@@ -11,7 +11,7 @@ import com.example.myapplication.model.Member
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(
+fun SystemScreen(
     currentMember: Member,
     onMemberSwitch: () -> Unit
 ) {
@@ -22,9 +22,9 @@ fun SettingsScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // 空的设置页面
+        // 空的系统页面
         Text(
-            text = "设置页面",
+            text = "系统",
             style = MaterialTheme.typography.headlineMedium
         )
     }

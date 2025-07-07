@@ -27,5 +27,6 @@ data class MessageEntity(
     val senderId: String,
     val content: String,
     val timestamp: Long,
-    val type: Int = 0 // 0表示文本消息
+    val type: Int = 0, // 0表示文本消息，1表示图片消息
+    val imagePath: String? = null // 图片消息的本地路径
 ) 

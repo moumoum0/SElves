@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
@@ -34,13 +35,15 @@ import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.example.myapplication.model.ChatGroup
 import com.example.myapplication.model.Member
+import com.example.myapplication.model.MessageType
 import com.example.myapplication.navigation.BottomNavItem
 import com.example.myapplication.ui.components.BottomNavBar
 import com.example.myapplication.ui.components.MemberSwitchDialog
 import com.example.myapplication.ui.components.CreateMemberDialog
 import com.example.myapplication.ui.components.CreateGroupDialog
-import com.example.myapplication.ui.screens.SettingsScreen
+import com.example.myapplication.ui.screens.SystemScreen
 import com.example.myapplication.ui.viewmodels.MainViewModel
+import com.example.myapplication.ui.viewmodels.LoadingPhase
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
 import com.example.myapplication.util.ImageUtils
@@ -54,23 +57,13 @@ fun MainScreen(
     val currentMember by viewModel.currentMember.collectAsState()
     val members by viewModel.members.collectAsState()
     val groups by viewModel.groups.collectAsState()
+    val loadingState by viewModel.loadingState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     
     var showCreateMemberDialog by remember { mutableStateOf(false) }
     var showMemberSwitchDialog by remember { mutableStateOf(false) }
     val navController = rememberNavController()
     val context = LocalContext.current
-
-    // 预加载所有成员的头像到内存缓存
-    LaunchedEffect(members) {
-        if (members.isNotEmpty()) {
-            ImageUtils.preloadAvatarsToMemory(
-                context = context,
-                avatarPaths = members.mapNotNull { it.avatarUrl },
-                coroutineScope = this
-            )
-        }
-    }
     
     // 如果没有成员，根据情况显示创建成员或切换成员对话框
     LaunchedEffect(currentMember, isLoading) {
@@ -118,83 +111,131 @@ fun MainScreen(
         )
     }
 
-    // 主导航结构
-    NavHost(
-        navController = navController,
-        startDestination = "main"
-    ) {
-        // 主页（包含底部导航栏）
-        composable("main") {
-            MainContent(
-                viewModel = viewModel,
-                currentMember = currentMember,
-                groups = groups,
-                isLoading = isLoading,
-                onMemberSwitch = { showMemberSwitchDialog = true },
-                onGroupClick = { group ->
-                    // 导航到聊天界面（作为独立页面）
-                    navController.navigate("chat/${group.id}")
-                },
-                onCreateGroup = { groupName ->
-                    val newGroup = viewModel.createGroup(groupName, currentMember!!)
-                    // 不再自动进入群聊
-                }
-            )
-        }
-        
-        // 聊天界面（作为独立页面）
-        composable(
-            route = "chat/{groupId}",
-            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
-            val group = groups.find { it.id == groupId }
-            val messages by viewModel.messages.collectAsState()
-            
-            // 当进入聊天界面时，标记所有消息为已读
-            LaunchedEffect(groupId) {
-                viewModel.markGroupMessagesAsRead(groupId)
+    // 显示统一的加载界面
+    if (isLoading) {
+        LoadingScreen(
+            loadingState = loadingState
+        )
+    } else {
+        // 主导航结构
+        NavHost(
+            navController = navController,
+            startDestination = "main"
+        ) {
+            // 主页（包含底部导航栏）
+            composable("main") {
+                MainContent(
+                    viewModel = viewModel,
+                    currentMember = currentMember,
+                    groups = groups,
+                    members = members,
+                    onMemberSwitch = { showMemberSwitchDialog = true },
+                    onGroupClick = { group ->
+                        // 导航到聊天界面（作为独立页面）
+                        navController.navigate("chat/${group.id}")
+                    },
+                    onCreateGroup = { groupName, selectedMembers ->
+                        val newGroup = viewModel.createGroup(groupName, selectedMembers, currentMember!!)
+                        // 不再自动进入群聊
+                    }
+                )
             }
             
-            if (group != null) {
-                // 顶部带返回按钮的聊天界面
-                Scaffold(
-                    topBar = {
-                        CenterAlignedTopAppBar(
-                            title = { Text(group.name) },
-                            navigationIcon = {
-                                IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowBack,
-                                        contentDescription = "返回"
-                                    )
-                                }
-                            },
-                            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    }
-                ) { paddingValues ->
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        ChatScreen(
-                            currentMember = currentMember!!,
-                            group = group,
-                            messages = messages[groupId] ?: emptyList(),
-                            members = members,
-                            onSendMessage = { content ->
-                                viewModel.sendMessage(groupId, content)
-                            },
-                            onDeleteMessage = { messageId ->
-                                viewModel.deleteMessage(groupId, messageId)
-                            }
-                        )
-                    }
+            // 聊天界面（作为独立页面，无底部导航栏）
+            composable(
+                route = "chat/{groupId}",
+                arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
+                val group = groups.find { it.id == groupId }
+                val messages by viewModel.messages.collectAsState()
+                
+                // 当进入聊天界面时，标记所有消息为已读
+                LaunchedEffect(groupId) {
+                    viewModel.markGroupMessagesAsRead(groupId)
+                }
+                
+                if (group != null) {
+                    ChatScreen(
+                        currentMember = currentMember!!,
+                        group = group,
+                        messages = messages[groupId] ?: emptyList(),
+                        members = members,
+                        onSendMessage = { content ->
+                            viewModel.sendMessage(groupId, content)
+                        },
+                        onSendImageMessage = { imageUri ->
+                            viewModel.sendImageMessage(groupId, imageUri)
+                        },
+                        onDeleteMessage = { messageId ->
+                            viewModel.deleteMessage(groupId, messageId)
+                        },
+                        onAddMembers = { membersToAdd ->
+                            viewModel.addMembersToGroup(groupId, membersToAdd)
+                        },
+                        onRemoveMembers = { membersToRemove ->
+                            viewModel.removeMembersFromGroup(groupId, membersToRemove)
+                        },
+                        onUpdateGroupName = { newName ->
+                            viewModel.updateGroupName(groupId, newName)
+                        },
+                        onDeleteGroup = {
+                            viewModel.deleteGroup(groupId)
+                            navController.popBackStack()
+                        },
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
                 }
             }
         }
     }
 }
+
+/**
+ * 统一的加载界面组件
+ */
+@Composable
+fun LoadingScreen(
+    loadingState: com.example.myapplication.ui.viewmodels.LoadingState
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(48.dp)
+        ) {
+            // 进度条
+            LinearProgressIndicator(
+                progress = loadingState.progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // 进度百分比
+            Text(
+                text = "${(loadingState.progress * 100).toInt()}%",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,10 +243,10 @@ fun MainContent(
     viewModel: MainViewModel,
     currentMember: Member?,
     groups: List<ChatGroup>,
-    isLoading: Boolean,
+    members: List<Member>,
     onMemberSwitch: () -> Unit,
     onGroupClick: (ChatGroup) -> Unit,
-    onCreateGroup: (String) -> Unit
+    onCreateGroup: (String, List<Member>) -> Unit
 ) {
     val mainNavController = rememberNavController()
     
@@ -214,14 +255,7 @@ fun MainContent(
             BottomNavBar(navController = mainNavController)
         }
     ) { paddingValues ->
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (currentMember != null) {
+        if (currentMember != null) {
             NavHost(
                 navController = mainNavController,
                 startDestination = BottomNavItem.Chat.route,
@@ -232,6 +266,7 @@ fun MainContent(
                         viewModel = viewModel,
                         currentMember = currentMember,
                         groups = groups,
+                        members = members,
                         onMemberSwitch = onMemberSwitch,
                         onGroupClick = onGroupClick,
                         onCreateGroup = onCreateGroup
@@ -239,7 +274,7 @@ fun MainContent(
                 }
                 
                 composable(BottomNavItem.Settings.route) {
-                    SettingsScreen(
+                    SystemScreen(
                         currentMember = currentMember,
                         onMemberSwitch = onMemberSwitch
                     )
@@ -255,9 +290,10 @@ fun ChatTab(
     viewModel: MainViewModel,
     currentMember: Member,
     groups: List<ChatGroup>,
+    members: List<Member>,
     onMemberSwitch: () -> Unit,
     onGroupClick: (ChatGroup) -> Unit,
-    onCreateGroup: (String) -> Unit
+    onCreateGroup: (String, List<Member>) -> Unit
 ) {
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -277,10 +313,12 @@ fun ChatTab(
 
     if (showCreateGroupDialog) {
         CreateGroupDialog(
+            availableMembers = members,
+            currentMember = currentMember,
             onDismiss = { showCreateGroupDialog = false },
-            onConfirm = { groupName ->
+            onConfirm = { groupName, selectedMembers ->
                 showCreateGroupDialog = false
-                onCreateGroup(groupName)
+                onCreateGroup(groupName, selectedMembers)
             }
         )
     }
@@ -311,8 +349,12 @@ fun ChatTab(
                         modifier = Modifier.padding(start = 16.dp)
                     )
                 }
-                TextButton(onClick = onMemberSwitch) {
-                    Text("切换成员")
+                IconButton(onClick = onMemberSwitch) {
+                    Icon(
+                        imageVector = Icons.Default.SwapHoriz,
+                        contentDescription = "切换成员",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
 
@@ -463,10 +505,15 @@ fun GroupItem(
             
             // 最新消息
             if (latestMessage != null) {
+                val messageContent = when (latestMessage.type) {
+                    MessageType.IMAGE -> "[图片]"
+                    MessageType.TEXT -> latestMessage.content
+                }
+                
                 val messageText = if (sender?.id == currentMember.id) {
-                    "你: ${latestMessage.content}"
+                    "你: $messageContent"
                 } else {
-                    "${sender?.name ?: "未知用户"}: ${latestMessage.content}"
+                    "${sender?.name ?: "未知用户"}: $messageContent"
                 }
                 
                 Text(

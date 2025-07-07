@@ -1,8 +1,8 @@
 package com.example.myapplication.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class BottomNavItem(
@@ -18,8 +18,8 @@ sealed class BottomNavItem(
     
     object Settings : BottomNavItem(
         route = "settings",
-        title = "设置",
-        icon = Icons.Default.Settings
+        title = "系统",
+        icon = Icons.Default.AccountTree
     )
     
     companion object {

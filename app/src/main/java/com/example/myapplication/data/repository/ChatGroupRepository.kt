@@ -25,6 +25,19 @@ class ChatGroupRepository @Inject constructor(
     }
 
     /**
+     * 根据成员ID获取该成员所属的群聊
+     */
+    fun getGroupsByMemberId(memberId: String): Flow<List<ChatGroup>> {
+        return chatGroupDao.getGroupsByMemberId(memberId).map { entities ->
+            entities.map { entity -> entity.toDomain(memberDao) }
+                .filter { group -> 
+                    // 进一步过滤，确保成员确实在群聊中
+                    group.members.any { it.id == memberId }
+                }
+        }
+    }
+
+    /**
      * 通过ID获取特定群聊
      */
     suspend fun getGroupById(groupId: String): ChatGroup? {

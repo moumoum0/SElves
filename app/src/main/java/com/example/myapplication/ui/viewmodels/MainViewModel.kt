@@ -12,7 +12,9 @@ import com.example.myapplication.data.repository.MemberRepository
 import com.example.myapplication.data.repository.MessageReadStatusRepository
 import com.example.myapplication.model.ChatGroup
 import com.example.myapplication.model.Message
+import com.example.myapplication.model.MessageType
 import com.example.myapplication.model.Member
+import android.net.Uri
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -20,10 +22,36 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import java.util.*
 import javax.inject.Inject
 import android.content.Context
 import com.example.myapplication.util.ImageUtils
+import kotlinx.coroutines.CompletableDeferred
+
+/**
+ * 应用加载状态枚举
+ */
+enum class LoadingPhase {
+    INITIALIZING,           // 初始化阶段
+    LOADING_MEMBERS,        // 加载成员数据
+    LOADING_CURRENT_MEMBER, // 加载当前成员
+    LOADING_GROUPS,         // 加载群组数据
+    LOADING_MESSAGES,       // 加载消息数据
+    PRELOADING_IMAGES,      // 预加载图片
+    COMPLETED               // 加载完成
+}
+
+/**
+ * 加载状态数据类
+ */
+data class LoadingState(
+    val isLoading: Boolean = true,
+    val currentPhase: LoadingPhase = LoadingPhase.INITIALIZING,
+    val progress: Float = 0f,
+    val message: String = "正在初始化..."
+)
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -53,9 +81,16 @@ class MainViewModel @Inject constructor(
     private val _groups = MutableStateFlow<List<ChatGroup>>(emptyList())
     val groups: StateFlow<List<ChatGroup>> = _groups.asStateFlow()
     
-    // 加载状态
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    // 统一的加载状态
+    private val _loadingState = MutableStateFlow(LoadingState())
+    val loadingState: StateFlow<LoadingState> = _loadingState.asStateFlow()
+    
+    // 保持向后兼容的加载状态
+    val isLoading: StateFlow<Boolean> = _loadingState.map { it.isLoading }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = true
+    )
     
     // 消息管理
     private val _messages = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
@@ -68,88 +103,238 @@ class MainViewModel @Inject constructor(
     // 已加载消息的群组ID列表
     private val loadedMessageGroups = mutableSetOf<String>()
     
+    // 加载阶段跟踪
+    private var membersLoaded = false
+    private var currentMemberLoaded = false
+    private var groupsLoaded = false
+    private var messagesLoaded = false
+    private var imagesPreloaded = false
+    
     // 异常处理器
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         if (throwable is kotlinx.coroutines.CancellationException) {
             Log.d(TAG, "协程被取消: ${throwable.message}")
         } else {
             Log.e(TAG, "协程异常: ${throwable.message}", throwable)
+            // 即使出现异常也要完成加载
+            completeLoading()
         }
     }
     
     init {
-        loadMembers()
-        loadSavedMember()
-        loadGroups()
+        startUnifiedLoading()
     }
     
-    private fun loadMembers() {
-        // 加载未删除的成员（用于UI显示）
+    /**
+     * 开始统一的加载流程
+     */
+    private fun startUnifiedLoading() {
         viewModelScope.launch(exceptionHandler) {
+            try {
+                updateLoadingState(LoadingPhase.INITIALIZING, 0f, "正在初始化应用...")
+                
+                // 阶段1：并行加载基础数据
+                updateLoadingState(LoadingPhase.LOADING_MEMBERS, 0.1f, "正在加载成员数据...")
+                val membersJob = async { loadMembers() }
+                
+                updateLoadingState(LoadingPhase.LOADING_CURRENT_MEMBER, 0.2f, "正在加载当前成员...")
+                val currentMemberJob = async { loadSavedMember() }
+                
+                // 等待基础数据加载完成
+                awaitAll(membersJob, currentMemberJob)
+                
+                // 阶段2：加载群组数据
+                updateLoadingState(LoadingPhase.LOADING_GROUPS, 0.4f, "正在加载群组数据...")
+                loadGroups()
+                
+                // 阶段3：加载消息数据
+                updateLoadingState(LoadingPhase.LOADING_MESSAGES, 0.6f, "正在加载消息数据...")
+                loadInitialMessages()
+                
+                // 阶段4：预加载图片
+                updateLoadingState(LoadingPhase.PRELOADING_IMAGES, 0.8f, "正在预加载图片...")
+                preloadImages()
+                
+                // 完成加载
+                updateLoadingState(LoadingPhase.COMPLETED, 1.0f, "加载完成")
+                completeLoading()
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "统一加载流程失败: ${e.message}", e)
+                completeLoading()
+            }
+        }
+    }
+    
+
+    
+    /**
+     * 更新加载状态
+     */
+    private fun updateLoadingState(phase: LoadingPhase, progress: Float, message: String) {
+        _loadingState.value = LoadingState(
+            isLoading = true,
+            currentPhase = phase,
+            progress = progress,
+            message = message
+        )
+        Log.d(TAG, "加载状态更新: $phase - $message (${(progress * 100).toInt()}%)")
+    }
+    
+    /**
+     * 完成加载
+     */
+    private fun completeLoading() {
+        _loadingState.value = LoadingState(
+            isLoading = false,
+            currentPhase = LoadingPhase.COMPLETED,
+            progress = 1.0f,
+            message = "加载完成"
+        )
+        Log.d(TAG, "应用加载完成")
+    }
+    
+
+    
+    /**
+     * 加载初始消息数据
+     */
+    private suspend fun loadInitialMessages() {
+        val groups = _groups.value
+        if (groups.isNotEmpty()) {
+            // 为每个群组加载消息
+            groups.forEach { group ->
+                loadGroupMessages(group.id)
+                loadUnreadCount(group.id)
+            }
+        }
+        messagesLoaded = true
+    }
+    
+    /**
+     * 预加载图片
+     */
+    private suspend fun preloadImages() {
+        val members = _members.value
+        val allMembers = _allMembers.value
+        
+        // 预加载成员头像
+        if (members.isNotEmpty()) {
+            ImageUtils.preloadAvatarsToMemory(
+                context = context,
+                avatarPaths = members.mapNotNull { it.avatarUrl },
+                coroutineScope = viewModelScope
+            )
+        }
+        
+        // 预加载消息中的图片
+        val allMessages = _messages.value.values.flatten()
+        val imagePaths = allMessages.mapNotNull { it.imagePath }
+        if (imagePaths.isNotEmpty()) {
+            ImageUtils.preloadMessageImages(
+                context = context,
+                imagePaths = imagePaths,
+                coroutineScope = viewModelScope
+            )
+        }
+        
+        imagesPreloaded = true
+    }
+    
+    private suspend fun loadMembers() {
+        // 创建一个CompletableDeferred来等待数据加载完成
+        val membersDeferred = CompletableDeferred<Unit>()
+        val allMembersDeferred = CompletableDeferred<Unit>()
+        
+        // 加载未删除的成员（用于UI显示）
+        val membersJob = viewModelScope.launch(exceptionHandler) {
             memberRepository.getAllMembers()
+                .take(1) // 只取第一个值
                 .collect { memberList ->
                     _members.value = memberList
                     Log.d(TAG, "已加载 ${memberList.size} 个活跃成员")
-                    
-                    // 立即预加载头像到内存缓存
-                    if (memberList.isNotEmpty()) {
-                        ImageUtils.preloadAvatarsToMemory(
-                            context = context,
-                            avatarPaths = memberList.mapNotNull { it.avatarUrl },
-                            coroutineScope = viewModelScope
-                        )
-                    }
+                    membersDeferred.complete(Unit)
                 }
         }
         
         // 加载所有成员包括已删除的（用于消息显示）
-        viewModelScope.launch(exceptionHandler) {
+        val allMembersJob = viewModelScope.launch(exceptionHandler) {
             memberRepository.getAllMembersIncludingDeleted()
+                .take(1) // 只取第一个值
                 .collect { memberList ->
                     _allMembers.value = memberList
                     Log.d(TAG, "已加载 ${memberList.size} 个成员（包括已删除成员）")
+                    allMembersDeferred.complete(Unit)
                 }
         }
+        
+        // 等待两个任务完成
+        membersDeferred.await()
+        allMembersDeferred.await()
+        membersLoaded = true
     }
     
-    private fun loadGroups() {
+    private suspend fun loadGroups() {
+        val groupsDeferred = CompletableDeferred<Unit>()
+        
         viewModelScope.launch(exceptionHandler) {
             try {
-                chatGroupRepository.getAllGroups()
-                    .collect { groupList ->
-                        _groups.value = groupList
-                        Log.d(TAG, "已加载 ${groupList.size} 个群聊")
-                        
-                        // 加载所有群组的消息和未读数量
-                        groupList.forEach { group ->
-                            loadGroupMessages(group.id)
-                            loadUnreadCount(group.id)
+                // 监听当前成员变化，当成员变化时重新加载群聊
+                combine(
+                    chatGroupRepository.getAllGroups(),
+                    _currentMember
+                ) { allGroups, currentMember ->
+                    if (currentMember != null) {
+                        // 过滤出当前成员所属的群聊
+                        allGroups.filter { group ->
+                            group.members.any { it.id == currentMember.id }
                         }
+                    } else {
+                        emptyList()
                     }
+                }.collect { groupList ->
+                    _groups.value = groupList
+                    Log.d(TAG, "已加载 ${groupList.size} 个群聊")
+                    if (!groupsLoaded) {
+                        groupsLoaded = true
+                        groupsDeferred.complete(Unit)
+                    }
+                }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) {
                     Log.d(TAG, "加载群聊任务被取消")
                 } else {
                     Log.e(TAG, "加载群聊失败: ${e.message}", e)
                 }
-                // 确保即使加载失败也不会阻塞UI
-                _isLoading.value = false
+                if (!groupsLoaded) {
+                    groupsLoaded = true
+                    groupsDeferred.complete(Unit)
+                }
             }
         }
+        
+        groupsDeferred.await()
     }
     
-    private fun loadSavedMember() {
+    private suspend fun loadSavedMember() {
+        val memberDeferred = CompletableDeferred<Unit>()
+        
         viewModelScope.launch(exceptionHandler) {
-            memberPreferences.currentMemberId.collect { memberId ->
-                if (!memberId.isNullOrEmpty()) {
-                    memberRepository.getMemberById(memberId)?.let { member ->
-                        _currentMember.value = member
-                        Log.d(TAG, "已加载保存的成员: ${member.name}")
+            memberPreferences.currentMemberId
+                .take(1) // 只取第一个值
+                .collect { memberId ->
+                    if (!memberId.isNullOrEmpty()) {
+                        memberRepository.getMemberById(memberId)?.let { member ->
+                            _currentMember.value = member
+                            Log.d(TAG, "已加载保存的成员: ${member.name}")
+                        }
                     }
+                    currentMemberLoaded = true
+                    memberDeferred.complete(Unit)
                 }
-                _isLoading.value = false
-            }
         }
+        
+        memberDeferred.await()
     }
     
     // 创建成员
@@ -191,19 +376,20 @@ class MainViewModel @Inject constructor(
         
         viewModelScope.launch(exceptionHandler) {
             memberPreferences.saveCurrentMemberId(member.id)
-            Log.d(TAG, "已保存当前成员ID: ${member.id}")
+            Log.d(TAG, "已保存当前成员ID: ${member.id}, 将重新加载群聊列表")
         }
     }
     
     // 创建群聊
-    fun createGroup(name: String, creator: Member): ChatGroup {
+    fun createGroup(name: String, selectedMembers: List<Member>, creator: Member): ChatGroup {
         val groupId = UUID.randomUUID().toString()
         
-        // 创建群聊对象
+        // 创建群聊对象，创建者为群主
         val newGroup = ChatGroup(
             id = groupId,
             name = name,
-            members = listOf(creator),
+            members = selectedMembers,
+            ownerId = creator.id,
             createdAt = System.currentTimeMillis()
         )
         
@@ -216,7 +402,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch(exceptionHandler) {
             try {
                 chatGroupRepository.saveGroup(newGroup)
-                Log.d(TAG, "群聊已保存到数据库: ${newGroup.name}")
+                Log.d(TAG, "群聊已保存到数据库: ${newGroup.name}, 群主: ${creator.name}, 成员数: ${selectedMembers.size}")
                 
                 // 为新群组初始化消息列表和未读数量
                 _messages.value = _messages.value.toMutableMap().apply {
@@ -229,7 +415,7 @@ class MainViewModel @Inject constructor(
             }
         }
         
-        Log.d(TAG, "创建群聊: ${newGroup.name}")
+        Log.d(TAG, "创建群聊: ${newGroup.name}, 群主: ${creator.name}, 成员数: ${selectedMembers.size}")
         
         return newGroup
     }
@@ -318,7 +504,8 @@ class MainViewModel @Inject constructor(
         val message = Message(
             id = UUID.randomUUID().toString(),
             senderId = currentMember.id,
-            content = content
+            content = content,
+            type = MessageType.TEXT
         )
         
         // 更新内存中的消息列表
@@ -339,6 +526,42 @@ class MainViewModel @Inject constructor(
         }
         
         Log.d(TAG, "发送消息: ${message.content} 到群组: $groupId")
+    }
+    
+    fun sendImageMessage(groupId: String, imageUri: Uri, caption: String = "") {
+        val currentMember = _currentMember.value ?: return
+        
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // 保存图片到内部存储
+                val imagePath = ImageUtils.saveMessageImageToInternalStorage(context, imageUri)
+                
+                if (imagePath != null) {
+                    val message = Message(
+                        id = UUID.randomUUID().toString(),
+                        senderId = currentMember.id,
+                        content = caption,
+                        type = MessageType.IMAGE,
+                        imagePath = imagePath
+                    )
+                    
+                    // 更新内存中的消息列表
+                    val currentMessages = _messages.value.toMutableMap()
+                    val groupMessages = currentMessages[groupId]?.toMutableList() ?: mutableListOf()
+                    groupMessages.add(message)
+                    currentMessages[groupId] = groupMessages
+                    _messages.value = currentMessages
+                    
+                    // 保存消息到数据库
+                    messageRepository.saveMessage(message, groupId)
+                    Log.d(TAG, "图片消息已保存到数据库: ${message.id}")
+                } else {
+                    Log.e(TAG, "保存图片失败")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "发送图片消息失败: ${e.message}", e)
+            }
+        }
     }
     
     // 删除消息
@@ -475,6 +698,129 @@ class MainViewModel @Inject constructor(
                 Log.d(TAG, "已标记消息 $messageId 为已读")
             } catch (e: Exception) {
                 Log.e(TAG, "标记消息 $messageId 为已读失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    // 群聊管理功能
+    
+    // 添加成员到群聊
+    fun addMembersToGroup(groupId: String, membersToAdd: List<Member>) {
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // 找到目标群聊
+                val currentGroups = _groups.value.toMutableList()
+                val groupIndex = currentGroups.indexOfFirst { it.id == groupId }
+                
+                if (groupIndex != -1) {
+                    val group = currentGroups[groupIndex]
+                    val updatedMembers = group.members.toMutableList()
+                    
+                    // 添加新成员（避免重复）
+                    membersToAdd.forEach { newMember ->
+                        if (updatedMembers.none { it.id == newMember.id }) {
+                            updatedMembers.add(newMember)
+                        }
+                    }
+                    
+                    // 更新群聊
+                    val updatedGroup = group.copy(members = updatedMembers)
+                    currentGroups[groupIndex] = updatedGroup
+                    _groups.value = currentGroups
+                    
+                    // 保存到数据库
+                    chatGroupRepository.updateGroup(updatedGroup)
+                    Log.d(TAG, "已添加 ${membersToAdd.size} 个成员到群聊: ${group.name}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "添加成员到群聊失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    // 从群聊中移除成员
+    fun removeMembersFromGroup(groupId: String, membersToRemove: List<Member>) {
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // 找到目标群聊
+                val currentGroups = _groups.value.toMutableList()
+                val groupIndex = currentGroups.indexOfFirst { it.id == groupId }
+                
+                if (groupIndex != -1) {
+                    val group = currentGroups[groupIndex]
+                    val updatedMembers = group.members.toMutableList()
+                    
+                    // 移除成员
+                    membersToRemove.forEach { memberToRemove ->
+                        updatedMembers.removeAll { it.id == memberToRemove.id }
+                    }
+                    
+                    // 更新群聊
+                    val updatedGroup = group.copy(members = updatedMembers)
+                    currentGroups[groupIndex] = updatedGroup
+                    _groups.value = currentGroups
+                    
+                    // 保存到数据库
+                    chatGroupRepository.updateGroup(updatedGroup)
+                    Log.d(TAG, "已从群聊 ${group.name} 中移除 ${membersToRemove.size} 个成员")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "从群聊移除成员失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    // 更新群聊名称
+    fun updateGroupName(groupId: String, newName: String) {
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // 找到目标群聊
+                val currentGroups = _groups.value.toMutableList()
+                val groupIndex = currentGroups.indexOfFirst { it.id == groupId }
+                
+                if (groupIndex != -1) {
+                    val group = currentGroups[groupIndex]
+                    val updatedGroup = group.copy(name = newName)
+                    currentGroups[groupIndex] = updatedGroup
+                    _groups.value = currentGroups
+                    
+                    // 保存到数据库
+                    chatGroupRepository.updateGroup(updatedGroup)
+                    Log.d(TAG, "已更新群聊名称: ${group.name} -> $newName")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "更新群聊名称失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    // 解散群聊
+    fun deleteGroup(groupId: String) {
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // 从内存中移除群聊
+                val currentGroups = _groups.value.toMutableList()
+                val groupToRemove = currentGroups.find { it.id == groupId }
+                currentGroups.removeAll { it.id == groupId }
+                _groups.value = currentGroups
+                
+                // 清空群聊消息
+                val currentMessages = _messages.value.toMutableMap()
+                currentMessages.remove(groupId)
+                _messages.value = currentMessages
+                
+                // 清空未读数量
+                val currentUnreadCounts = _unreadCounts.value.toMutableMap()
+                currentUnreadCounts.remove(groupId)
+                _unreadCounts.value = currentUnreadCounts
+                
+                // 从数据库中删除
+                chatGroupRepository.deleteGroupById(groupId)
+                messageRepository.clearGroupMessages(groupId)
+                
+                Log.d(TAG, "已解散群聊: ${groupToRemove?.name}")
+            } catch (e: Exception) {
+                Log.e(TAG, "解散群聊失败: ${e.message}", e)
             }
         }
     }

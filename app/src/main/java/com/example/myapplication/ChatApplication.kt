@@ -8,7 +8,6 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import dagger.hilt.android.HiltAndroidApp
-import com.example.myapplication.data.SQLiteConfig
 import okhttp3.OkHttpClient
 
 @HiltAndroidApp
@@ -16,9 +15,6 @@ class ChatApplication : Application() {
     
     override fun onCreate() {
         super.onCreate()
-        
-        // 初始化SQLite配置
-        SQLiteConfig.init(this)
         
         // 配置Coil图片加载器
         setupCoilImageLoader()

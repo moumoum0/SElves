@@ -21,13 +21,17 @@ import java.util.UUID
 object ImageUtils {
     private const val TAG = "ImageUtils"
     private const val AVATAR_DIR = "avatars"
+    private const val MESSAGE_IMAGES_DIR = "message_images" // 消息图片目录
     
     // 添加内存缓存，避免频繁的文件系统访问
     private val avatarFileCache = LruCache<String, File>(50) // 增加缓存大小
     private val avatarExistsCache = LruCache<String, Boolean>(100) // 增加缓存大小
+    private val messageImageFileCache = LruCache<String, File>(100) // 消息图片缓存
+    private val messageImageExistsCache = LruCache<String, Boolean>(200) // 消息图片存在性缓存
     
     // 预加载状态缓存
     private val preloadedAvatars = mutableSetOf<String>()
+    private val preloadedMessageImages = mutableSetOf<String>()
     
     /**
      * 保存头像到应用内部存储
@@ -192,9 +196,150 @@ object ImageUtils {
     }
     
     /**
+     * 保存消息图片到应用内部存储
+     * @param context 上下文
+     * @param imageUri 图片Uri
+     * @return 保存成功返回文件路径，失败返回null
+     */
+    suspend fun saveMessageImageToInternalStorage(context: Context, imageUri: Uri?): String? = withContext(Dispatchers.IO) {
+        if (imageUri == null) return@withContext null
+        
+        try {
+            // 创建消息图片目录
+            val messageImageDir = File(context.filesDir, MESSAGE_IMAGES_DIR).apply { 
+                if (!exists()) mkdirs() 
+            }
+            
+            // 创建唯一文件名
+            val fileName = "msg_img_${UUID.randomUUID()}.jpg"
+            val destinationFile = File(messageImageDir, fileName)
+            
+            // 复制文件
+            context.contentResolver.openInputStream(imageUri)?.use { input ->
+                FileOutputStream(destinationFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+            
+            // 返回文件路径
+            val filePath = destinationFile.absolutePath
+            
+            // 保存到缓存
+            messageImageFileCache.put(filePath, destinationFile)
+            messageImageExistsCache.put(filePath, true)
+            
+            Log.d(TAG, "消息图片已保存到: $filePath")
+            return@withContext filePath
+        } catch (e: Exception) {
+            Log.e(TAG, "保存消息图片失败: ${e.message}", e)
+            return@withContext null
+        }
+    }
+    
+    /**
+     * 获取消息图片文件
+     * @param imagePath 图片文件路径
+     * @return 图片文件，如果路径为空或文件不存在则返回null
+     */
+    fun getMessageImageFile(imagePath: String?): File? {
+        if (imagePath.isNullOrEmpty()) return null
+        
+        // 先从缓存中获取
+        messageImageFileCache.get(imagePath)?.let { return it }
+        
+        // 检查文件是否存在的缓存
+        if (messageImageExistsCache.get(imagePath) == false) return null
+        
+        val file = File(imagePath)
+        val exists = file.exists()
+        
+        // 更新缓存
+        messageImageExistsCache.put(imagePath, exists)
+        if (exists) {
+            messageImageFileCache.put(imagePath, file)
+            return file
+        }
+        
+        return null
+    }
+    
+    /**
+     * 获取消息图片加载模型
+     * @param imagePath 图片文件路径
+     * @return 适合AsyncImage加载的模型，如果路径无效则返回null
+     */
+    fun getMessageImageModel(imagePath: String?): Any? {
+        return getMessageImageFile(imagePath)
+    }
+    
+    /**
+     * 创建消息图片的优化请求
+     * @param context 上下文
+     * @param imagePath 图片文件路径
+     * @return ImageRequest对象
+     */
+    fun createMessageImageRequest(context: Context, imagePath: String?): ImageRequest? {
+        val file = getMessageImageFile(imagePath) ?: return null
+        
+        return ImageRequest.Builder(context)
+            .data(file)
+            .memoryCachePolicy(CachePolicy.ENABLED)
+            .diskCachePolicy(CachePolicy.ENABLED)
+            .crossfade(true) // 消息图片使用淡入效果
+            .build()
+    }
+    
+    /**
+     * 预加载消息图片到内存缓存中
+     * @param context 上下文
+     * @param imagePaths 需要预加载的图片路径列表
+     * @param coroutineScope 协程作用域
+     */
+    fun preloadMessageImages(
+        context: Context, 
+        imagePaths: List<String>, 
+        coroutineScope: CoroutineScope
+    ) {
+        coroutineScope.launch(Dispatchers.IO) {
+            val imageLoader = coil.Coil.imageLoader(context)
+            
+            imagePaths.forEach { path ->
+                if (path.isNotEmpty() && !preloadedMessageImages.contains(path)) {
+                    try {
+                        // 缓存文件是否存在信息
+                        val file = File(path)
+                        val exists = file.exists()
+                        messageImageExistsCache.put(path, exists)
+                        
+                        if (exists) {
+                            // 缓存File对象
+                            messageImageFileCache.put(path, file)
+                            
+                            // 预加载到Coil的内存缓存中
+                            val request = ImageRequest.Builder(context)
+                                .data(file)
+                                .memoryCachePolicy(CachePolicy.ENABLED)
+                                .diskCachePolicy(CachePolicy.ENABLED)
+                                .build()
+                            
+                            // 执行预加载
+                            imageLoader.execute(request)
+                            preloadedMessageImages.add(path)
+                            Log.d(TAG, "预加载消息图片: $path")
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "预加载消息图片失败: $path, ${e.message}")
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
      * 清理预加载缓存
      */
     fun clearPreloadCache() {
         preloadedAvatars.clear()
+        preloadedMessageImages.clear()
     }
 } 

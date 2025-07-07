@@ -9,10 +9,12 @@ data class Message(
     val senderId: String,
     val content: String,
     val timestamp: Long = System.currentTimeMillis(),
-    val type: MessageType = MessageType.TEXT
+    val type: MessageType = MessageType.TEXT,
+    val imagePath: String? = null // 图片消息的本地路径
 ) : Parcelable
 
 enum class MessageType {
-    TEXT
-    // 后续可以添加图片、文件等类型
+    TEXT,
+    IMAGE
+    // 后续可以添加文件等类型
 } 

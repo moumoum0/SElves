@@ -1,5 +1,8 @@
 package com.example.myapplication.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -9,7 +12,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
@@ -24,15 +31,20 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.example.myapplication.model.ChatGroup
 import com.example.myapplication.model.Message
+import com.example.myapplication.model.MessageType
 import com.example.myapplication.model.Member
 import com.example.myapplication.util.ImageUtils
 import com.example.myapplication.ui.components.MessageAvatarImage
+import com.example.myapplication.ui.components.GroupManagementDialog
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -43,14 +55,37 @@ fun ChatScreen(
     messages: List<Message>,
     members: List<Member>,
     onSendMessage: (String) -> Unit,
-    onDeleteMessage: (String) -> Unit = {}
+    onSendImageMessage: (Uri) -> Unit = {}, // 发送图片消息的回调
+    onDeleteMessage: (String) -> Unit = {},
+    onAddMembers: (List<Member>) -> Unit = {},
+    onRemoveMembers: (List<Member>) -> Unit = {},
+    onUpdateGroupName: (String) -> Unit = {},
+    onDeleteGroup: () -> Unit = {},
+    onNavigateBack: () -> Unit = {}
 ) {
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    var previewImagePath by remember { mutableStateOf<String?>(null) }
+    var showGroupManagement by remember { mutableStateOf(false) }
+    
+    // 图片选择器
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { onSendImageMessage(it) }
+    }
     
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
+        // 顶部栏
+        ChatTopBar(
+            group = group,
+            onNavigateBack = onNavigateBack,
+            onMenuClick = { showGroupManagement = true }
+        )
         // 消息列表
         LazyColumn(
             modifier = Modifier
@@ -65,23 +100,43 @@ fun ChatScreen(
                     message = message,
                     isFromCurrentMember = message.senderId == currentMember.id,
                     sender = members.find { it.id == message.senderId },
-                    onDeleteMessage = onDeleteMessage
+                    onDeleteMessage = onDeleteMessage,
+                    onImageClick = { imagePath ->
+                        previewImagePath = imagePath
+                    },
+                    currentMember = currentMember,
+                    members = members
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
-        // 输入框和发送按钮
+        // 输入框和发送按钮 - 延伸到导航栏下方
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background),
+            shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.background
         ) {
-            Row(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                // 图片选择按钮
+                IconButton(
+                    onClick = { imagePickerLauncher.launch("image/*") }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = "发送图片",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                
                 OutlinedTextField(
                     value = messageText,
                     onValueChange = { messageText = it },
@@ -105,7 +160,46 @@ fun ChatScreen(
                     )
                 }
             }
+            
+            // 导航栏占位空间
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+                    .background(MaterialTheme.colorScheme.background)
+            )
         }
+    }
+    }
+    
+    // 图片预览对话框
+    previewImagePath?.let { imagePath ->
+        // 找到发送这张图片的消息
+        val imageMessage = messages.find { it.imagePath == imagePath }
+        val sender = imageMessage?.let { message ->
+            members.find { it.id == message.senderId }
+        }
+        
+        ImagePreviewDialog(
+            imagePath = imagePath,
+            senderName = sender?.name ?: "未知成员",
+            timestamp = imageMessage?.timestamp ?: 0L,
+            onDismiss = { previewImagePath = null }
+        )
+    }
+    
+    // 群聊管理对话框
+    if (showGroupManagement) {
+        GroupManagementDialog(
+            group = group,
+            currentMember = currentMember,
+            allMembers = members,
+            onDismiss = { showGroupManagement = false },
+            onAddMembers = onAddMembers,
+            onRemoveMembers = onRemoveMembers,
+            onUpdateGroupName = onUpdateGroupName,
+            onDeleteGroup = onDeleteGroup
+        )
     }
 }
 
@@ -114,7 +208,10 @@ fun MessageItem(
     message: Message,
     isFromCurrentMember: Boolean,
     sender: Member?,
-    onDeleteMessage: (String) -> Unit
+    onDeleteMessage: (String) -> Unit,
+    onImageClick: (String) -> Unit = {},
+    currentMember: Member,
+    members: List<Member>
 ) {
     var showMenu by remember { mutableStateOf(false) }
     var pressPosition by remember { mutableStateOf(DpOffset.Zero) }
@@ -154,39 +251,12 @@ fun MessageItem(
                     
                     // 消息气泡
                     Box {
-                        Surface(
-                            shape = RoundedCornerShape(
-                                topStart = 0.dp,
-                                topEnd = 16.dp,
-                                bottomStart = 16.dp,
-                                bottomEnd = 16.dp
-                            ),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.combinedClickable(
-                                onClick = {},
-                                onLongClick = { 
-                                    showMenu = true
-                                }
-                            )
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(12.dp)
-                            ) {
-                                // 消息文本
-                                Text(
-                                    text = message.content,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                
-                                // 时间戳
-                                Text(
-                                    text = formatTimestamp(message.timestamp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
-                        }
+                        MessageBubble(
+                            message = message,
+                            isFromCurrentMember = false,
+                            onLongClick = { showMenu = true },
+                            onImageClick = onImageClick
+                        )
                         
                         MessageMenu(
                             showMenu = showMenu,
@@ -201,39 +271,12 @@ fun MessageItem(
             } else {
                 // 消息气泡
                 Box {
-                    Surface(
-                        shape = RoundedCornerShape(
-                            topStart = 16.dp,
-                            topEnd = 0.dp,
-                            bottomStart = 16.dp,
-                            bottomEnd = 16.dp
-                        ),
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.combinedClickable(
-                            onClick = {},
-                            onLongClick = { 
-                                showMenu = true
-                            }
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            // 消息文本
-                            Text(
-                                text = message.content,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            
-                            // 时间戳
-                            Text(
-                                text = formatTimestamp(message.timestamp),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                    }
+                    MessageBubble(
+                        message = message,
+                        isFromCurrentMember = true,
+                        onLongClick = { showMenu = true },
+                        onImageClick = onImageClick
+                    )
                     
                     MessageMenu(
                         showMenu = showMenu,
@@ -253,6 +296,237 @@ fun MessageItem(
                     contentDescription = "当前成员头像",
                     size = 40.dp
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun MessageBubble(
+    message: Message,
+    isFromCurrentMember: Boolean,
+    onLongClick: () -> Unit,
+    onImageClick: (String) -> Unit = {}
+) {
+    val bubbleColor = if (isFromCurrentMember) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+    
+    val contentColor = if (isFromCurrentMember) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    
+    val bubbleShape = if (isFromCurrentMember) {
+        RoundedCornerShape(
+            topStart = 16.dp,
+            topEnd = 0.dp,
+            bottomStart = 16.dp,
+            bottomEnd = 16.dp
+        )
+    } else {
+        RoundedCornerShape(
+            topStart = 0.dp,
+            topEnd = 16.dp,
+            bottomStart = 16.dp,
+            bottomEnd = 16.dp
+        )
+    }
+    
+    Surface(
+        shape = bubbleShape,
+        color = bubbleColor,
+        modifier = Modifier.combinedClickable(
+            onClick = {},
+            onLongClick = onLongClick
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            when (message.type) {
+                MessageType.TEXT -> {
+                    // 文本消息
+                    Text(
+                        text = message.content,
+                        color = contentColor
+                    )
+                }
+                MessageType.IMAGE -> {
+                    // 图片消息
+                    ImageMessage(
+                        imagePath = message.imagePath,
+                        contentColor = contentColor,
+                        onImageClick = onImageClick
+                    )
+                    
+                    // 如果图片消息还有文本内容，也显示出来
+                    if (message.content.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = message.content,
+                            color = contentColor
+                        )
+                    }
+                }
+            }
+            
+            // 时间戳
+            Text(
+                text = formatTimestamp(message.timestamp),
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor.copy(alpha = 0.7f),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun ImageMessage(
+    imagePath: String?,
+    contentColor: Color,
+    onImageClick: (String) -> Unit = {}
+) {
+    val context = LocalContext.current
+    
+    if (imagePath != null) {
+        val imageRequest = remember(imagePath) {
+            ImageUtils.createMessageImageRequest(context, imagePath)
+        }
+        
+        if (imageRequest != null) {
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = "消息图片",
+                modifier = Modifier
+                    .size(200.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onImageClick(imagePath)
+                            }
+                        )
+                    },
+                contentScale = ContentScale.Crop,
+                onError = {
+                    // 图片加载失败时的处理
+                }
+            )
+        } else {
+            // 图片加载失败时显示错误信息
+            Text(
+                text = "图片加载失败",
+                color = contentColor.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    } else {
+        // 没有图片路径时显示错误信息
+        Text(
+            text = "图片不可用",
+            color = contentColor.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+}
+
+@Composable
+fun ImagePreviewDialog(
+    imagePath: String,
+    senderName: String,
+    timestamp: Long,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onDismiss() }
+                    )
+                }
+        ) {
+            // 图片内容 - 全屏显示
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                val imageRequest = remember(imagePath) {
+                    ImageUtils.createMessageImageRequest(context, imagePath)
+                }
+                
+                if (imageRequest != null) {
+                    AsyncImage(
+                        model = imageRequest,
+                        contentDescription = "预览图片",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit
+                    )
+                } else {
+                    Text(
+                        text = "图片加载失败",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+            
+            // 顶部信息栏 - 带半透明背景
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Color.Black.copy(alpha = 0.3f)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                    .align(Alignment.TopStart),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 返回按钮
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.offset(x = (-8).dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "返回",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.weight(1f))
+                
+                // 发送人信息
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = senderName,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = formatTimestamp(timestamp),
+                        color = Color.White.copy(alpha = 0.7f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
@@ -382,4 +656,50 @@ private fun isThisYear(timestamp: Long): Boolean {
     val thisYear = calendar.get(Calendar.YEAR)
     calendar.timeInMillis = timestamp
     return calendar.get(Calendar.YEAR) == thisYear
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChatTopBar(
+    group: ChatGroup,
+    onNavigateBack: () -> Unit,
+    onMenuClick: () -> Unit
+) {
+    TopAppBar(
+        title = {
+            Column {
+                Text(
+                    text = group.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${group.members.size} 人",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "返回"
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "更多选项"
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface
+        )
+    )
 } 

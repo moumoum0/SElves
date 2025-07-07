@@ -1,7 +1,8 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     id("kotlin-parcelize")
     id("dagger.hilt.android.plugin")
 }
@@ -22,32 +23,13 @@ android {
             useSupportLibrary = true
         }
 
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += mapOf(
-                    "room.incremental" to "true",
-                    "room.expandProjection" to "true"
-                )
-            }
-        }
-
         // 为Room和SQLite设置系统属性
         System.setProperty("org.sqlite.tmpdir", "${project.buildDir}/tmp/sqlite")
         System.setProperty("room.schemaLocation", "${project.buildDir}/schemas")
     }
 
-    kapt {
-        arguments {
-            arg("room.schemaLocation", "$projectDir/schemas")
-            arg("room.tmpdir", "$buildDir/tmp/room")
-            arg("org.sqlite.tmpdir", "$buildDir/tmp/sqlite")
-        }
-        
-        // 确保kapt为编译过程设置Java系统属性
-        javacOptions {
-            option("-J-Dorg.sqlite.tmpdir=${project.buildDir}/tmp/sqlite")
-            option("-J-Droom.schemaLocation=${project.buildDir}/schemas")
-        }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
     }
 
     buildTypes {
@@ -66,8 +48,11 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
+    lint {
+        disable += setOf(
+            "MutableCollectionMutableState",
+            "AutoboxingStateCreation"
+        )
     }
     packaging {
         resources {
@@ -102,11 +87,11 @@ dependencies {
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
     
     // Hilt
     implementation("com.google.dagger:hilt-android:$hiltVersion")
-    kapt("com.google.dagger:hilt-compiler:$hiltVersion")
+    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
     
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")

@@ -24,7 +24,7 @@ import android.util.Log
         MessageEntity::class,
         MessageReadStatusEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -97,6 +97,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 添加imagePath字段到messages表
+                    database.execSQL("ALTER TABLE messages ADD COLUMN imagePath TEXT")
+                    
+                    Log.d("AppDatabase", "数据库迁移 3->4 完成：消息表已添加imagePath字段")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -104,7 +117,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

@@ -37,6 +37,7 @@ object Mappers {
             id = id,
             name = name,
             members = members,
+            ownerId = ownerId,
             createdAt = createdAt
         )
     }
@@ -46,6 +47,7 @@ object Mappers {
         id = id,
         name = name,
         memberIds = members.map { it.id }.joinToString(","),
+        ownerId = ownerId,
         createdAt = createdAt
     )
     
@@ -57,8 +59,10 @@ object Mappers {
         timestamp = timestamp,
         type = when(type) {
             0 -> MessageType.TEXT
+            1 -> MessageType.IMAGE
             else -> MessageType.TEXT // 默认为文本消息
-        }
+        },
+        imagePath = imagePath
     )
     
     fun Message.toEntity(groupId: String): MessageEntity = MessageEntity(
@@ -69,6 +73,8 @@ object Mappers {
         timestamp = timestamp,
         type = when(type) {
             MessageType.TEXT -> 0
-        }
+            MessageType.IMAGE -> 1
+        },
+        imagePath = imagePath
     )
 } 
