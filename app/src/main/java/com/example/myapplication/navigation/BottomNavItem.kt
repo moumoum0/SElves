@@ -3,6 +3,7 @@ package com.example.myapplication.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class BottomNavItem(
@@ -10,6 +11,12 @@ sealed class BottomNavItem(
     val title: String,
     val icon: ImageVector
 ) {
+    object Home : BottomNavItem(
+        route = "home",
+        title = "首页",
+        icon = Icons.Default.Home
+    )
+    
     object Chat : BottomNavItem(
         route = "chat",
         title = "聊天",
@@ -23,6 +30,6 @@ sealed class BottomNavItem(
     )
     
     companion object {
-        val items = listOf(Chat, Settings)
+        val items = listOf(Home, Chat, Settings)
     }
 } 

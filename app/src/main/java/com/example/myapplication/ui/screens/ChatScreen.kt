@@ -76,9 +76,7 @@ fun ChatScreen(
     }
     
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+        modifier = Modifier.fillMaxSize()
     ) {
         // 顶部栏
         ChatTopBar(
@@ -111,21 +109,17 @@ fun ChatScreen(
             }
         }
 
-        // 输入框和发送按钮 - 延伸到导航栏下方
+        // 输入框和发送按钮
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background),
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxWidth(),
+            shadowElevation = 8.dp
         ) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 // 图片选择按钮
                 IconButton(
                     onClick = { imagePickerLauncher.launch("image/*") }
@@ -160,16 +154,7 @@ fun ChatScreen(
                     )
                 }
             }
-            
-            // 导航栏占位空间
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
-                    .background(MaterialTheme.colorScheme.background)
-            )
         }
-    }
     }
     
     // 图片预览对话框

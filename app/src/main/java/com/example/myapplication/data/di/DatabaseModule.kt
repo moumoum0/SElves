@@ -9,10 +9,12 @@ import com.example.myapplication.data.dao.ChatGroupDao
 import com.example.myapplication.data.dao.MemberDao
 import com.example.myapplication.data.dao.MessageDao
 import com.example.myapplication.data.dao.MessageReadStatusDao
+import com.example.myapplication.data.dao.TodoDao
 import com.example.myapplication.data.repository.ChatGroupRepository
 import com.example.myapplication.data.repository.MemberRepository
 import com.example.myapplication.data.repository.MessageRepository
 import com.example.myapplication.data.repository.MessageReadStatusRepository
+import com.example.myapplication.data.repository.TodoRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,6 +64,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideTodoDao(database: AppDatabase): TodoDao {
+        return database.todoDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideMemberRepository(database: AppDatabase): MemberRepository {
         return MemberRepository(database)
     }
@@ -82,6 +90,12 @@ object DatabaseModule {
     @Singleton
     fun provideMessageReadStatusRepository(messageReadStatusDao: MessageReadStatusDao): MessageReadStatusRepository {
         return MessageReadStatusRepository(messageReadStatusDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTodoRepository(todoDao: TodoDao): TodoRepository {
+        return TodoRepository(todoDao)
     }
 
     @Provides

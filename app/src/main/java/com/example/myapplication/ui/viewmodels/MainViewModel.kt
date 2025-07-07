@@ -249,22 +249,24 @@ class MainViewModel @Inject constructor(
         // 加载未删除的成员（用于UI显示）
         val membersJob = viewModelScope.launch(exceptionHandler) {
             memberRepository.getAllMembers()
-                .take(1) // 只取第一个值
                 .collect { memberList ->
                     _members.value = memberList
                     Log.d(TAG, "已加载 ${memberList.size} 个活跃成员")
-                    membersDeferred.complete(Unit)
+                    if (!membersLoaded) {
+                        membersDeferred.complete(Unit)
+                    }
                 }
         }
         
         // 加载所有成员包括已删除的（用于消息显示）
         val allMembersJob = viewModelScope.launch(exceptionHandler) {
             memberRepository.getAllMembersIncludingDeleted()
-                .take(1) // 只取第一个值
                 .collect { memberList ->
                     _allMembers.value = memberList
                     Log.d(TAG, "已加载 ${memberList.size} 个成员（包括已删除成员）")
-                    allMembersDeferred.complete(Unit)
+                    if (!membersLoaded) {
+                        allMembersDeferred.complete(Unit)
+                    }
                 }
         }
         
@@ -321,7 +323,7 @@ class MainViewModel @Inject constructor(
         
         viewModelScope.launch(exceptionHandler) {
             memberPreferences.currentMemberId
-                .take(1) // 只取第一个值
+                .take(1) // 只取第一个值，这里保持不变因为我们只需要初始值
                 .collect { memberId ->
                     if (!memberId.isNullOrEmpty()) {
                         memberRepository.getMemberById(memberId)?.let { member ->

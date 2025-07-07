@@ -92,6 +92,7 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     ksp("com.google.dagger:hilt-compiler:$hiltVersion")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
     
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")

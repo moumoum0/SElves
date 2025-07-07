@@ -4,10 +4,13 @@ import com.example.myapplication.data.dao.MemberDao
 import com.example.myapplication.data.entity.ChatGroupEntity
 import com.example.myapplication.data.entity.MessageEntity
 import com.example.myapplication.data.entity.MemberEntity
+import com.example.myapplication.data.entity.TodoEntity
 import com.example.myapplication.model.ChatGroup
 import com.example.myapplication.model.Message
 import com.example.myapplication.model.Member
 import com.example.myapplication.model.MessageType
+import com.example.myapplication.model.Todo
+import com.example.myapplication.model.TodoPriority
 import kotlinx.coroutines.flow.first
 
 /**
@@ -76,5 +79,37 @@ object Mappers {
             MessageType.IMAGE -> 1
         },
         imagePath = imagePath
+    )
+    
+    // 待办事项映射
+    fun TodoEntity.toDomain(): Todo = Todo(
+        id = id,
+        title = title,
+        description = description,
+        isCompleted = isCompleted,
+        createdAt = createdAt,
+        completedAt = completedAt,
+        priority = when(priority) {
+            0 -> TodoPriority.LOW
+            1 -> TodoPriority.NORMAL
+            2 -> TodoPriority.HIGH
+            else -> TodoPriority.NORMAL
+        },
+        createdBy = createdBy
+    )
+    
+    fun Todo.toEntity(): TodoEntity = TodoEntity(
+        id = id,
+        title = title,
+        description = description,
+        isCompleted = isCompleted,
+        createdAt = createdAt,
+        completedAt = completedAt,
+        priority = when(priority) {
+            TodoPriority.LOW -> 0
+            TodoPriority.NORMAL -> 1
+            TodoPriority.HIGH -> 2
+        },
+        createdBy = createdBy
     )
 } 

@@ -42,6 +42,8 @@ import com.example.myapplication.ui.components.MemberSwitchDialog
 import com.example.myapplication.ui.components.CreateMemberDialog
 import com.example.myapplication.ui.components.CreateGroupDialog
 import com.example.myapplication.ui.screens.SystemScreen
+import com.example.myapplication.ui.screens.HomeScreen
+import com.example.myapplication.ui.screens.TodoScreen
 import com.example.myapplication.ui.viewmodels.MainViewModel
 import com.example.myapplication.ui.viewmodels.LoadingPhase
 import androidx.compose.ui.graphics.Color
@@ -137,11 +139,25 @@ fun MainScreen(
                     onCreateGroup = { groupName, selectedMembers ->
                         val newGroup = viewModel.createGroup(groupName, selectedMembers, currentMember!!)
                         // 不再自动进入群聊
+                    },
+                    onNavigateToTodo = {
+                        // 导航到待办事项页面（作为独立页面）
+                        navController.navigate("todo")
                     }
                 )
             }
             
-            // 聊天界面（作为独立页面，无底部导航栏）
+            // 待办事项界面（作为独立全屏页面）
+            composable("todo") {
+                TodoScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    currentMemberId = currentMember?.id ?: ""
+                )
+            }
+            
+            // 聊天界面（作为独立页面）
             composable(
                 route = "chat/{groupId}",
                 arguments = listOf(navArgument("groupId") { type = NavType.StringType })
@@ -246,7 +262,8 @@ fun MainContent(
     members: List<Member>,
     onMemberSwitch: () -> Unit,
     onGroupClick: (ChatGroup) -> Unit,
-    onCreateGroup: (String, List<Member>) -> Unit
+    onCreateGroup: (String, List<Member>) -> Unit,
+    onNavigateToTodo: () -> Unit
 ) {
     val mainNavController = rememberNavController()
     
@@ -258,9 +275,17 @@ fun MainContent(
         if (currentMember != null) {
             NavHost(
                 navController = mainNavController,
-                startDestination = BottomNavItem.Chat.route,
+                startDestination = BottomNavItem.Home.route,
                 modifier = Modifier.padding(paddingValues)
             ) {
+                composable(BottomNavItem.Home.route) {
+                    HomeScreen(
+                        currentMember = currentMember,
+                        onMemberSwitch = onMemberSwitch,
+                        onNavigateToTodo = onNavigateToTodo
+                    )
+                }
+                
                 composable(BottomNavItem.Chat.route) {
                     ChatTab(
                         viewModel = viewModel,

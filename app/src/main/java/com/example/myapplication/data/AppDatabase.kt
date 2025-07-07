@@ -11,10 +11,12 @@ import com.example.myapplication.data.dao.ChatGroupDao
 import com.example.myapplication.data.dao.MemberDao
 import com.example.myapplication.data.dao.MessageDao
 import com.example.myapplication.data.dao.MessageReadStatusDao
+import com.example.myapplication.data.dao.TodoDao
 import com.example.myapplication.data.entity.ChatGroupEntity
 import com.example.myapplication.data.entity.MemberEntity
 import com.example.myapplication.data.entity.MessageEntity
 import com.example.myapplication.data.entity.MessageReadStatusEntity
+import com.example.myapplication.data.entity.TodoEntity
 import android.util.Log
 
 @Database(
@@ -22,9 +24,10 @@ import android.util.Log
         MemberEntity::class,
         ChatGroupEntity::class,
         MessageEntity::class,
-        MessageReadStatusEntity::class
+        MessageReadStatusEntity::class,
+        TodoEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -33,6 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun chatGroupDao(): ChatGroupDao
     abstract fun messageDao(): MessageDao
     abstract fun messageReadStatusDao(): MessageReadStatusDao
+    abstract fun todoDao(): TodoDao
 
     companion object {
         @Volatile
@@ -110,6 +114,33 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 创建待办事项表
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS todos (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "title TEXT NOT NULL, " +
+                                "description TEXT NOT NULL DEFAULT '', " +
+                                "isCompleted INTEGER NOT NULL DEFAULT 0, " +
+                                "createdAt INTEGER NOT NULL, " +
+                                "completedAt INTEGER, " +
+                                "priority INTEGER NOT NULL DEFAULT 1, " +
+                                "createdBy TEXT NOT NULL, " +
+                                "FOREIGN KEY (createdBy) REFERENCES members(id) ON DELETE CASCADE)"
+                    )
+
+                    // 创建索引
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_todos_createdBy ON todos(createdBy)")
+
+                    Log.d("AppDatabase", "数据库迁移 4->5 完成：待办事项表已创建")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -117,7 +148,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
