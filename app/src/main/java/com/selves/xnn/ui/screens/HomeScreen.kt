@@ -29,6 +29,7 @@ import com.selves.xnn.ui.screens.TodoScreen
 import com.selves.xnn.ui.screens.DynamicScreen
 import com.selves.xnn.viewmodel.TodoViewModel
 import com.selves.xnn.viewmodel.DynamicViewModel
+import com.selves.xnn.viewmodel.VoteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +37,8 @@ fun HomeScreen(
     currentMember: com.selves.xnn.model.Member?,
     onMemberSwitch: () -> Unit,
     onNavigateToTodo: () -> Unit,
-    onNavigateToDynamic: () -> Unit
+    onNavigateToDynamic: () -> Unit,
+    onNavigateToVote: () -> Unit
 ) {
     val navController = rememberNavController()
     
@@ -49,7 +51,8 @@ fun HomeScreen(
                 currentMember = currentMember,
                 onMemberSwitch = onMemberSwitch,
                 onNavigateToTodo = onNavigateToTodo,
-                onNavigateToDynamic = onNavigateToDynamic
+                onNavigateToDynamic = onNavigateToDynamic,
+                onNavigateToVote = onNavigateToVote
             )
         }
     }
@@ -61,14 +64,17 @@ fun HomeMainScreen(
     onMemberSwitch: () -> Unit,
     onNavigateToTodo: () -> Unit,
     onNavigateToDynamic: () -> Unit,
+    onNavigateToVote: () -> Unit,
     todoViewModel: TodoViewModel = hiltViewModel(),
-    dynamicViewModel: DynamicViewModel = hiltViewModel()
+    dynamicViewModel: DynamicViewModel = hiltViewModel(),
+    voteViewModel: VoteViewModel = hiltViewModel()
 ) {
     // 设置当前成员（用于创建待办事项时记录创建者）
     LaunchedEffect(currentMember?.id) {
         currentMember?.id?.let { memberId ->
             todoViewModel.setCurrentMember(memberId)
             dynamicViewModel.setCurrentUser(memberId)
+            voteViewModel.setCurrentUser(memberId)
         }
     }
     
@@ -78,6 +84,9 @@ fun HomeMainScreen(
     
     // 观察动态数据
     val dynamics by dynamicViewModel.dynamics.collectAsState()
+    
+    // 观察投票数据
+    val activeVotes by voteViewModel.activeVotes.collectAsState()
     
     Column(
         modifier = Modifier.fillMaxSize()
@@ -101,7 +110,8 @@ fun HomeMainScreen(
         item {
             FunctionModulesSection(
                 onNavigateToTodo = onNavigateToTodo,
-                onNavigateToDynamic = onNavigateToDynamic
+                onNavigateToDynamic = onNavigateToDynamic,
+                onNavigateToVote = onNavigateToVote
             )
         }
         
@@ -124,7 +134,10 @@ fun HomeMainScreen(
         }
         
         item {
-            VoteSection()
+            VoteSection(
+                votes = activeVotes.take(2),
+                onNavigateToVote = onNavigateToVote
+            )
         }
     }
     }
@@ -171,7 +184,8 @@ fun UserInfoHeader(
 @Composable
 fun FunctionModulesSection(
     onNavigateToTodo: () -> Unit = {},
-    onNavigateToDynamic: () -> Unit = {}
+    onNavigateToDynamic: () -> Unit = {},
+    onNavigateToVote: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -204,6 +218,7 @@ fun FunctionModulesSection(
                             when (title) {
                                 "待办" -> onNavigateToTodo()
                                 "动态" -> onNavigateToDynamic()
+                                "投票" -> onNavigateToVote()
                                 // 其他功能模块的点击事件可以在这里添加
                             }
                         }
@@ -480,7 +495,10 @@ fun DynamicItem(title: String, content: String, time: String, authorName: String
 }
 
 @Composable
-fun VoteSection() {
+fun VoteSection(
+    votes: List<com.selves.xnn.model.Vote> = emptyList(),
+    onNavigateToVote: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -498,25 +516,55 @@ fun VoteSection() {
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
-                TextButton(onClick = { /* TODO: 查看更多投票 */ }) {
+                TextButton(onClick = onNavigateToVote) {
                     Text("查看更多")
                 }
             }
             
             // 投票列表预览
-            repeat(2) { index ->
-                VoteItem(
-                    title = "投票主题 ${index + 1}",
-                    description = "这是投票的详细描述...",
-                    endTime = "还有${3 - index}天结束"
+            if (votes.isEmpty()) {
+                Text(
+                    text = "暂无投票活动",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 16.dp)
                 )
+            } else {
+                votes.forEach { vote ->
+                    VoteItem(
+                        title = vote.title,
+                        description = vote.description,
+                        endTime = vote.endTime?.let { endTime ->
+                            val now = java.time.LocalDateTime.now()
+                            val duration = java.time.Duration.between(now, endTime)
+                            when {
+                                duration.toDays() > 0 -> "还有${duration.toDays()}天结束"
+                                duration.toHours() > 0 -> "还有${duration.toHours()}小时结束"
+                                duration.toMinutes() > 0 -> "还有${duration.toMinutes()}分钟结束"
+                                else -> "即将结束"
+                            }
+                        } ?: "无时间限制",
+                        totalVotes = vote.totalVotes
+                    )
+                }
+                
+                if (votes.size >= 2) {
+                    Text(
+                        text = "查看更多投票",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .clickable { onNavigateToVote() }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun VoteItem(title: String, description: String, endTime: String) {
+fun VoteItem(title: String, description: String, endTime: String, totalVotes: Int = 0) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -531,13 +579,25 @@ fun VoteItem(title: String, description: String, endTime: String) {
         Text(
             text = description,
             fontSize = 14.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            maxLines = 2,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = endTime,
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = endTime,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = "${totalVotes} 票",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 } 

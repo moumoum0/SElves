@@ -53,6 +53,8 @@ import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.screens.ChatScreen
 import com.selves.xnn.ui.screens.DynamicScreen
 import com.selves.xnn.ui.screens.DynamicDetailScreen
+import com.selves.xnn.ui.screens.VoteScreen
+import com.selves.xnn.ui.screens.VoteDetailScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,6 +152,10 @@ fun GroupChatScreen(
                     onNavigateToDynamic = {
                         // 导航到动态页面（作为独立页面）
                         navController.navigate("dynamic")
+                    },
+                    onNavigateToVote = {
+                        // 导航到投票页面（作为独立页面）
+                        navController.navigate("vote")
                     }
                 )
             }
@@ -186,6 +192,35 @@ fun GroupChatScreen(
                 
                 DynamicDetailScreen(
                     dynamicId = dynamicId,
+                    currentMember = currentMember,
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // 投票界面（作为独立全屏页面）
+            composable("vote") {
+                VoteScreen(
+                    currentMember = currentMember,
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onVoteClick = { voteId ->
+                        navController.navigate("vote_detail/$voteId")
+                    }
+                )
+            }
+            
+            // 投票详情界面
+            composable(
+                route = "vote_detail/{voteId}",
+                arguments = listOf(navArgument("voteId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val voteId = backStackEntry.arguments?.getString("voteId") ?: return@composable
+                
+                VoteDetailScreen(
+                    voteId = voteId,
                     currentMember = currentMember,
                     onBackClick = {
                         navController.popBackStack()
@@ -300,7 +335,8 @@ fun MainContent(
     onGroupClick: (ChatGroup) -> Unit,
     onCreateGroup: (String, List<Member>) -> Unit,
     onNavigateToTodo: () -> Unit,
-    onNavigateToDynamic: () -> Unit
+    onNavigateToDynamic: () -> Unit,
+    onNavigateToVote: () -> Unit
 ) {
     val mainNavController = rememberNavController()
     
@@ -320,7 +356,8 @@ fun MainContent(
                         currentMember = currentMember,
                         onMemberSwitch = onMemberSwitch,
                         onNavigateToTodo = onNavigateToTodo,
-                        onNavigateToDynamic = onNavigateToDynamic
+                        onNavigateToDynamic = onNavigateToDynamic,
+                        onNavigateToVote = onNavigateToVote
                     )
                 }
                 

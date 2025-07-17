@@ -11,12 +11,14 @@ import com.selves.xnn.data.dao.MemberDao
 import com.selves.xnn.data.dao.MessageDao
 import com.selves.xnn.data.dao.MessageReadStatusDao
 import com.selves.xnn.data.dao.TodoDao
+import com.selves.xnn.data.dao.VoteDao
 import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.DynamicRepository
 import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.data.repository.MessageRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
 import com.selves.xnn.data.repository.TodoRepository
+import com.selves.xnn.data.repository.VoteRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -78,6 +80,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideVoteDao(database: AppDatabase): VoteDao {
+        return database.voteDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideMemberRepository(database: AppDatabase): MemberRepository {
         return MemberRepository(database)
     }
@@ -110,6 +118,12 @@ object DatabaseModule {
     @Singleton
     fun provideDynamicRepository(dynamicDao: DynamicDao): DynamicRepository {
         return DynamicRepository(dynamicDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideVoteRepository(voteDao: VoteDao): VoteRepository {
+        return VoteRepository(voteDao)
     }
 
     @Provides

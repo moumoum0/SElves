@@ -13,6 +13,7 @@ import com.selves.xnn.data.dao.MemberDao
 import com.selves.xnn.data.dao.MessageDao
 import com.selves.xnn.data.dao.MessageReadStatusDao
 import com.selves.xnn.data.dao.TodoDao
+import com.selves.xnn.data.dao.VoteDao
 import com.selves.xnn.data.entity.ChatGroupEntity
 import com.selves.xnn.data.entity.DynamicEntity
 import com.selves.xnn.data.entity.DynamicCommentEntity
@@ -21,6 +22,9 @@ import com.selves.xnn.data.entity.MemberEntity
 import com.selves.xnn.data.entity.MessageEntity
 import com.selves.xnn.data.entity.MessageReadStatusEntity
 import com.selves.xnn.data.entity.TodoEntity
+import com.selves.xnn.data.entity.VoteEntity
+import com.selves.xnn.data.entity.VoteOptionEntity
+import com.selves.xnn.data.entity.VoteRecordEntity
 import android.util.Log
 
 @Database(
@@ -32,9 +36,12 @@ import android.util.Log
         TodoEntity::class,
         DynamicEntity::class,
         DynamicCommentEntity::class,
-        DynamicLikeEntity::class
+        DynamicLikeEntity::class,
+        VoteEntity::class,
+        VoteOptionEntity::class,
+        VoteRecordEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -45,6 +52,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun messageReadStatusDao(): MessageReadStatusDao
     abstract fun todoDao(): TodoDao
     abstract fun dynamicDao(): DynamicDao
+    abstract fun voteDao(): VoteDao
 
     companion object {
         @Volatile
@@ -217,6 +225,68 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 创建投票表
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS votes (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "title TEXT NOT NULL, " +
+                                "description TEXT NOT NULL, " +
+                                "authorId TEXT NOT NULL, " +
+                                "authorName TEXT NOT NULL, " +
+                                "authorAvatar TEXT, " +
+                                "createdAt INTEGER NOT NULL, " +
+                                "endTime INTEGER, " +
+                                "status TEXT NOT NULL, " +
+                                "allowMultipleChoice INTEGER NOT NULL DEFAULT 0, " +
+                                "isAnonymous INTEGER NOT NULL DEFAULT 0, " +
+                                "totalVotes INTEGER NOT NULL DEFAULT 0, " +
+                                "FOREIGN KEY (authorId) REFERENCES members(id) ON DELETE CASCADE)"
+                    )
+
+                    // 创建投票选项表
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS vote_options (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "voteId TEXT NOT NULL, " +
+                                "content TEXT NOT NULL, " +
+                                "voteCount INTEGER NOT NULL DEFAULT 0, " +
+                                "orderIndex INTEGER NOT NULL DEFAULT 0, " +
+                                "FOREIGN KEY (voteId) REFERENCES votes(id) ON DELETE CASCADE)"
+                    )
+
+                    // 创建投票记录表
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS vote_records (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "voteId TEXT NOT NULL, " +
+                                "optionId TEXT NOT NULL, " +
+                                "userId TEXT NOT NULL, " +
+                                "userName TEXT NOT NULL, " +
+                                "userAvatar TEXT, " +
+                                "votedAt INTEGER NOT NULL, " +
+                                "FOREIGN KEY (voteId) REFERENCES votes(id) ON DELETE CASCADE, " +
+                                "FOREIGN KEY (optionId) REFERENCES vote_options(id) ON DELETE CASCADE, " +
+                                "FOREIGN KEY (userId) REFERENCES members(id) ON DELETE CASCADE)"
+                    )
+
+                    // 创建索引
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_votes_authorId ON votes(authorId)")
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_vote_options_voteId ON vote_options(voteId)")
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_vote_records_voteId ON vote_records(voteId)")
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_vote_records_optionId ON vote_records(optionId)")
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_vote_records_userId ON vote_records(userId)")
+                    database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_vote_records_unique ON vote_records(voteId, userId, optionId)")
+
+                    Log.d("AppDatabase", "数据库迁移 6->7 完成：投票相关表已创建")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -224,7 +294,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

@@ -2,6 +2,7 @@ package com.selves.xnn.data
 
 import androidx.room.TypeConverter
 import com.selves.xnn.model.DynamicType
+import com.selves.xnn.model.VoteStatus
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.Date
@@ -45,5 +46,15 @@ class Converters {
     @TypeConverter
     fun toDynamicType(type: String?): DynamicType? {
         return type?.let { DynamicType.valueOf(it) }
+    }
+    
+    @TypeConverter
+    fun fromVoteStatus(status: VoteStatus?): String? {
+        return status?.name
+    }
+
+    @TypeConverter
+    fun toVoteStatus(status: String?): VoteStatus? {
+        return status?.let { VoteStatus.valueOf(it) }
     }
 } 
