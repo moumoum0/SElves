@@ -1,0 +1,13 @@
+package com.selves.xnn.model
+
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+data class ChatGroup(
+    val id: String,
+    val name: String,
+    val members: List<Member>,
+    val ownerId: String,
+    val createdAt: Long = System.currentTimeMillis()
+) : Parcelable 
