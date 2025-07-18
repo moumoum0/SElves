@@ -12,6 +12,8 @@ import com.selves.xnn.data.dao.MessageDao
 import com.selves.xnn.data.dao.MessageReadStatusDao
 import com.selves.xnn.data.dao.TodoDao
 import com.selves.xnn.data.dao.VoteDao
+import com.selves.xnn.data.dao.SystemDao
+import com.selves.xnn.data.dao.OnlineStatusDao
 import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.DynamicRepository
 import com.selves.xnn.data.repository.MemberRepository
@@ -19,6 +21,8 @@ import com.selves.xnn.data.repository.MessageRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
 import com.selves.xnn.data.repository.TodoRepository
 import com.selves.xnn.data.repository.VoteRepository
+import com.selves.xnn.data.repository.SystemRepository
+import com.selves.xnn.data.repository.OnlineStatusRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -86,6 +90,18 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideSystemDao(database: AppDatabase): SystemDao {
+        return database.systemDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideOnlineStatusDao(database: AppDatabase): OnlineStatusDao {
+        return database.onlineStatusDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideMemberRepository(database: AppDatabase): MemberRepository {
         return MemberRepository(database)
     }
@@ -124,6 +140,18 @@ object DatabaseModule {
     @Singleton
     fun provideVoteRepository(voteDao: VoteDao): VoteRepository {
         return VoteRepository(voteDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSystemRepository(database: AppDatabase): SystemRepository {
+        return SystemRepository(database)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOnlineStatusRepository(onlineStatusDao: OnlineStatusDao): OnlineStatusRepository {
+        return OnlineStatusRepository(onlineStatusDao)
     }
 
     @Provides

@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+
 import com.selves.xnn.util.ImageUtils
 import kotlinx.coroutines.launch
 
@@ -76,19 +76,7 @@ fun EditDynamicDialog(
     }
     
     // 获取系统UI控制器
-    val systemUiController = rememberSystemUiController()
-    
-    // 设置系统栏颜色为白色
-    LaunchedEffect(Unit) {
-        systemUiController.setStatusBarColor(
-            color = Color.White,
-            darkIcons = true
-        )
-        systemUiController.setNavigationBarColor(
-            color = Color.White,
-            darkIcons = true
-        )
-    }
+    // 不修改系统UI颜色，保持与主应用一致
     
     // 使用Box替代Dialog来实现全屏效果
     Box(

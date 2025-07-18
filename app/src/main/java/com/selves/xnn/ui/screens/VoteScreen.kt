@@ -192,7 +192,10 @@ fun VoteTopBar(
                                 animationSpec = tween(300)
                             ) + fadeOut(animationSpec = tween(300))
                         ) {
-                            Text("投票")
+                            Text(
+                                text = "投票",
+                                fontWeight = FontWeight.Normal
+                            )
                         }
                         
                         // 搜索栏展开动画

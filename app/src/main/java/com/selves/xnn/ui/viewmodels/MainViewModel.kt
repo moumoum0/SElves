@@ -10,6 +10,8 @@ import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.MessageRepository
 import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
+import com.selves.xnn.data.repository.SystemRepository
+import com.selves.xnn.data.repository.OnlineStatusRepository
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Message
 import com.selves.xnn.model.MessageType
@@ -60,7 +62,9 @@ class MainViewModel @Inject constructor(
     private val chatGroupRepository: ChatGroupRepository,
     private val messageRepository: MessageRepository,
     private val messageReadStatusRepository: MessageReadStatusRepository,
-    private val memberPreferences: MemberPreferences
+    private val memberPreferences: MemberPreferences,
+    private val systemRepository: SystemRepository,
+    private val onlineStatusRepository: OnlineStatusRepository
 ) : ViewModel() {
     
     private val TAG = "MainViewModel"
@@ -80,6 +84,10 @@ class MainViewModel @Inject constructor(
     // 群组
     private val _groups = MutableStateFlow<List<ChatGroup>>(emptyList())
     val groups: StateFlow<List<ChatGroup>> = _groups.asStateFlow()
+    
+    // 系统是否存在
+    private val _hasSystem = MutableStateFlow<Boolean?>(null)
+    val hasSystem: StateFlow<Boolean?> = _hasSystem.asStateFlow()
     
     // 统一的加载状态
     private val _loadingState = MutableStateFlow(LoadingState())
@@ -110,6 +118,9 @@ class MainViewModel @Inject constructor(
     private var messagesLoaded = false
     private var imagesPreloaded = false
     
+    // 防止重复加载的标志
+    private var isLoadingInProgress = false
+    
     // 异常处理器
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         if (throwable is kotlinx.coroutines.CancellationException) {
@@ -129,9 +140,19 @@ class MainViewModel @Inject constructor(
      * 开始统一的加载流程
      */
     private fun startUnifiedLoading() {
+        // 防止重复加载
+        if (isLoadingInProgress) {
+            Log.d(TAG, "加载已在进行中，跳过重复加载")
+            return
+        }
+        
+        isLoadingInProgress = true
         viewModelScope.launch(exceptionHandler) {
             try {
                 updateLoadingState(LoadingPhase.INITIALIZING, 0f, "正在初始化应用...")
+                
+                // 阶段0：检查系统是否存在
+                checkSystemExists()
                 
                 // 阶段1：并行加载基础数据
                 updateLoadingState(LoadingPhase.LOADING_MEMBERS, 0.1f, "正在加载成员数据...")
@@ -162,6 +183,8 @@ class MainViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "统一加载流程失败: ${e.message}", e)
                 completeLoading()
+            } finally {
+                isLoadingInProgress = false
             }
         }
     }
@@ -191,6 +214,7 @@ class MainViewModel @Inject constructor(
             progress = 1.0f,
             message = "加载完成"
         )
+        isLoadingInProgress = false
         Log.d(TAG, "应用加载完成")
     }
     
@@ -328,7 +352,9 @@ class MainViewModel @Inject constructor(
                     if (!memberId.isNullOrEmpty()) {
                         memberRepository.getMemberById(memberId)?.let { member ->
                             _currentMember.value = member
-                            Log.d(TAG, "已加载保存的成员: ${member.name}")
+                            // 让保存的成员上线
+                            onlineStatusRepository.loginMember(member.id)
+                            Log.d(TAG, "已加载保存的成员: ${member.name}，用户已上线")
                         }
                     }
                     currentMemberLoaded = true
@@ -340,9 +366,9 @@ class MainViewModel @Inject constructor(
     }
     
     // 创建成员
-    fun createMember(name: String, avatarUrl: String?) {
+    fun createMember(name: String, avatarUrl: String?, shouldSetAsCurrent: Boolean = true) {
         val memberId = UUID.randomUUID().toString()
-        Log.d(TAG, "开始创建成员 - ID: $memberId, 名称: $name")
+        Log.d(TAG, "开始创建成员 - ID: $memberId, 名称: $name, 是否设为当前成员: $shouldSetAsCurrent")
         
         val member = Member(
             id = memberId,
@@ -355,12 +381,27 @@ class MainViewModel @Inject constructor(
             try {
                 Log.d(TAG, "正在保存成员到数据库...")
                 memberRepository.saveMember(member)
-                Log.d(TAG, "成员保存成功，设置为当前成员")
+                Log.d(TAG, "成员保存成功")
                 
-                // 保存当前成员ID
-                _currentMember.value = member
-                memberPreferences.saveCurrentMemberId(member.id)
-                Log.d(TAG, "已完成成员创建和设置: ${member.name}")
+                if (shouldSetAsCurrent) {
+                    // 先让之前的成员下线
+                    _currentMember.value?.let { previousMember ->
+                        if (previousMember.id != member.id) {
+                            onlineStatusRepository.logoutMember(previousMember.id)
+                            Log.d(TAG, "用户 ${previousMember.name} 已下线")
+                        }
+                    }
+                    
+                    // 设置新的当前成员
+                    _currentMember.value = member
+                    memberPreferences.saveCurrentMemberId(member.id)
+                    
+                    // 让新创建的成员上线
+                    onlineStatusRepository.loginMember(member.id)
+                    Log.d(TAG, "已完成成员创建和设置: ${member.name}，用户已上线")
+                } else {
+                    Log.d(TAG, "已完成成员创建: ${member.name}，未设为当前成员")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "创建成员失败: ${e.message}", e)
             }
@@ -369,11 +410,26 @@ class MainViewModel @Inject constructor(
     
     // 设置当前成员
     fun setCurrentMember(member: Member) {
-        _currentMember.value = member
-        
-        // 重新加载所有群组的未读数量
-        _groups.value.forEach { group ->
-            loadUnreadCount(group.id)
+        viewModelScope.launch(exceptionHandler) {
+            // 如果有之前的成员，先让其下线
+            _currentMember.value?.let { previousMember ->
+                if (previousMember.id != member.id) {
+                    onlineStatusRepository.logoutMember(previousMember.id)
+                    Log.d(TAG, "用户 ${previousMember.name} 已下线")
+                }
+            }
+            
+            // 设置新的当前成员
+            _currentMember.value = member
+            
+            // 让新成员上线
+            onlineStatusRepository.loginMember(member.id)
+            Log.d(TAG, "用户 ${member.name} 已上线")
+            
+            // 重新加载所有群组的未读数量
+            _groups.value.forEach { group ->
+                loadUnreadCount(group.id)
+            }
         }
         
         viewModelScope.launch(exceptionHandler) {
@@ -823,6 +879,55 @@ class MainViewModel @Inject constructor(
                 Log.d(TAG, "已解散群聊: ${groupToRemove?.name}")
             } catch (e: Exception) {
                 Log.e(TAG, "解散群聊失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    /**
+     * 检查系统是否存在
+     */
+    private suspend fun checkSystemExists() {
+        try {
+            val hasSystemResult = systemRepository.hasSystem()
+            _hasSystem.value = hasSystemResult
+            Log.d(TAG, "系统存在检查结果: $hasSystemResult")
+        } catch (e: Exception) {
+            Log.e(TAG, "检查系统存在性失败: ${e.message}", e)
+            _hasSystem.value = false
+        }
+    }
+    
+    /**
+     * 创建系统
+     */
+    fun createSystem(name: String, avatarUrl: String?, description: String) {
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                val system = com.selves.xnn.model.System(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    avatarUrl = avatarUrl,
+                    description = description,
+                    createdAt = java.lang.System.currentTimeMillis(),
+                    updatedAt = java.lang.System.currentTimeMillis()
+                )
+                
+                systemRepository.saveSystem(system)
+                _hasSystem.value = true
+                Log.d(TAG, "系统已创建: $name")
+            } catch (e: Exception) {
+                Log.e(TAG, "创建系统失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        // 应用关闭时让当前用户下线
+        viewModelScope.launch {
+            _currentMember.value?.let { member ->
+                onlineStatusRepository.logoutMember(member.id)
+                Log.d(TAG, "应用关闭，用户 ${member.name} 已下线")
             }
         }
     }

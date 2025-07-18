@@ -8,7 +8,7 @@ data class Message(
     val id: String,
     val senderId: String,
     val content: String,
-    val timestamp: Long = System.currentTimeMillis(),
+    val timestamp: Long = java.lang.System.currentTimeMillis(),
     val type: MessageType = MessageType.TEXT,
     val imagePath: String? = null // 图片消息的本地路径
 ) : Parcelable

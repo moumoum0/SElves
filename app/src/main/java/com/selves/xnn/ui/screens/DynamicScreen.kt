@@ -206,7 +206,10 @@ fun DynamicTopBar(
                                 animationSpec = tween(300)
                             ) + fadeOut(animationSpec = tween(300))
                         ) {
-                            Text("动态")
+                            Text(
+                                text = "动态",
+                                fontWeight = FontWeight.Normal
+                            )
                         }
                         
                         // 搜索栏展开动画（从右侧向左侧展开）

@@ -9,5 +9,5 @@ data class ChatGroup(
     val name: String,
     val members: List<Member>,
     val ownerId: String,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = java.lang.System.currentTimeMillis()
 ) : Parcelable 

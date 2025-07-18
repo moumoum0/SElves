@@ -59,7 +59,12 @@ fun DynamicDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("动态详情") },
+                title = { 
+                    Text(
+                        text = "动态详情",
+                        fontWeight = FontWeight.Normal
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")

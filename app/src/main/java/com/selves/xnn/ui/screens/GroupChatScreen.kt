@@ -41,11 +41,17 @@ import com.selves.xnn.ui.components.BottomNavBar
 import com.selves.xnn.ui.components.MemberSwitchDialog
 import com.selves.xnn.ui.components.CreateMemberDialog
 import com.selves.xnn.ui.components.CreateGroupDialog
+import com.selves.xnn.ui.components.CreateSystemDialog
 import com.selves.xnn.ui.screens.SystemScreen
 import com.selves.xnn.ui.screens.HomeScreen
 import com.selves.xnn.ui.screens.TodoScreen
+import com.selves.xnn.ui.screens.MemberManagementScreen
+import com.selves.xnn.ui.screens.OnlineStatsScreen
+import com.selves.xnn.ui.screens.SettingsScreen
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.ui.viewmodels.LoadingPhase
+import com.selves.xnn.viewmodel.OnlineStatsViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
 import com.selves.xnn.util.ImageUtils
@@ -66,15 +72,25 @@ fun GroupChatScreen(
     val groups by viewModel.groups.collectAsState()
     val loadingState by viewModel.loadingState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val hasSystem by viewModel.hasSystem.collectAsState()
     
     var showCreateMemberDialog by remember { mutableStateOf(false) }
     var showMemberSwitchDialog by remember { mutableStateOf(false) }
+    var showCreateSystemDialog by remember { mutableStateOf(false) }
     val navController = rememberNavController()
     val context = LocalContext.current
     
+    // 检查系统是否存在，如果不存在则显示创建系统对话框
+    LaunchedEffect(hasSystem, isLoading) {
+        // 只有在加载完成且系统不存在时才显示创建系统对话框
+        if (!isLoading && hasSystem == false) {
+            showCreateSystemDialog = true
+        }
+    }
+    
     // 如果没有成员，根据情况显示创建成员或切换成员对话框
-    LaunchedEffect(currentMember, isLoading) {
-        if (currentMember == null && !isLoading) {
+    LaunchedEffect(currentMember, isLoading, hasSystem) {
+        if (currentMember == null && !isLoading && hasSystem == true) {
             if (members.isEmpty()) {
                 // 没有任何成员，显示创建成员对话框
                 showCreateMemberDialog = true
@@ -83,6 +99,20 @@ fun GroupChatScreen(
                 showMemberSwitchDialog = true
             }
         }
+    }
+
+    if (showCreateSystemDialog) {
+        CreateSystemDialog(
+            onDismiss = { 
+                // 系统创建是必需的，不允许取消
+            },
+            onConfirm = { name, avatarUrl, description ->
+                showCreateSystemDialog = false
+                // 创建系统
+                viewModel.createSystem(name, avatarUrl, description)
+            },
+            canDismiss = false
+        )
     }
 
     if (showCreateMemberDialog) {
@@ -156,6 +186,18 @@ fun GroupChatScreen(
                     onNavigateToVote = {
                         // 导航到投票页面（作为独立页面）
                         navController.navigate("vote")
+                    },
+                    onNavigateToMemberManagement = {
+                        // 导航到成员管理页面（作为独立页面）
+                        navController.navigate("member_management")
+                    },
+                    onNavigateToOnlineStats = {
+                        // 导航到在线统计页面（作为独立页面）
+                        navController.navigate("online_stats")
+                    },
+                    onNavigateToSettings = {
+                        // 导航到设置页面（作为独立页面）
+                        navController.navigate("settings")
                     }
                 )
             }
@@ -228,6 +270,7 @@ fun GroupChatScreen(
                 )
             }
             
+
             // 聊天界面（作为独立页面）
             composable(
                 route = "chat/{groupId}",
@@ -275,6 +318,61 @@ fun GroupChatScreen(
                         }
                     )
                 }
+            }
+            
+            // 成员管理界面（作为独立页面）
+            composable("member_management") {
+                MemberManagementScreen(
+                    members = members,
+                    currentMember = currentMember!!,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // 在线统计界面（作为独立页面）
+            composable("online_stats") {
+                val onlineStatsViewModel: OnlineStatsViewModel = hiltViewModel()
+                val onlineStats by onlineStatsViewModel.onlineStats.collectAsState()
+                val isLoading by onlineStatsViewModel.isLoading.collectAsState()
+                val loginLogs by onlineStatsViewModel.loginLogs.collectAsState()
+                val loginLogSummary by onlineStatsViewModel.loginLogSummary.collectAsState()
+                val isLoadingLogs by onlineStatsViewModel.isLoadingLogs.collectAsState()
+                
+                LaunchedEffect(currentMember) {
+                    currentMember?.let { member ->
+                        onlineStatsViewModel.loadOnlineStats(member)
+                    }
+                }
+                
+                OnlineStatsScreen(
+                    members = members,
+                    currentMember = currentMember!!,
+                    onlineStats = onlineStats,
+                    isLoading = isLoading,
+                    loginLogs = loginLogs,
+                    loginLogSummary = loginLogSummary,
+                    isLoadingLogs = isLoadingLogs,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onLoadLoginLogs = { filter ->
+                        onlineStatsViewModel.loadLoginLogs(filter)
+                    },
+                    onLoadLoginLogSummary = {
+                        onlineStatsViewModel.loadLoginLogSummary()
+                    }
+                )
+            }
+            
+            // 设置界面（作为独立页面）
+            composable("settings") {
+                SettingsScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }
@@ -336,16 +434,19 @@ fun MainContent(
     onCreateGroup: (String, List<Member>) -> Unit,
     onNavigateToTodo: () -> Unit,
     onNavigateToDynamic: () -> Unit,
-    onNavigateToVote: () -> Unit
+    onNavigateToVote: () -> Unit,
+    onNavigateToMemberManagement: () -> Unit,
+    onNavigateToOnlineStats: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val mainNavController = rememberNavController()
     
-    Scaffold(
-        bottomBar = {
-            BottomNavBar(navController = mainNavController)
-        }
-    ) { paddingValues ->
-        if (currentMember != null) {
+    if (currentMember != null) {
+        Scaffold(
+            bottomBar = {
+                BottomNavBar(navController = mainNavController)
+            }
+        ) { paddingValues ->
             NavHost(
                 navController = mainNavController,
                 startDestination = BottomNavItem.Home.route,
@@ -376,10 +477,23 @@ fun MainContent(
                 composable(BottomNavItem.Settings.route) {
                     SystemScreen(
                         currentMember = currentMember,
-                        onMemberSwitch = onMemberSwitch
+                        allMembers = members,
+                        onNavigateToMemberManagement = onNavigateToMemberManagement,
+                        onNavigateToOnlineStats = onNavigateToOnlineStats,
+                        onNavigateToSettings = onNavigateToSettings
                     )
                 }
+                
+
             }
+        }
+    } else {
+        // 当没有当前成员时，显示空白页面，让对话框处理成员创建
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            // 不显示加载指示器，让对话框处理成员创建流程
         }
     }
 }

@@ -61,7 +61,12 @@ fun VoteDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("投票详情") },
+                title = { 
+                    Text(
+                        text = "投票详情",
+                        fontWeight = FontWeight.Normal
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")

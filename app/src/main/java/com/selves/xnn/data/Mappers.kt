@@ -5,12 +5,14 @@ import com.selves.xnn.data.entity.ChatGroupEntity
 import com.selves.xnn.data.entity.MessageEntity
 import com.selves.xnn.data.entity.MemberEntity
 import com.selves.xnn.data.entity.TodoEntity
+import com.selves.xnn.data.entity.SystemEntity
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Message
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.MessageType
 import com.selves.xnn.model.Todo
 import com.selves.xnn.model.TodoPriority
+import com.selves.xnn.model.System
 import kotlinx.coroutines.flow.first
 
 /**
@@ -111,5 +113,24 @@ object Mappers {
             TodoPriority.HIGH -> 2
         },
         createdBy = createdBy
+    )
+    
+    // 系统映射
+    fun SystemEntity.toDomain(): System = System(
+        id = id,
+        name = name,
+        avatarUrl = avatarUrl,
+        description = description,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+    
+    fun System.toEntity(): SystemEntity = SystemEntity(
+        id = id,
+        name = name,
+        avatarUrl = avatarUrl,
+        description = description,
+        createdAt = createdAt,
+        updatedAt = updatedAt
     )
 } 

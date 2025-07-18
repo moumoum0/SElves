@@ -9,7 +9,7 @@ data class Todo(
     val title: String,
     val description: String = "",
     val isCompleted: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis(),
+    val createdAt: Long = java.lang.System.currentTimeMillis(),
     val completedAt: Long? = null,
     val priority: TodoPriority = TodoPriority.NORMAL,
     val createdBy: String // 创建者ID

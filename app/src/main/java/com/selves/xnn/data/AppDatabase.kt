@@ -14,6 +14,8 @@ import com.selves.xnn.data.dao.MessageDao
 import com.selves.xnn.data.dao.MessageReadStatusDao
 import com.selves.xnn.data.dao.TodoDao
 import com.selves.xnn.data.dao.VoteDao
+import com.selves.xnn.data.dao.SystemDao
+import com.selves.xnn.data.dao.OnlineStatusDao
 import com.selves.xnn.data.entity.ChatGroupEntity
 import com.selves.xnn.data.entity.DynamicEntity
 import com.selves.xnn.data.entity.DynamicCommentEntity
@@ -25,6 +27,8 @@ import com.selves.xnn.data.entity.TodoEntity
 import com.selves.xnn.data.entity.VoteEntity
 import com.selves.xnn.data.entity.VoteOptionEntity
 import com.selves.xnn.data.entity.VoteRecordEntity
+import com.selves.xnn.data.entity.SystemEntity
+import com.selves.xnn.data.entity.OnlineStatusEntity
 import android.util.Log
 
 @Database(
@@ -39,9 +43,11 @@ import android.util.Log
         DynamicLikeEntity::class,
         VoteEntity::class,
         VoteOptionEntity::class,
-        VoteRecordEntity::class
+        VoteRecordEntity::class,
+        SystemEntity::class,
+        OnlineStatusEntity::class
     ],
-    version = 7,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -53,6 +59,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun todoDao(): TodoDao
     abstract fun dynamicDao(): DynamicDao
     abstract fun voteDao(): VoteDao
+    abstract fun systemDao(): SystemDao
+    abstract fun onlineStatusDao(): OnlineStatusDao
 
     companion object {
         @Volatile
@@ -287,6 +295,51 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 创建系统表
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS systems (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "name TEXT NOT NULL, " +
+                                "avatarUrl TEXT, " +
+                                "description TEXT NOT NULL DEFAULT '', " +
+                                "createdAt INTEGER NOT NULL, " +
+                                "updatedAt INTEGER NOT NULL)"
+                    )
+
+                    Log.d("AppDatabase", "数据库迁移 7->8 完成：系统表已创建")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                }
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 创建在线状态表
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS online_status (" +
+                                "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                                "memberId TEXT NOT NULL, " +
+                                "loginTime INTEGER NOT NULL, " +
+                                "logoutTime INTEGER, " +
+                                "duration INTEGER NOT NULL DEFAULT 0, " +
+                                "FOREIGN KEY (memberId) REFERENCES members(id) ON DELETE CASCADE)"
+                    )
+
+                    // 创建索引
+                    database.execSQL("CREATE INDEX IF NOT EXISTS index_online_status_memberId ON online_status(memberId)")
+
+                    Log.d("AppDatabase", "数据库迁移 8->9 完成：在线状态表已创建")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -294,7 +347,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

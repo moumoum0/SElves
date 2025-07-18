@@ -24,7 +24,7 @@ sealed class BottomNavItem(
     )
     
     object Settings : BottomNavItem(
-        route = "settings",
+        route = "system",
         title = "系统",
         icon = Icons.Default.AccountTree
     )

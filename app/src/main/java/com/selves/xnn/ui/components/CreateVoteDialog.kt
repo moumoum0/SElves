@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -46,19 +46,7 @@ fun CreateVoteDialog(
     var selectedDate by remember { mutableStateOf<LocalDateTime?>(null) }
     
     val context = LocalContext.current
-    val systemUiController = rememberSystemUiController()
-    
-    // 设置系统栏颜色为白色
-    LaunchedEffect(Unit) {
-        systemUiController.setStatusBarColor(
-            color = Color.White,
-            darkIcons = true
-        )
-        systemUiController.setNavigationBarColor(
-            color = Color.White,
-            darkIcons = true
-        )
-    }
+    // 不修改系统UI颜色，保持与主应用一致
     
     // 使用Box替代Dialog来实现全屏效果
     Box(
