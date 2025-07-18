@@ -16,7 +16,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1.0-beta1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -26,6 +26,9 @@ android {
         // 为Room和SQLite设置系统属性
         System.setProperty("org.sqlite.tmpdir", "${project.buildDir}/tmp/sqlite")
         System.setProperty("room.schemaLocation", "${project.buildDir}/schemas")
+        
+        // 只保留必要的资源密度
+        resourceConfigurations += listOf("zh", "en")
     }
 
     ksp {
@@ -34,8 +37,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
     compileOptions {
@@ -57,6 +65,15 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/license.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+            excludes += "/META-INF/notice.txt"
+            excludes += "/META-INF/ASL2.0"
+            excludes += "/META-INF/*.kotlin_module"
         }
     }
 }
