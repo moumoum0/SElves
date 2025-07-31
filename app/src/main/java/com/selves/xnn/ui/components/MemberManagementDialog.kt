@@ -27,9 +27,10 @@ fun MemberManagementDialog(
     onDismiss: () -> Unit,
     onCreateNewMember: () -> Unit,
     onDeleteMember: (Member) -> Unit,
-    onEditMember: (Member) -> Unit = {}
+    onEditMember: (Member) -> Unit
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
+    var memberToEdit by remember { mutableStateOf<Member?>(null) }
     
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -96,7 +97,7 @@ fun MemberManagementDialog(
                             member = member,
                             isCurrentMember = member.id == currentMember.id,
                             onDeleteMember = { showDeleteConfirmation = member },
-                            onEditMember = onEditMember
+                            onEditMember = { memberToEdit = member }
                         )
                     }
                 }
@@ -145,6 +146,19 @@ fun MemberManagementDialog(
                 ) {
                     Text("取消")
                 }
+            }
+        )
+    }
+    
+    // 编辑成员对话框
+    memberToEdit?.let { member ->
+        EditMemberDialog(
+            member = member,
+            existingMemberNames = members.map { it.name },
+            onDismiss = { memberToEdit = null },
+            onConfirm = { name, avatarUrl ->
+                onEditMember(member.copy(name = name, avatarUrl = avatarUrl))
+                memberToEdit = null
             }
         )
     }

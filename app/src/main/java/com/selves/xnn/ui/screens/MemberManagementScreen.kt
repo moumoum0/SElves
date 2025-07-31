@@ -21,6 +21,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.model.Member
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.CreateMemberDialog
+import com.selves.xnn.ui.components.EditMemberDialog
 import com.selves.xnn.ui.viewmodels.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +34,7 @@ fun MemberManagementScreen(
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
     var showCreateMemberDialog by remember { mutableStateOf(false) }
+    var memberToEdit by remember { mutableStateOf<Member?>(null) }
     
     Scaffold(
         topBar = {
@@ -77,7 +79,7 @@ fun MemberManagementScreen(
                     member = member,
                     isCurrentMember = member.id == currentMember.id,
                     onDeleteMember = { showDeleteConfirmation = member },
-                    onEditMember = { /* TODO: 实现编辑功能 */ }
+                    onEditMember = { memberToEdit = member }
                 )
             }
         }
@@ -124,6 +126,19 @@ fun MemberManagementScreen(
             onConfirm = { name, avatarUrl ->
                 mainViewModel.createMember(name, avatarUrl, shouldSetAsCurrent = false)
                 showCreateMemberDialog = false
+            }
+        )
+    }
+    
+    // 编辑成员对话框
+    memberToEdit?.let { member ->
+        EditMemberDialog(
+            member = member,
+            existingMemberNames = members.map { it.name },
+            onDismiss = { memberToEdit = null },
+            onConfirm = { name, avatarUrl ->
+                mainViewModel.updateMember(member.id, name, avatarUrl)
+                memberToEdit = null
             }
         )
     }

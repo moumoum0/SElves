@@ -408,6 +408,40 @@ class MainViewModel @Inject constructor(
         }
     }
     
+    // 更新成员信息
+    fun updateMember(memberId: String, name: String, avatarUrl: String?) {
+        Log.d(TAG, "开始更新成员 - ID: $memberId, 新名称: $name")
+        
+        viewModelScope.launch(exceptionHandler) {
+            try {
+                // 获取成员当前信息
+                val existingMember = memberRepository.getMemberById(memberId)
+                
+                if (existingMember != null) {
+                    // 创建更新后的成员对象
+                    val updatedMember = existingMember.copy(
+                        name = name,
+                        avatarUrl = avatarUrl ?: existingMember.avatarUrl
+                    )
+                    
+                    // 保存到数据库
+                    memberRepository.saveMember(updatedMember)
+                    
+                    // 如果是当前成员，更新当前成员信息
+                    if (_currentMember.value?.id == memberId) {
+                        _currentMember.value = updatedMember
+                    }
+                    
+                    Log.d(TAG, "成员更新成功: ${updatedMember.name}")
+                } else {
+                    Log.e(TAG, "无法更新成员，未找到ID为 $memberId 的成员")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "更新成员失败: ${e.message}", e)
+            }
+        }
+    }
+    
     // 设置当前成员
     fun setCurrentMember(member: Member) {
         viewModelScope.launch(exceptionHandler) {

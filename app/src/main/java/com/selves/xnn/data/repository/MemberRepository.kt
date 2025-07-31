@@ -56,17 +56,18 @@ class MemberRepository @Inject constructor(private val database: AppDatabase) {
      * 保存成员
      */
     suspend fun saveMember(member: Member) {
-        // 先检查成员是否已存在
+        // 检查成员是否已存在
         val exists = database.memberDao().checkMemberExists(member.id)
-        if (exists > 0) {
-            // 成员已存在，记录日志
-            Log.d("MemberRepository", "成员已存在，不重复保存: ${member.id} - ${member.name}")
-            return
-        }
-        
         val entity = member.toEntity()
+        
+        // 不管成员是否存在，都保存/更新数据
         database.memberDao().insertMember(entity)
-        Log.d("MemberRepository", "成功保存成员: ${member.id} - ${member.name}")
+        
+        if (exists > 0) {
+            Log.d("MemberRepository", "成功更新成员: ${member.id} - ${member.name}")
+        } else {
+            Log.d("MemberRepository", "成功保存新成员: ${member.id} - ${member.name}")
+        }
     }
     
     /**
