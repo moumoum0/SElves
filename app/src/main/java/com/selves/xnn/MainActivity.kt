@@ -14,7 +14,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
-import com.selves.xnn.ui.screens.GroupChatScreen
+import com.selves.xnn.ui.screens.AppNavigationScreen
 import com.selves.xnn.ui.theme.SelvesTheme
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    GroupChatScreen(viewModel = mainViewModel)
+                    AppNavigationScreen(viewModel = mainViewModel)
                 }
             }
         }
