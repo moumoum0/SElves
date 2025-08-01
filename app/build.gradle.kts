@@ -97,6 +97,9 @@ dependencies {
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended")
     
+    // AppCompat (for CropImageActivity)
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    
     // DataStore
     implementation("androidx.datastore:datastore-preferences:$datastoreVersion")
     implementation("androidx.datastore:datastore-preferences-core:$datastoreVersion")
@@ -113,6 +116,9 @@ dependencies {
     
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+    
+    // Image cropper
+    implementation("com.github.CanHub:Android-Image-Cropper:4.3.2")
     
     // Accompanist for System UI Controller
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")

@@ -2,4 +2,13 @@
 <resources>
 
     <style name="Theme.Selves" parent="android:Theme.Material.Light.NoActionBar" />
+    
+    <!-- AppCompat主题，用于图片裁剪Activity -->
+    <style name="Theme.Selves.Crop" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="colorPrimary">#1976D2</item>
+        <item name="colorPrimaryDark">#1565C0</item>
+        <item name="colorAccent">#03DAC5</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:windowBackground">#000000</item>
+    </style>
 </resources>

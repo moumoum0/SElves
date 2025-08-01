@@ -23,6 +23,11 @@
             </intent-filter>
         </activity>
 
+        <!-- 图片裁剪Activity，需要AppCompat主题 -->
+        <activity
+            android:name="com.canhub.cropper.CropImageActivity"
+            android:theme="@style/Theme.Selves.Crop" />
+
     </application>
 
 </manifest>

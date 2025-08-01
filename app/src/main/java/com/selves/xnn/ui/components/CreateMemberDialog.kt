@@ -33,6 +33,8 @@ import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
 import com.selves.xnn.ui.components.ProfileAvatarImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageView
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -49,9 +51,11 @@ fun CreateMemberDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    // 图片选择器启动器
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        avatarUri = uri
+    // 图片裁剪启动器
+    val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            avatarUri = result.uriContent
+        }
     }
 
     // 创建成员的函数
@@ -103,7 +107,10 @@ fun CreateMemberDialog(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp)
-                        .clickable { launcher.launch("image/*") }
+                        .clickable { 
+                            // 启动图片裁剪器，可以选择从图库或相机
+                            cropImageLauncher.launch(ImageUtils.createAvatarCropOptions())
+                        }
                 ) {
                     if (avatarUri != null) {
                         AsyncImage(

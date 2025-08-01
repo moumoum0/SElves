@@ -237,6 +237,18 @@ fun AppNavigationScreen(
                 SettingsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToAbout = {
+                        navController.navigate("about")
+                    }
+                )
+            }
+            
+            // 关于界面（作为独立页面）
+            composable("about") {
+                AboutScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }

@@ -33,6 +33,8 @@ import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
 import com.selves.xnn.ui.components.AvatarImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageView
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -51,11 +53,13 @@ fun EditMemberDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
 
-    // 图片选择器启动器
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            avatarUri = it
-            currentAvatarUrl = null // 清除当前头像URL，因为选择了新头像
+    // 图片裁剪启动器
+    val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            result.uriContent?.let {
+                avatarUri = it
+                currentAvatarUrl = null // 清除当前头像URL，因为选择了新头像
+            }
         }
     }
 
@@ -112,7 +116,10 @@ fun EditMemberDialog(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp)
-                        .clickable { launcher.launch("image/*") }
+                        .clickable { 
+                            // 启动图片裁剪器，可以选择从图库或相机
+                            cropImageLauncher.launch(ImageUtils.createAvatarCropOptions())
+                        }
                 ) {
                     if (avatarUri != null) {
                         // 显示新选择的头像

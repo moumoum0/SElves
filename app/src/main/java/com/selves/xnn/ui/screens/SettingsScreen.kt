@@ -18,7 +18,8 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToAbout: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -53,7 +54,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Info,
                     title = "关于",
                     subtitle = "应用信息和版本",
-                    onClick = { /* TODO: 显示关于信息 */ }
+                    onClick = onNavigateToAbout
                 )
             }
         }

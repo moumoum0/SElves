@@ -21,21 +21,19 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.selves.xnn.util.ImageUtils
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * 独立的图片查看器组件
+ * 全屏图片查看器组件
  * 
  * @param imagePath 图片路径
  * @param onBack 返回按钮点击事件
  * @param onDismiss 点击空白区域关闭事件
- * @param showAsDialog 是否以Dialog形式显示，默认为true
  * @param senderName 发送者名称，可选
  * @param timestamp 时间戳，可选
  * @param startPosition 动画起始位置，可选
@@ -46,37 +44,64 @@ fun ImageViewer(
     imagePath: String,
     onBack: () -> Unit,
     onDismiss: () -> Unit = onBack,
-    showAsDialog: Boolean = true,
     senderName: String? = null,
     timestamp: Long? = null,
     startPosition: Offset? = null,
     startSize: androidx.compose.ui.unit.DpSize? = null
 ) {
-    val content = @Composable {
-        ImageViewerContent(
-            imagePath = imagePath,
-            onBack = onBack,
-            onDismiss = onDismiss,
-            senderName = senderName,
-            timestamp = timestamp,
-            startPosition = startPosition,
-            startSize = startSize
+    val systemUiController = rememberSystemUiController()
+    val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
+    
+    // 记住原始的系统UI颜色
+    val originalStatusBarColor = remember { Color.White }
+    val originalNavigationBarColor = remember { surfaceVariantColor }
+    
+    // 动画状态
+    var animationStarted by remember { mutableStateOf(false) }
+    
+    // 设置全屏透明模式
+    LaunchedEffect(Unit) {
+        // 进入时设置透明
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = false
+        )
+        systemUiController.setNavigationBarColor(
+            color = Color.Transparent,
+            darkIcons = false
         )
     }
     
-    if (showAsDialog) {
-        Dialog(
-            onDismissRequest = onDismiss,
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnClickOutside = true
+    DisposableEffect(Unit) {
+        onDispose {
+            // 退出时恢复原色
+            systemUiController.setStatusBarColor(
+                color = originalStatusBarColor,
+                darkIcons = true
             )
-        ) {
-            content()
+            systemUiController.setNavigationBarColor(
+                color = originalNavigationBarColor,
+                darkIcons = false
+            )
         }
-    } else {
-        content()
     }
+    
+    // 启动动画
+    LaunchedEffect(Unit) {
+        delay(50) // 短暂延迟确保初始状态设置完成
+        animationStarted = true
+    }
+    
+    ImageViewerContent(
+        imagePath = imagePath,
+        onBack = onBack,
+        onDismiss = onDismiss,
+        senderName = senderName,
+        timestamp = timestamp,
+        startPosition = startPosition,
+        startSize = startSize,
+        animationStarted = animationStarted
+    )
 }
 
 @Composable
@@ -87,7 +112,8 @@ private fun ImageViewerContent(
     senderName: String? = null,
     timestamp: Long? = null,
     startPosition: Offset? = null,
-    startSize: androidx.compose.ui.unit.DpSize? = null
+    startSize: androidx.compose.ui.unit.DpSize? = null,
+    animationStarted: Boolean
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -98,9 +124,6 @@ private fun ImageViewerContent(
     val screenHeight = configuration.screenHeightDp.dp
     val screenCenterX = screenWidth / 2
     val screenCenterY = screenHeight / 2
-    
-    // 动画状态
-    var animationStarted by remember { mutableStateOf(false) }
     
     // 计算初始位置偏移（相对于屏幕中心）
     val initialOffsetX = startPosition?.let { 
@@ -158,12 +181,6 @@ private fun ImageViewerContent(
         label = "contentAlpha"
     )
     
-    // 启动动画
-    LaunchedEffect(Unit) {
-        delay(50) // 短暂延迟确保初始状态设置完成
-        animationStarted = true
-    }
-    
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -207,7 +224,8 @@ private fun ImageViewerContent(
             onClick = onBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(start = 8.dp, top = 16.dp)
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(start = 8.dp, top = 8.dp)
                 .clip(CircleShape)
                 .background(Color.Black.copy(alpha = 0.5f * animatedContentAlpha))
                 .size(48.dp)
@@ -225,6 +243,7 @@ private fun ImageViewerContent(
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
+                    .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(16.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.5f * animatedContentAlpha))

@@ -14,6 +14,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 
 /**
  * 图片工具类
@@ -341,5 +344,112 @@ object ImageUtils {
     fun clearPreloadCache() {
         preloadedAvatars.clear()
         preloadedMessageImages.clear()
+    }
+    
+    /**
+     * 创建头像裁剪选项
+     * @return 头像裁剪的配置选项
+     */
+    fun createAvatarCropOptions(): CropImageContractOptions {
+        return CropImageContractOptions(
+            uri = null,
+            cropImageOptions = CropImageOptions().apply {
+                imageSourceIncludeGallery = true
+                imageSourceIncludeCamera = false
+                guidelines = com.canhub.cropper.CropImageView.Guidelines.ON_TOUCH
+                aspectRatioX = 1
+                aspectRatioY = 1
+                fixAspectRatio = true
+                cropShape = com.canhub.cropper.CropImageView.CropShape.OVAL
+                activityTitle = "裁剪头像"
+                activityMenuIconColor = android.graphics.Color.WHITE
+                activityBackgroundColor = android.graphics.Color.BLACK
+                toolbarColor = android.graphics.Color.BLACK
+                cropMenuCropButtonTitle = "✓"
+                allowRotation = true
+                allowFlipping = false
+                allowCounterRotation = false
+                showCropOverlay = true
+                autoZoomEnabled = true
+                maxZoom = 4
+                initialCropWindowPaddingRatio = 0.1f
+                borderLineThickness = 3f
+                borderLineColor = android.graphics.Color.WHITE
+                borderCornerThickness = 5f
+                borderCornerOffset = 5f
+                borderCornerLength = 14f
+                borderCornerColor = android.graphics.Color.WHITE
+                guidelinesThickness = 1f
+                guidelinesColor = android.graphics.Color.argb(170, 255, 255, 255)
+                backgroundColor = android.graphics.Color.argb(119, 0, 0, 0)
+                minCropWindowWidth = 40
+                minCropWindowHeight = 40
+                minCropResultWidth = 200
+                minCropResultHeight = 200
+                maxCropResultWidth = 999
+                maxCropResultHeight = 999
+                outputCompressFormat = android.graphics.Bitmap.CompressFormat.JPEG
+                outputCompressQuality = 90
+                outputRequestWidth = 400
+                outputRequestHeight = 400
+                outputRequestSizeOptions = com.canhub.cropper.CropImageView.RequestSizeOptions.RESIZE_INSIDE
+                noOutputImage = false
+                customOutputUri = null
+            }
+        )
+    }
+    
+    /**
+     * 创建从 Uri 开始的头像裁剪选项
+     * @param uri 要裁剪的图片 Uri
+     * @return 头像裁剪的配置选项
+     */
+    fun createAvatarCropOptionsFromUri(uri: Uri): CropImageContractOptions {
+        return CropImageContractOptions(
+            uri = uri,
+            cropImageOptions = CropImageOptions().apply {
+                imageSourceIncludeGallery = false
+                imageSourceIncludeCamera = false
+                guidelines = com.canhub.cropper.CropImageView.Guidelines.ON_TOUCH
+                aspectRatioX = 1
+                aspectRatioY = 1
+                fixAspectRatio = true
+                cropShape = com.canhub.cropper.CropImageView.CropShape.OVAL
+                activityTitle = "裁剪头像"
+                activityMenuIconColor = android.graphics.Color.WHITE
+                activityBackgroundColor = android.graphics.Color.BLACK
+                toolbarColor = android.graphics.Color.BLACK
+                cropMenuCropButtonTitle = "✓"
+                allowRotation = true
+                allowFlipping = false
+                allowCounterRotation = false
+                showCropOverlay = true
+                autoZoomEnabled = true
+                maxZoom = 4
+                initialCropWindowPaddingRatio = 0.1f
+                borderLineThickness = 3f
+                borderLineColor = android.graphics.Color.WHITE
+                borderCornerThickness = 5f
+                borderCornerOffset = 5f
+                borderCornerLength = 14f
+                borderCornerColor = android.graphics.Color.WHITE
+                guidelinesThickness = 1f
+                guidelinesColor = android.graphics.Color.argb(170, 255, 255, 255)
+                backgroundColor = android.graphics.Color.argb(119, 0, 0, 0)
+                minCropWindowWidth = 40
+                minCropWindowHeight = 40
+                minCropResultWidth = 200
+                minCropResultHeight = 200
+                maxCropResultWidth = 999
+                maxCropResultHeight = 999
+                outputCompressFormat = android.graphics.Bitmap.CompressFormat.JPEG
+                outputCompressQuality = 90
+                outputRequestWidth = 400
+                outputRequestHeight = 400
+                outputRequestSizeOptions = com.canhub.cropper.CropImageView.RequestSizeOptions.RESIZE_INSIDE
+                noOutputImage = false
+                customOutputUri = null
+            }
+        )
     }
 } 
