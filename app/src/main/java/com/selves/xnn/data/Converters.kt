@@ -30,12 +30,26 @@ class Converters {
     
     @TypeConverter
     fun fromLocalDateTime(value: LocalDateTime?): Long? {
-        return value?.toEpochSecond(ZoneOffset.UTC)
+        return try {
+            value?.toEpochSecond(ZoneOffset.UTC)
+        } catch (e: Exception) {
+            android.util.Log.e("Converters", "LocalDateTime序列化失败: $value", e)
+            null
+        }
     }
     
     @TypeConverter
     fun toLocalDateTime(value: Long?): LocalDateTime? {
-        return value?.let { LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC) }
+        return try {
+            value?.let { 
+                val result = LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC)
+                android.util.Log.v("Converters", "LocalDateTime转换: $value -> $result")
+                result
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("Converters", "LocalDateTime反序列化失败: $value", e)
+            null
+        }
     }
     
     @TypeConverter

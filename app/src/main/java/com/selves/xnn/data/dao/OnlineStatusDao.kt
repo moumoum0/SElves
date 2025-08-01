@@ -97,6 +97,13 @@ interface OnlineStatusDao {
         WHERE loginTime >= :todayStart
     """)
     suspend fun getAverageOnlineTime(currentTime: Long, todayStart: Long): Long?
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM online_status ORDER BY loginTime ASC")
+    suspend fun getAllOnlineStatusSync(): List<OnlineStatusEntity>
+
+    @Query("DELETE FROM online_status")
+    suspend fun deleteAll()
 }
 
 data class LastActiveTime(

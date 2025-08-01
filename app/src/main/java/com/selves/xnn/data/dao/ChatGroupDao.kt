@@ -34,4 +34,11 @@ interface ChatGroupDao {
     
     @Query("DELETE FROM chat_groups WHERE id = :groupId")
     suspend fun deleteGroupById(groupId: String)
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM chat_groups ORDER BY createdAt ASC")
+    suspend fun getAllGroupsSync(): List<ChatGroupEntity>
+
+    @Query("DELETE FROM chat_groups")
+    suspend fun deleteAll()
 } 

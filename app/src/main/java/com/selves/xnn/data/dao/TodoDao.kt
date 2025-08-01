@@ -55,4 +55,11 @@ interface TodoDao {
     
     @Query("UPDATE todos SET isCompleted = :isCompleted, completedAt = :completedAt WHERE id = :todoId")
     suspend fun updateTodoStatus(todoId: String, isCompleted: Boolean, completedAt: Long?)
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM todos ORDER BY createdAt ASC")
+    suspend fun getAllTodosSync(): List<TodoEntity>
+
+    @Query("DELETE FROM todos")
+    suspend fun deleteAll()
 } 

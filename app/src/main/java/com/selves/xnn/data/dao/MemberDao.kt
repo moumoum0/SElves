@@ -27,4 +27,11 @@ interface MemberDao {
 
     @Query("DELETE FROM members WHERE id = :memberId")
     suspend fun deleteMemberById(memberId: String)
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM members")
+    suspend fun getAllMembersSync(): List<MemberEntity>
+
+    @Query("DELETE FROM members")
+    suspend fun deleteAll()
 } 

@@ -35,4 +35,11 @@ interface MessageDao {
 
     @Query("SELECT COUNT(*) FROM messages WHERE groupId = :groupId")
     suspend fun getMessageCountByGroupId(groupId: String): Int
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM messages ORDER BY timestamp ASC")
+    suspend fun getAllMessagesSync(): List<MessageEntity>
+
+    @Query("DELETE FROM messages")
+    suspend fun deleteAll()
 } 

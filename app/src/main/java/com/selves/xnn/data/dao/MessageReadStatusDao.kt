@@ -57,4 +57,11 @@ interface MessageReadStatusDao {
         )
     """)
     suspend fun getUnreadMessageIds(groupId: String, currentMemberId: String): List<String>
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM message_read_status ORDER BY readAt ASC")
+    suspend fun getAllReadStatusSync(): List<MessageReadStatusEntity>
+
+    @Query("DELETE FROM message_read_status")
+    suspend fun deleteAll()
 } 

@@ -128,4 +128,23 @@ interface VoteDao {
     // 搜索功能
     @Query("SELECT * FROM votes WHERE title LIKE :query OR description LIKE :query ORDER BY createdAt DESC")
     fun searchVotes(query: String): Flow<List<VoteEntity>>
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM votes ORDER BY createdAt ASC")
+    suspend fun getAllVotesSync(): List<VoteEntity>
+
+    @Query("SELECT * FROM vote_options ORDER BY voteId ASC, orderIndex ASC")
+    suspend fun getAllVoteOptionsSync(): List<VoteOptionEntity>
+
+    @Query("SELECT * FROM vote_records ORDER BY voteId ASC, votedAt ASC")
+    suspend fun getAllVoteRecordsSync(): List<VoteRecordEntity>
+
+    @Query("DELETE FROM votes")
+    suspend fun deleteAllVotes()
+
+    @Query("DELETE FROM vote_options")
+    suspend fun deleteAllVoteOptions()
+
+    @Query("DELETE FROM vote_records")
+    suspend fun deleteAllVoteRecords()
 } 

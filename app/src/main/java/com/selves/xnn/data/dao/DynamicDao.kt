@@ -84,4 +84,23 @@ interface DynamicDao {
     // 搜索功能
     @Query("SELECT * FROM dynamics WHERE title LIKE :query OR content LIKE :query ORDER BY createdAt DESC")
     fun searchDynamics(query: String): Flow<List<DynamicEntity>>
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM dynamics ORDER BY createdAt ASC")
+    suspend fun getAllDynamicsSync(): List<DynamicEntity>
+
+    @Query("SELECT * FROM dynamic_comments ORDER BY createdAt ASC")
+    suspend fun getAllCommentsSync(): List<DynamicCommentEntity>
+
+    @Query("SELECT * FROM dynamic_likes ORDER BY createdAt ASC")
+    suspend fun getAllLikesSync(): List<DynamicLikeEntity>
+
+    @Query("DELETE FROM dynamics")
+    suspend fun deleteAllDynamics()
+
+    @Query("DELETE FROM dynamic_comments")
+    suspend fun deleteAllComments()
+
+    @Query("DELETE FROM dynamic_likes")
+    suspend fun deleteAllLikes()
 } 

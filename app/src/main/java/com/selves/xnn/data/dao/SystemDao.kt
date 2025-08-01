@@ -27,4 +27,11 @@ interface SystemDao {
     
     @Query("DELETE FROM systems WHERE id = :systemId")
     suspend fun deleteSystemById(systemId: String)
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM systems ORDER BY createdAt ASC")
+    suspend fun getAllSystemsSync(): List<SystemEntity>
+
+    @Query("DELETE FROM systems")
+    suspend fun deleteAll()
 } 
