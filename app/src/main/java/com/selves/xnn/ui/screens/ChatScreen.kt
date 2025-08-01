@@ -49,6 +49,7 @@ import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
 import com.selves.xnn.ui.components.MessageAvatarImage
 import com.selves.xnn.ui.components.GroupManagementDialog
+import com.selves.xnn.ui.components.ImageViewer
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -172,11 +173,11 @@ fun ChatScreen(
             members.find { it.id == message.senderId }
         }
         
-        ImagePreviewDialog(
+        ImageViewer(
             imagePath = imagePath,
+            onBack = { previewImagePath = null },
             senderName = sender?.name ?: "未知成员",
-            timestamp = imageMessage?.timestamp ?: 0L,
-            onDismiss = { previewImagePath = null }
+            timestamp = imageMessage?.timestamp ?: 0L
         )
     }
     
@@ -427,102 +428,7 @@ fun ImageMessage(
     }
 }
 
-@Composable
-fun ImagePreviewDialog(
-    imagePath: String,
-    senderName: String,
-    timestamp: Long,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { onDismiss() }
-                    )
-                }
-        ) {
-            // 图片内容 - 全屏显示
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                val imageRequest = remember(imagePath) {
-                    ImageUtils.createMessageImageRequest(context, imagePath)
-                }
-                
-                if (imageRequest != null) {
-                    AsyncImage(
-                        model = imageRequest,
-                        contentDescription = "预览图片",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
-                } else {
-                    Text(
-                        text = "图片加载失败",
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-            
-            // 顶部信息栏 - 带半透明背景
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Color.Black.copy(alpha = 0.3f)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                    .align(Alignment.TopStart),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // 返回按钮
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.offset(x = (-8).dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "返回",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.weight(1f))
-                
-                // 发送人信息
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = senderName,
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Text(
-                        text = formatTimestamp(timestamp),
-                        color = Color.White.copy(alpha = 0.7f),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-    }
-}
+
 
 @Composable
 fun MessageMenu(
@@ -574,80 +480,7 @@ fun Modifier.combinedClickable(
 }
 
 private fun formatTimestamp(timestamp: Long): String {
-    val now = System.currentTimeMillis()
-    val date = Date(timestamp)
-    val sdf = when {
-        // 今天的消息只显示时间
-        isToday(timestamp) -> SimpleDateFormat("HH:mm", Locale.getDefault())
-        // 昨天的消息显示"昨天"和时间
-        isYesterday(timestamp) -> {
-            return "昨天 " + SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
-        }
-        // 一周内的消息显示星期几和时间
-        isWithinWeek(timestamp) -> {
-            val weekDay = when(SimpleDateFormat("EEEE", Locale.CHINESE).format(date)) {
-                "星期一" -> "周一"
-                "星期二" -> "周二"
-                "星期三" -> "周三"
-                "星期四" -> "周四"
-                "星期五" -> "周五"
-                "星期六" -> "周六"
-                "星期日" -> "周日"
-                else -> ""
-            }
-            return "$weekDay " + SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
-        }
-        // 今年的消息显示月日和时间
-        isThisYear(timestamp) -> SimpleDateFormat("M月d日 HH:mm", Locale.getDefault())
-        // 其他显示完整日期
-        else -> SimpleDateFormat("yyyy年M月d日 HH:mm", Locale.getDefault())
-    }
-    return sdf.format(date)
-}
-
-private fun isToday(timestamp: Long): Boolean {
-    val calendar = Calendar.getInstance()
-    val today = calendar.apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-    
-    return timestamp >= today
-}
-
-private fun isYesterday(timestamp: Long): Boolean {
-    val calendar = Calendar.getInstance()
-    calendar.add(Calendar.DAY_OF_YEAR, -1)
-    val yesterday = calendar.apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-    
-    return timestamp >= yesterday && timestamp < yesterday + 24 * 60 * 60 * 1000
-}
-
-private fun isWithinWeek(timestamp: Long): Boolean {
-    val calendar = Calendar.getInstance()
-    calendar.add(Calendar.DAY_OF_YEAR, -7)
-    val weekAgo = calendar.apply {
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
-    
-    return timestamp >= weekAgo
-}
-
-private fun isThisYear(timestamp: Long): Boolean {
-    val calendar = Calendar.getInstance()
-    val thisYear = calendar.get(Calendar.YEAR)
-    calendar.timeInMillis = timestamp
-    return calendar.get(Calendar.YEAR) == thisYear
+    return com.selves.xnn.util.TimeFormatter.formatTimestamp(timestamp)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

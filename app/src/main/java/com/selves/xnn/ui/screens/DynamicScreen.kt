@@ -27,7 +27,7 @@ import com.selves.xnn.model.DynamicType
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.EditDynamicDialog
 import com.selves.xnn.ui.components.DynamicImageGrid
-import com.selves.xnn.ui.components.DynamicImagePreviewDialog
+import com.selves.xnn.ui.components.ImageViewer
 import com.selves.xnn.viewmodel.DynamicViewModel
 import java.time.format.DateTimeFormatter
 
@@ -161,9 +161,9 @@ fun DynamicScreen(
     
     // 图片预览对话框
     previewImagePath?.let { imagePath ->
-        DynamicImagePreviewDialog(
+        ImageViewer(
             imagePath = imagePath,
-            onDismiss = { previewImagePath = null }
+            onBack = { previewImagePath = null }
         )
     }
 }
@@ -342,7 +342,7 @@ fun DynamicCard(
                             fontSize = 16.sp
                         )
                         Text(
-                            text = dynamic.createdAt.format(DateTimeFormatter.ofPattern("MM-dd HH:mm")),
+                            text = com.selves.xnn.util.TimeFormatter.formatDetailDateTime(dynamic.createdAt),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp
                         )

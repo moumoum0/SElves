@@ -25,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.selves.xnn.ui.components.AvatarImage
+import com.selves.xnn.ui.components.UserInfoHeader
 import com.selves.xnn.ui.screens.TodoScreen
 import com.selves.xnn.ui.screens.DynamicScreen
 import com.selves.xnn.viewmodel.TodoViewModel
@@ -93,7 +94,7 @@ fun HomeMainScreen(
     ) {
         // 顶部用户信息栏
         if (currentMember != null) {
-            UserInfoHeader(
+            com.selves.xnn.ui.components.UserInfoHeader(
                 currentMember = currentMember,
                 onMemberSwitch = onMemberSwitch
             )
@@ -143,43 +144,7 @@ fun HomeMainScreen(
     }
 }
 
-@Composable
-fun UserInfoHeader(
-    currentMember: com.selves.xnn.model.Member,
-    onMemberSwitch: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.White)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { onMemberSwitch() }
-        ) {
-            AvatarImage(
-                avatarUrl = currentMember.avatarUrl,
-                contentDescription = "成员头像",
-                size = 40.dp
-            )
-            Text(
-                text = currentMember.name,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 16.dp)
-            )
-        }
-        IconButton(onClick = onMemberSwitch) {
-            Icon(
-                imageVector = Icons.Default.SwapHoriz,
-                contentDescription = "切换成员",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
+
 
 @Composable
 fun FunctionModulesSection(
@@ -435,7 +400,7 @@ fun DynamicSection(
                     DynamicItem(
                         title = dynamic.title.ifEmpty { "无标题" },
                         content = dynamic.content,
-                        time = dynamic.createdAt.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm")),
+                        time = com.selves.xnn.util.TimeFormatter.formatDetailDateTime(dynamic.createdAt),
                         authorName = dynamic.authorName
                     )
                 }

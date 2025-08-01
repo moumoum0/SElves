@@ -751,19 +751,7 @@ class MainViewModel @Inject constructor(
     
     // 格式化时间显示
     fun formatMessageTime(timestamp: Long): String {
-        val now = System.currentTimeMillis()
-        val diff = now - timestamp
-        
-        return when {
-            diff < 60 * 1000 -> "刚刚" // 1分钟内
-            diff < 60 * 60 * 1000 -> "${diff / (60 * 1000)}分钟前" // 1小时内
-            diff < 24 * 60 * 60 * 1000 -> "${diff / (60 * 60 * 1000)}小时前" // 24小时内
-            else -> {
-                val calendar = java.util.Calendar.getInstance()
-                calendar.timeInMillis = timestamp
-                "${calendar.get(java.util.Calendar.MONTH) + 1}/${calendar.get(java.util.Calendar.DAY_OF_MONTH)}"
-            }
-        }
+        return com.selves.xnn.util.TimeFormatter.formatTimestamp(timestamp)
     }
     
     // 标记群组所有消息为已读

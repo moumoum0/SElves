@@ -287,7 +287,7 @@ fun CreateVoteDialog(
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = endTime?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) 
+                                        text = endTime?.let { com.selves.xnn.util.TimeFormatter.formatDetailDateTime(it) } 
                                                ?: "不限制",
                                         fontSize = 12.sp,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -332,7 +332,7 @@ fun CreateVoteDialog(
             title = { Text("选择结束时间") },
             text = {
                 Column {
-                    Text("当前时间: ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))}")
+                    Text("当前时间: ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(LocalDateTime.now())}")
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("您可以选择一个未来的时间作为投票结束时间")
                 }

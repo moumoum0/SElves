@@ -300,17 +300,5 @@ private fun formatOnlineTime(minutes: Int): String {
 }
 
 private fun formatLastActiveTime(timestamp: Long): String {
-    val now = System.currentTimeMillis()
-    val diff = now - timestamp
-    
-    return when {
-        diff < 60 * 1000 -> "刚刚"
-        diff < 60 * 60 * 1000 -> "${diff / (60 * 1000)}分钟前"
-        diff < 24 * 60 * 60 * 1000 -> "${diff / (60 * 60 * 1000)}小时前"
-        else -> {
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = timestamp
-            SimpleDateFormat("MM/dd HH:mm", Locale.getDefault()).format(calendar.time)
-        }
-    }
+    return com.selves.xnn.util.TimeFormatter.formatTimestamp(timestamp)
 } 

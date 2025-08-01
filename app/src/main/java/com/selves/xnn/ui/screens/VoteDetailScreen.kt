@@ -228,7 +228,7 @@ fun VoteDetailCard(
                             fontSize = 16.sp
                         )
                         Text(
-                            text = vote.createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                            text = com.selves.xnn.util.TimeFormatter.formatDetailDateTime(vote.createdAt),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 12.sp
                         )
@@ -325,7 +325,7 @@ fun VoteDetailCard(
                 // 结束时间
                 vote.endTime?.let { endTime ->
                     Text(
-                        text = "截止 ${endTime.format(DateTimeFormatter.ofPattern("MM-dd HH:mm"))}",
+                        text = "截止 ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(endTime)}",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -580,7 +580,7 @@ fun VoteRecordItem(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = record.votedAt.format(DateTimeFormatter.ofPattern("MM-dd HH:mm")),
+                text = com.selves.xnn.util.TimeFormatter.formatDetailDateTime(record.votedAt),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

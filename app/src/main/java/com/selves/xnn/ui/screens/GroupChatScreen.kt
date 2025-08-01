@@ -26,6 +26,7 @@ import com.selves.xnn.model.Member
 import com.selves.xnn.model.MessageType
 import com.selves.xnn.ui.components.CreateGroupDialog
 import com.selves.xnn.ui.components.AvatarImage
+import com.selves.xnn.ui.components.UserInfoHeader
 import com.selves.xnn.ui.viewmodels.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,37 +71,10 @@ fun GroupChatScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             // 顶部成员信息栏
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onMemberSwitch() }
-                ) {
-                    AvatarImage(
-                        avatarUrl = currentMember.avatarUrl,
-                        contentDescription = "成员头像",
-                        size = 40.dp
-                    )
-                    Text(
-                        text = currentMember.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(start = 16.dp)
-                    )
-                }
-                IconButton(onClick = onMemberSwitch) {
-                    Icon(
-                        imageVector = Icons.Default.SwapHoriz,
-                        contentDescription = "切换成员",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            UserInfoHeader(
+                currentMember = currentMember,
+                onMemberSwitch = onMemberSwitch
+            )
 
             // 群聊列表
             if (groups.isEmpty()) {

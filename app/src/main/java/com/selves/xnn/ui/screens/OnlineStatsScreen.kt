@@ -228,19 +228,7 @@ private fun formatOnlineTime(minutes: Int): String {
 }
 
 private fun formatLastActiveTime(timestamp: Long): String {
-    val now = System.currentTimeMillis()
-    val diff = now - timestamp
-    
-    return when {
-        diff < 60 * 1000 -> "刚刚"
-        diff < 60 * 60 * 1000 -> "${diff / (60 * 1000)}分钟前"
-        diff < 24 * 60 * 60 * 1000 -> "${diff / (60 * 60 * 1000)}小时前"
-        else -> {
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = timestamp
-            SimpleDateFormat("MM/dd HH:mm", Locale.getDefault()).format(calendar.time)
-        }
-    }
+    return com.selves.xnn.util.TimeFormatter.formatTimestamp(timestamp)
 }
 
 @Composable
@@ -396,7 +384,7 @@ fun LoginLogItem(loginLog: LoginLog) {
                 
                 // 登录时间
                 Text(
-                    text = "登录: ${loginLog.loginTime.format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}",
+                    text = "登录: ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(loginLog.loginTime)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -411,7 +399,7 @@ fun LoginLogItem(loginLog: LoginLog) {
                 } else {
                     loginLog.logoutTime?.let { logoutTime ->
                         Text(
-                            text = "登出: ${logoutTime.format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))} • 时长: ${formatDuration(loginLog.duration)}",
+                            text = "登出: ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(logoutTime)} • 时长: ${formatDuration(loginLog.duration)}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

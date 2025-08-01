@@ -485,8 +485,7 @@ fun TodoItem(
 }
 
 private fun formatTime(timestamp: Long): String {
-    val formatter = SimpleDateFormat("MM/dd HH:mm", Locale.getDefault())
-    return formatter.format(Date(timestamp))
+    return com.selves.xnn.util.TimeFormatter.formatTimestamp(timestamp)
 }
 
 @Composable
