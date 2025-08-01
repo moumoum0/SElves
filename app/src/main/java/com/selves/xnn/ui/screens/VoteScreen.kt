@@ -25,17 +25,26 @@ import com.selves.xnn.model.Member
 import com.selves.xnn.model.Vote
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.CreateVoteDialog
+import com.selves.xnn.ui.components.QuickMemberSwitch
 import com.selves.xnn.viewmodel.VoteViewModel
+import com.selves.xnn.data.MemberPreferences
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VoteScreen(
     currentMember: Member?,
+    members: List<Member> = emptyList(),
     onBackClick: () -> Unit = {},
     onVoteClick: (String) -> Unit = {},
+    onMemberSelected: (Member) -> Unit = {},
     voteViewModel: VoteViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val memberPreferences = remember { MemberPreferences(context) }
+    val quickMemberSwitchEnabled by memberPreferences.quickMemberSwitchEnabled.collectAsState(initial = false)
     val uiState by voteViewModel.uiState.collectAsState()
     val filteredVotes by voteViewModel.filteredVotes.collectAsState()
     val searchQuery by voteViewModel.searchQuery.collectAsState()
@@ -97,7 +106,7 @@ fun VoteScreen(
                 }
             }
         ) { paddingValues ->
-            // 投票列表
+            // 投票列表（根据设置显示快捷切换成员）
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier

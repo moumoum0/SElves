@@ -22,10 +22,19 @@ class SettingsViewModel @Inject constructor(
     private val _showThemeModeDialog = MutableStateFlow(false)
     val showThemeModeDialog: StateFlow<Boolean> = _showThemeModeDialog.asStateFlow()
     
+    private val _quickMemberSwitchEnabled = MutableStateFlow(false)
+    val quickMemberSwitchEnabled: StateFlow<Boolean> = _quickMemberSwitchEnabled.asStateFlow()
+    
     init {
         viewModelScope.launch {
             memberPreferences.themeMode.collect { mode ->
                 _themeMode.value = mode
+            }
+        }
+        
+        viewModelScope.launch {
+            memberPreferences.quickMemberSwitchEnabled.collect { enabled ->
+                _quickMemberSwitchEnabled.value = enabled
             }
         }
     }
@@ -42,5 +51,11 @@ class SettingsViewModel @Inject constructor(
     
     fun hideThemeModeDialog() {
         _showThemeModeDialog.value = false
+    }
+    
+    fun setQuickMemberSwitchEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            memberPreferences.saveQuickMemberSwitchEnabled(enabled)
+        }
     }
 } 

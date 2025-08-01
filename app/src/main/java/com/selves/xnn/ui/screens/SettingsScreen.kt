@@ -27,6 +27,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val showThemeModeDialog by viewModel.showThemeModeDialog.collectAsState()
+    val quickMemberSwitchEnabled by viewModel.quickMemberSwitchEnabled.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -79,11 +80,14 @@ fun SettingsScreen(
             }
             
             item {
-                SettingsItem(
+                SettingsSwitchItem(
                     icon = Icons.Default.SwapHoriz,
                     title = "快捷切换成员",
-                    subtitle = "设置默认成员和快捷切换",
-                    onClick = { /* TODO: 实现快捷切换成员设置 */ }
+                    subtitle = "在投票和聊天界面显示快捷成员切换",
+                    checked = quickMemberSwitchEnabled,
+                    onCheckedChange = { enabled ->
+                        viewModel.setQuickMemberSwitchEnabled(enabled)
+                    }
                 )
             }
             

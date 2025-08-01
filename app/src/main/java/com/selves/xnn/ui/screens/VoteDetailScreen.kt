@@ -26,7 +26,10 @@ import com.selves.xnn.model.Vote
 import com.selves.xnn.model.VoteOption
 import com.selves.xnn.model.VoteRecord
 import com.selves.xnn.ui.components.AvatarImage
+import com.selves.xnn.ui.components.QuickMemberSwitch
 import com.selves.xnn.viewmodel.VoteViewModel
+import com.selves.xnn.data.MemberPreferences
+import androidx.compose.ui.platform.LocalContext
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,9 +37,14 @@ import java.time.format.DateTimeFormatter
 fun VoteDetailScreen(
     voteId: String,
     currentMember: Member?,
+    members: List<Member> = emptyList(),
     onBackClick: () -> Unit = {},
+    onMemberSelected: (Member) -> Unit = {},
     voteViewModel: VoteViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val memberPreferences = remember { MemberPreferences(context) }
+    val quickMemberSwitchEnabled by memberPreferences.quickMemberSwitchEnabled.collectAsState(initial = false)
     val uiState by voteViewModel.uiState.collectAsState()
     val vote by voteViewModel.getVoteWithOptions(voteId).collectAsState(initial = null)
     val voteRecords by voteViewModel.getVoteRecords(voteId).collectAsState(initial = emptyList())
@@ -73,6 +81,16 @@ fun VoteDetailScreen(
                     }
                 },
                 actions = {
+                    // 快捷成员切换组件
+                    if (quickMemberSwitchEnabled && currentMember != null) {
+                        QuickMemberSwitch(
+                            currentMember = currentMember,
+                            members = members,
+                            onMemberSelected = onMemberSelected,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
+                    
                     vote?.let { currentVote ->
                         if (currentVote.isActive && !currentVote.hasVoted) {
                             TextButton(

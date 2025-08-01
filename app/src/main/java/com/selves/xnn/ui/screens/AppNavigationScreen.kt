@@ -112,11 +112,15 @@ fun AppNavigationScreen(
             composable("vote") {
                 VoteScreen(
                     currentMember = currentMember,
+                    members = members,
                     onBackClick = {
                         navController.popBackStack()
                     },
                     onVoteClick = { voteId ->
                         navController.navigate("vote_detail/$voteId")
+                    },
+                    onMemberSelected = { member ->
+                        viewModel.setCurrentMember(member)
                     }
                 )
             }
@@ -131,8 +135,12 @@ fun AppNavigationScreen(
                 VoteDetailScreen(
                     voteId = voteId,
                     currentMember = currentMember,
+                    members = members,
                     onBackClick = {
                         navController.popBackStack()
+                    },
+                    onMemberSelected = { member ->
+                        viewModel.setCurrentMember(member)
                     }
                 )
             }
@@ -181,6 +189,9 @@ fun AppNavigationScreen(
                         },
                         onNavigateBack = {
                             navController.popBackStack()
+                        },
+                        onMemberSelected = { member ->
+                            viewModel.setCurrentMember(member)
                         }
                     )
                 }

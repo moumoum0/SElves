@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,7 @@ class MemberPreferences(private val context: Context) {
     companion object {
         private val CURRENT_MEMBER_ID = stringPreferencesKey("current_member_id")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
+        private val QUICK_MEMBER_SWITCH_ENABLED = booleanPreferencesKey("quick_member_switch_enabled")
     }
     
     /**
@@ -67,6 +69,23 @@ class MemberPreferences(private val context: Context) {
     suspend fun saveThemeMode(themeMode: ThemeMode) {
         context.dataStore.edit { preferences ->
             preferences[THEME_MODE] = themeMode.name
+        }
+    }
+    
+    /**
+     * 获取快捷切换成员是否启用
+     */
+    val quickMemberSwitchEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[QUICK_MEMBER_SWITCH_ENABLED] ?: false
+        }
+    
+    /**
+     * 保存快捷切换成员启用状态
+     */
+    suspend fun saveQuickMemberSwitchEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[QUICK_MEMBER_SWITCH_ENABLED] = enabled
         }
     }
 } 

@@ -55,6 +55,8 @@ import com.selves.xnn.util.ImageUtils
 import com.selves.xnn.ui.components.MessageAvatarImage
 import com.selves.xnn.ui.components.GroupManagementDialog
 import com.selves.xnn.ui.components.ImageViewer
+import com.selves.xnn.ui.components.QuickMemberSwitch
+import com.selves.xnn.data.MemberPreferences
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -71,8 +73,12 @@ fun ChatScreen(
     onRemoveMembers: (List<Member>) -> Unit = {},
     onUpdateGroupName: (String) -> Unit = {},
     onDeleteGroup: () -> Unit = {},
-    onNavigateBack: () -> Unit = {}
+    onNavigateBack: () -> Unit = {},
+    onMemberSelected: (Member) -> Unit = {}
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val memberPreferences = remember { MemberPreferences(context) }
+    val quickMemberSwitchEnabled by memberPreferences.quickMemberSwitchEnabled.collectAsState(initial = false)
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     var previewImagePath by remember { mutableStateOf<String?>(null) }
@@ -137,15 +143,25 @@ fun ChatScreen(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 图片选择按钮
-                IconButton(
-                    onClick = { imagePickerLauncher.launch("image/*") }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Image,
-                        contentDescription = "发送图片",
-                        tint = MaterialTheme.colorScheme.primary
+                // 快捷成员切换（当启用时显示在最左边）
+                if (quickMemberSwitchEnabled) {
+                    QuickMemberSwitch(
+                        currentMember = currentMember,
+                        members = group.members, // 只显示当前群聊的成员
+                        onMemberSelected = onMemberSelected,
+                        modifier = Modifier.padding(end = 8.dp)
                     )
+                } else {
+                    // 图片选择按钮（默认位置）
+                    IconButton(
+                        onClick = { imagePickerLauncher.launch("image/*") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "发送图片",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
                 
                 OutlinedTextField(
@@ -155,6 +171,19 @@ fun ChatScreen(
                     placeholder = { Text("输入消息") },
                     maxLines = 5
                 )
+                
+                // 当启用快捷切换时，图片按钮移到这里
+                if (quickMemberSwitchEnabled) {
+                    IconButton(
+                        onClick = { imagePickerLauncher.launch("image/*") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "发送图片",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
                 
                 IconButton(
                     onClick = {
