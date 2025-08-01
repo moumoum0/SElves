@@ -21,7 +21,7 @@ fun UserInfoHeader(
     currentMember: Member,
     onMemberSwitch: () -> Unit,
     modifier: Modifier = Modifier,
-    backgroundColor: Color = Color.White,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
     showSwitchButton: Boolean = true
 ) {
     Row(

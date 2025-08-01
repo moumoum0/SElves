@@ -63,7 +63,7 @@ fun CreateSystemDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -97,7 +97,7 @@ fun CreateSystemDialog(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
             

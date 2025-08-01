@@ -171,7 +171,7 @@ fun VoteTopBar(
         // 主导航栏
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = Color.White,
+            color = MaterialTheme.colorScheme.surface,
             shadowElevation = 4.dp
         ) {
             TopAppBar(
@@ -253,7 +253,7 @@ fun VoteTopBar(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -261,7 +261,7 @@ fun VoteTopBar(
         // 过滤标签栏
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = Color.White
+            color = MaterialTheme.colorScheme.surface
         ) {
             Row(
                 modifier = Modifier

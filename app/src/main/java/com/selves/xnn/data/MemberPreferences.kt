@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import com.selves.xnn.model.ThemeMode
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "member_preferences")
 
@@ -18,6 +19,7 @@ class MemberPreferences(private val context: Context) {
     
     companion object {
         private val CURRENT_MEMBER_ID = stringPreferencesKey("current_member_id")
+        private val THEME_MODE = stringPreferencesKey("theme_mode")
     }
     
     /**
@@ -43,6 +45,28 @@ class MemberPreferences(private val context: Context) {
     suspend fun clearCurrentMemberId() {
         context.dataStore.edit { preferences ->
             preferences.remove(CURRENT_MEMBER_ID)
+        }
+    }
+    
+    /**
+     * 获取主题模式
+     */
+    val themeMode: Flow<ThemeMode> = context.dataStore.data
+        .map { preferences ->
+            val themeModeString = preferences[THEME_MODE] ?: ThemeMode.SYSTEM.name
+            try {
+                ThemeMode.valueOf(themeModeString)
+            } catch (e: IllegalArgumentException) {
+                ThemeMode.SYSTEM
+            }
+        }
+    
+    /**
+     * 保存主题模式
+     */
+    suspend fun saveThemeMode(themeMode: ThemeMode) {
+        context.dataStore.edit { preferences ->
+            preferences[THEME_MODE] = themeMode.name
         }
     }
 } 

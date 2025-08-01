@@ -439,7 +439,11 @@ fun TodoItem(
                                     TodoPriority.LOW -> "不急"
                                     else -> ""
                                 },
-                                color = Color.White,
+                                color = when (todo.priority) {
+                                    TodoPriority.HIGH -> MaterialTheme.colorScheme.onError
+                                    TodoPriority.LOW -> MaterialTheme.colorScheme.onSurface
+                                    else -> MaterialTheme.colorScheme.onSurface
+                                },
                                 fontSize = 10.sp,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
@@ -558,7 +562,11 @@ fun TodoDetailBottomSheet(
                         TodoPriority.LOW -> "不急"
                         else -> "一般"
                     },
-                    color = Color.White,
+                    color = when (todo.priority) {
+                        TodoPriority.HIGH -> MaterialTheme.colorScheme.onError
+                        TodoPriority.LOW -> MaterialTheme.colorScheme.onSurface
+                        else -> MaterialTheme.colorScheme.onSecondary
+                    },
                     fontSize = 12.sp,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                 )

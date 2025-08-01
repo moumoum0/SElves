@@ -52,7 +52,7 @@ fun CreateVoteDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier.fillMaxSize()
@@ -60,7 +60,7 @@ fun CreateVoteDialog(
             // 顶部工具栏
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 4.dp
             ) {
                 TopAppBar(
@@ -100,7 +100,7 @@ fun CreateVoteDialog(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             }

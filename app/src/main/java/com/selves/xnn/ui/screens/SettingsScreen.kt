@@ -13,13 +13,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.selves.xnn.ui.viewmodels.SettingsViewModel
+import com.selves.xnn.ui.components.ThemeModeDialog
+import com.selves.xnn.model.getDisplayName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToAbout: () -> Unit = {}
+    onNavigateToAbout: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val themeMode by viewModel.themeMode.collectAsState()
+    val showThemeModeDialog by viewModel.showThemeModeDialog.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,12 +70,11 @@ fun SettingsScreen(
             }
             
             item {
-                SettingsSwitchItem(
+                SettingsItem(
                     icon = Icons.Default.DarkMode,
                     title = "深色模式",
-                    subtitle = "跟随系统或手动设置",
-                    checked = false, // TODO: 绑定实际状态
-                    onCheckedChange = { /* TODO: 实现深色模式切换 */ }
+                    subtitle = themeMode.getDisplayName(),
+                    onClick = { viewModel.showThemeModeDialog() }
                 )
             }
             
@@ -129,6 +135,16 @@ fun SettingsScreen(
                 )
             }
         }
+        
+        // 主题模式选择对话框
+        ThemeModeDialog(
+            isOpen = showThemeModeDialog,
+            selectedThemeMode = themeMode,
+            onThemeModeSelected = { selectedMode ->
+                viewModel.setThemeMode(selectedMode)
+            },
+            onDismiss = { viewModel.hideThemeModeDialog() }
+        )
     }
 }
 

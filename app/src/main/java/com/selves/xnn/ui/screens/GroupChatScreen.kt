@@ -170,7 +170,7 @@ fun GroupItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

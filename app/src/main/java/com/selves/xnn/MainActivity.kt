@@ -11,18 +11,27 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
 import com.selves.xnn.ui.screens.AppNavigationScreen
 import com.selves.xnn.ui.theme.SelvesTheme
+import com.selves.xnn.ui.theme.shouldUseDarkTheme
 import com.selves.xnn.ui.viewmodels.MainViewModel
+import com.selves.xnn.data.MemberPreferences
+import com.selves.xnn.model.ThemeMode
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    
+    @Inject
+    lateinit var memberPreferences: MemberPreferences
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,19 +48,22 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            SelvesTheme {
+            val themeMode by memberPreferences.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+            
+            SelvesTheme(themeMode = themeMode) {
                 val systemUiController = rememberSystemUiController()
-                val isDarkTheme = isSystemInDarkTheme()
+                val isDarkTheme = shouldUseDarkTheme(themeMode)
                 val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
+                val surfaceColor = MaterialTheme.colorScheme.surface
 
                 SideEffect {
-                    // 设置状态栏为白色
+                    // 根据主题模式设置状态栏颜色
                     systemUiController.setStatusBarColor(
-                        color = Color.White,
-                        darkIcons = true // 因为背景是白色，所以图标使用深色
+                        color = if (isDarkTheme) surfaceColor else Color.White,
+                        darkIcons = !isDarkTheme
                     )
                     
-                    // 导航栏仍然使用surfaceVariant颜色
+                    // 导航栏使用surfaceVariant颜色
                     systemUiController.setNavigationBarColor(
                         color = surfaceVariantColor,
                         darkIcons = !isDarkTheme

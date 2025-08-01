@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import com.selves.xnn.model.ThemeMode
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -33,13 +34,26 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+/**
+ * 根据主题模式确定是否使用深色主题
+ */
+@Composable
+fun shouldUseDarkTheme(themeMode: ThemeMode): Boolean {
+    return when (themeMode) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
+}
+
 @Composable
 fun SelvesTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val darkTheme = shouldUseDarkTheme(themeMode)
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
