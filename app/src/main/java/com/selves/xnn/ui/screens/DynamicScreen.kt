@@ -16,14 +16,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.model.Dynamic
 import com.selves.xnn.model.DynamicType
+import com.selves.xnn.model.Member
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.EditDynamicDialog
 import com.selves.xnn.ui.components.DynamicImageGrid
@@ -34,9 +38,9 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DynamicScreen(
-    currentMember: com.selves.xnn.model.Member?,
-    onBackClick: () -> Unit = {},
-    onDynamicClick: (String) -> Unit = {},
+    currentMember: Member?,
+    onDynamicClick: (String) -> Unit,
+    onNavigateBack: () -> Unit,
     dynamicViewModel: DynamicViewModel = hiltViewModel()
 ) {
     val uiState by dynamicViewModel.uiState.collectAsState()
@@ -47,6 +51,8 @@ fun DynamicScreen(
     var showSearchBar by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var previewImagePath by remember { mutableStateOf<String?>(null) }
+    var previewImagePosition by remember { mutableStateOf<Offset?>(null) }
+    var previewImageSize by remember { mutableStateOf<DpSize?>(null) }
     
     // 设置当前用户
     LaunchedEffect(currentMember?.id) {
@@ -82,7 +88,7 @@ fun DynamicScreen(
                     showSearchBar = showSearchBar,
                     searchQuery = searchQuery,
                     filterType = filterType,
-                    onBackClick = onBackClick,
+                    onBackClick = onNavigateBack,
                     onSearchClick = { showSearchBar = !showSearchBar },
                     onSearchChange = { dynamicViewModel.searchDynamics(it) },
                     onFilterChange = { dynamicViewModel.setFilterType(it) },
@@ -125,7 +131,11 @@ fun DynamicScreen(
                             onLikeClick = { dynamicViewModel.toggleLike(dynamic.id) },
                             onCommentClick = { onDynamicClick(dynamic.id) },
                             onDeleteClick = { dynamicViewModel.deleteDynamic(dynamic.id) },
-                            onImageClick = { imagePath -> previewImagePath = imagePath },
+                            onImageClick = { imagePath, position, size -> 
+                                previewImagePath = imagePath
+                                previewImagePosition = position
+                                previewImageSize = size
+                            },
                             onCardClick = { onDynamicClick(dynamic.id) }
                         )
                     }
@@ -163,7 +173,13 @@ fun DynamicScreen(
     previewImagePath?.let { imagePath ->
         ImageViewer(
             imagePath = imagePath,
-            onBack = { previewImagePath = null }
+            onBack = { 
+                previewImagePath = null
+                previewImagePosition = null
+                previewImageSize = null
+            },
+            startPosition = previewImagePosition,
+            startSize = previewImageSize
         )
     }
 }
@@ -306,7 +322,7 @@ fun DynamicCard(
     onLikeClick: () -> Unit,
     onCommentClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onImageClick: (String) -> Unit = {},
+    onImageClick: (String, Offset, DpSize) -> Unit = { _, _, _ -> },
     onCardClick: () -> Unit = {}
 ) {
     Card(

@@ -36,6 +36,14 @@ import coil.compose.AsyncImage
 
 import com.selves.xnn.util.ImageUtils
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -319,7 +327,7 @@ fun ImageItem(
 @Composable
 fun DynamicImageGrid(
     imagePaths: List<String>,
-    onImageClick: (String) -> Unit = {},
+    onImageClick: (String, Offset, DpSize) -> Unit = { _, _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -331,7 +339,7 @@ fun DynamicImageGrid(
             // 单张图片 - 显示最大尺寸
             SingleImageItem(
                 imagePath = imagePaths[0],
-                onClick = { onImageClick(imagePaths[0]) },
+                onClick = { position, size -> onImageClick(imagePaths[0], position, size) },
                 modifier = modifier.height(300.dp) // 增加高度，显示更大
             )
         }
@@ -355,7 +363,7 @@ fun DynamicImageGrid(
                         rowImages.forEach { imagePath ->
                             GridImageItem(
                                 imagePath = imagePath,
-                                onClick = { onImageClick(imagePath) },
+                                onClick = { position, size -> onImageClick(imagePath, position, size) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -391,9 +399,69 @@ fun DynamicImageGrid(
                         rowImages.forEach { imagePath ->
                             GridImageItem(
                                 imagePath = imagePath,
-                                onClick = { onImageClick(imagePath) },
+                                onClick = { position, size -> onImageClick(imagePath, position, size) },
                                 modifier = Modifier.weight(1f)
                             )
+                        }
+                        // 如果这一行不满3个，添加空白占位符
+                        repeat(itemsPerRow - rowImages.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+        else -> {
+            // 超过9张图片，显示前8张和剩余数量  
+            val displayImages = imagePaths.take(8)
+            val remainingCount = imagePaths.size - 8
+            val rows = 3
+            val itemsPerRow = 3
+            
+            Column(
+                modifier = modifier,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                for (rowIndex in 0 until rows) {
+                    val startIndex = rowIndex * itemsPerRow
+                    val endIndex = minOf(startIndex + itemsPerRow, displayImages.size)
+                    val rowImages = displayImages.subList(startIndex, endIndex)
+                    
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        rowImages.forEachIndexed { index, imagePath ->
+                            if (rowIndex == 2 && index == 2 && remainingCount > 0) {
+                                // 最后一张显示剩余数量
+                                Box(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    GridImageItem(
+                                        imagePath = imagePath,
+                                        onClick = { position, size -> onImageClick(imagePath, position, size) },
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = 0.6f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = "+$remainingCount",
+                                            color = Color.White,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            } else {
+                                GridImageItem(
+                                    imagePath = imagePath,
+                                    onClick = { position, size -> onImageClick(imagePath, position, size) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                         // 如果这一行不满3个，添加空白占位符
                         repeat(itemsPerRow - rowImages.size) {
@@ -409,16 +477,34 @@ fun DynamicImageGrid(
 @Composable
 private fun SingleImageItem(
     imagePath: String,
-    onClick: () -> Unit,
+    onClick: (Offset, DpSize) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
+    var imageSize by remember { mutableStateOf(DpSize.Zero) }
+    var imagePosition by remember { mutableStateOf(Offset.Zero) }
     
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .clickable { onClick() },
+            .onSizeChanged { size ->
+                imageSize = with(density) {
+                    DpSize(size.width.toDp(), size.height.toDp())
+                }
+            }
+            .onGloballyPositioned { layoutCoordinates ->
+                imagePosition = layoutCoordinates.positionInRoot()
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { 
+                        // 传递图片的实际位置和大小，而不是点击位置
+                        onClick(imagePosition, imageSize)
+                    }
+                )
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         val imageRequest = remember(imagePath) {
@@ -452,16 +538,34 @@ private fun SingleImageItem(
 @Composable
 private fun GridImageItem(
     imagePath: String,
-    onClick: () -> Unit,
+    onClick: (Offset, DpSize) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
+    var imageSize by remember { mutableStateOf(DpSize.Zero) }
+    var imagePosition by remember { mutableStateOf(Offset.Zero) }
     
     Card(
         modifier = modifier
             .aspectRatio(1f)
             .clip(RoundedCornerShape(8.dp))
-            .clickable { onClick() },
+            .onSizeChanged { size ->
+                imageSize = with(density) {
+                    DpSize(size.width.toDp(), size.height.toDp())
+                }
+            }
+            .onGloballyPositioned { layoutCoordinates ->
+                imagePosition = layoutCoordinates.positionInRoot()
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { 
+                        // 传递图片的实际位置和大小，而不是点击位置
+                        onClick(imagePosition, imageSize)
+                    }
+                )
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         val imageRequest = remember(imagePath) {

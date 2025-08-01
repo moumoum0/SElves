@@ -14,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,8 +45,10 @@ fun DynamicDetailScreen(
     val comments by dynamicViewModel.getComments(dynamicId).collectAsState(initial = emptyList())
     
     var commentText by remember { mutableStateOf("") }
-    var previewImagePath by remember { mutableStateOf<String?>(null) }
     var replyToComment by remember { mutableStateOf<DynamicComment?>(null) }
+    var previewImagePath by remember { mutableStateOf<String?>(null) }
+    var previewImagePosition by remember { mutableStateOf<Offset?>(null) }
+    var previewImageSize by remember { mutableStateOf<DpSize?>(null) }
     
     // 查找当前动态
     val currentDynamic = dynamics.find { it.id == dynamicId }
@@ -110,7 +114,11 @@ fun DynamicDetailScreen(
                             dynamic = currentDynamic,
                             currentUserId = currentMember?.id,
                             onLikeClick = { dynamicViewModel.toggleLike(currentDynamic.id) },
-                            onImageClick = { imagePath -> previewImagePath = imagePath },
+                            onImageClick = { imagePath, position, size ->
+                                previewImagePath = imagePath
+                                previewImagePosition = position
+                                previewImageSize = size
+                            },
                             onDeleteClick = { 
                                 dynamicViewModel.deleteDynamic(currentDynamic.id)
                                 onBackClick()
@@ -195,7 +203,13 @@ fun DynamicDetailScreen(
     previewImagePath?.let { imagePath ->
         ImageViewer(
             imagePath = imagePath,
-            onBack = { previewImagePath = null }
+            onBack = { 
+                previewImagePath = null
+                previewImagePosition = null
+                previewImageSize = null
+            },
+            startPosition = previewImagePosition,
+            startSize = previewImageSize
         )
     }
     
@@ -213,7 +227,7 @@ fun DynamicDetailCard(
     dynamic: Dynamic,
     currentUserId: String?,
     onLikeClick: () -> Unit,
-    onImageClick: (String) -> Unit,
+    onImageClick: (String, Offset, DpSize) -> Unit,
     onDeleteClick: () -> Unit
 ) {
     Card(

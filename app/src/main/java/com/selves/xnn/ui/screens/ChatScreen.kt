@@ -25,14 +25,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
@@ -71,6 +76,8 @@ fun ChatScreen(
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     var previewImagePath by remember { mutableStateOf<String?>(null) }
+    var previewImagePosition by remember { mutableStateOf<Offset?>(null) }
+    var previewImageSize by remember { mutableStateOf<DpSize?>(null) }
     var showGroupManagement by remember { mutableStateOf(false) }
     
     // 图片选择器
@@ -107,8 +114,10 @@ fun ChatScreen(
                     isFromCurrentMember = message.senderId == currentMember.id,
                     sender = members.find { it.id == message.senderId },
                     onDeleteMessage = onDeleteMessage,
-                    onImageClick = { imagePath ->
+                    onImageClick = { imagePath, position, size ->
                         previewImagePath = imagePath
+                        previewImagePosition = position
+                        previewImageSize = size
                     },
                     currentMember = currentMember,
                     members = members
@@ -175,9 +184,15 @@ fun ChatScreen(
         
         ImageViewer(
             imagePath = imagePath,
-            onBack = { previewImagePath = null },
+            onBack = { 
+                previewImagePath = null
+                previewImagePosition = null
+                previewImageSize = null
+            },
             senderName = sender?.name ?: "未知成员",
-            timestamp = imageMessage?.timestamp ?: 0L
+            timestamp = imageMessage?.timestamp ?: 0L,
+            startPosition = previewImagePosition,
+            startSize = previewImageSize
         )
     }
     
@@ -202,7 +217,7 @@ fun MessageItem(
     isFromCurrentMember: Boolean,
     sender: Member?,
     onDeleteMessage: (String) -> Unit,
-    onImageClick: (String) -> Unit = {},
+    onImageClick: (String, Offset, DpSize) -> Unit = { _, _, _ -> },
     currentMember: Member,
     members: List<Member>
 ) {
@@ -299,7 +314,7 @@ fun MessageBubble(
     message: Message,
     isFromCurrentMember: Boolean,
     onLongClick: () -> Unit,
-    onImageClick: (String) -> Unit = {}
+    onImageClick: (String, Offset, DpSize) -> Unit = { _, _, _ -> }
 ) {
     val bubbleColor = if (isFromCurrentMember) {
         MaterialTheme.colorScheme.primary
@@ -382,9 +397,10 @@ fun MessageBubble(
 fun ImageMessage(
     imagePath: String?,
     contentColor: Color,
-    onImageClick: (String) -> Unit = {}
+    onImageClick: (String, Offset, DpSize) -> Unit = { _, _, _ -> }
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
     
     if (imagePath != null) {
         val imageRequest = remember(imagePath) {
@@ -392,16 +408,28 @@ fun ImageMessage(
         }
         
         if (imageRequest != null) {
+            var imageSize by remember { mutableStateOf(DpSize.Zero) }
+            var imagePosition by remember { mutableStateOf(Offset.Zero) }
+            
             AsyncImage(
                 model = imageRequest,
                 contentDescription = "消息图片",
                 modifier = Modifier
                     .size(200.dp)
                     .clip(RoundedCornerShape(8.dp))
+                    .onSizeChanged { size ->
+                        imageSize = with(density) {
+                            DpSize(size.width.toDp(), size.height.toDp())
+                        }
+                    }
+                    .onGloballyPositioned { layoutCoordinates ->
+                        imagePosition = layoutCoordinates.positionInRoot()
+                    }
                     .pointerInput(Unit) {
                         detectTapGestures(
-                            onTap = {
-                                onImageClick(imagePath)
+                            onTap = { 
+                                // 传递图片的实际位置和大小，而不是点击位置
+                                onImageClick(imagePath, imagePosition, imageSize)
                             }
                         )
                     },

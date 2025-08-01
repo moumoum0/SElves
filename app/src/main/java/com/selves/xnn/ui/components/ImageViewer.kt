@@ -1,5 +1,6 @@
 package com.selves.xnn.ui.components
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -11,15 +12,20 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.selves.xnn.util.ImageUtils
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,6 +38,8 @@ import java.util.*
  * @param showAsDialog 是否以Dialog形式显示，默认为true
  * @param senderName 发送者名称，可选
  * @param timestamp 时间戳，可选
+ * @param startPosition 动画起始位置，可选
+ * @param startSize 动画起始大小，可选
  */
 @Composable
 fun ImageViewer(
@@ -40,7 +48,9 @@ fun ImageViewer(
     onDismiss: () -> Unit = onBack,
     showAsDialog: Boolean = true,
     senderName: String? = null,
-    timestamp: Long? = null
+    timestamp: Long? = null,
+    startPosition: Offset? = null,
+    startSize: androidx.compose.ui.unit.DpSize? = null
 ) {
     val content = @Composable {
         ImageViewerContent(
@@ -48,7 +58,9 @@ fun ImageViewer(
             onBack = onBack,
             onDismiss = onDismiss,
             senderName = senderName,
-            timestamp = timestamp
+            timestamp = timestamp,
+            startPosition = startPosition,
+            startSize = startSize
         )
     }
     
@@ -73,23 +85,101 @@ private fun ImageViewerContent(
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     senderName: String? = null,
-    timestamp: Long? = null
+    timestamp: Long? = null,
+    startPosition: Offset? = null,
+    startSize: androidx.compose.ui.unit.DpSize? = null
 ) {
     val context = LocalContext.current
+    val density = LocalDensity.current
+    val configuration = LocalConfiguration.current
+    
+    // 屏幕尺寸
+    val screenWidth = configuration.screenWidthDp.dp
+    val screenHeight = configuration.screenHeightDp.dp
+    val screenCenterX = screenWidth / 2
+    val screenCenterY = screenHeight / 2
+    
+    // 动画状态
+    var animationStarted by remember { mutableStateOf(false) }
+    
+    // 计算初始位置偏移（相对于屏幕中心）
+    val initialOffsetX = startPosition?.let { 
+        // 从图片中心开始动画，所以要加上图片宽度的一半
+        val imageCenterX = with(density) { it.x.toDp() } + (startSize?.width ?: 0.dp) / 2
+        imageCenterX - screenCenterX 
+    } ?: 0.dp
+    
+    val initialOffsetY = startPosition?.let { 
+        // 从图片中心开始动画，所以要加上图片高度的一半
+        val imageCenterY = with(density) { it.y.toDp() } + (startSize?.height ?: 0.dp) / 2
+        imageCenterY - screenCenterY 
+    } ?: 0.dp
+    
+    // 计算初始缩放比例
+    val initialScale = startSize?.let { 
+        // 使用较小的维度来计算缩放比例，确保图片完全可见
+        minOf(
+            it.width / screenWidth, 
+            it.height / screenHeight
+        )
+    } ?: 0.1f
+    
+    // 位置动画
+    val animatedOffsetX by animateDpAsState(
+        targetValue = if (animationStarted) 0.dp else initialOffsetX,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "offsetX"
+    )
+    
+    val animatedOffsetY by animateDpAsState(
+        targetValue = if (animationStarted) 0.dp else initialOffsetY,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "offsetY"
+    )
+    
+    // 缩放动画
+    val animatedScale by animateFloatAsState(
+        targetValue = if (animationStarted) 1f else initialScale,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "scale"
+    )
+    
+    // 背景透明度动画
+    val animatedBackgroundAlpha by animateFloatAsState(
+        targetValue = if (animationStarted) 1f else 0f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "backgroundAlpha"
+    )
+    
+    // 内容透明度动画（返回按钮和用户信息）
+    val animatedContentAlpha by animateFloatAsState(
+        targetValue = if (animationStarted) 1f else 0f,
+        animationSpec = tween(durationMillis = 400, delayMillis = 200, easing = FastOutSlowInEasing),
+        label = "contentAlpha"
+    )
+    
+    // 启动动画
+    LaunchedEffect(Unit) {
+        delay(50) // 短暂延迟确保初始状态设置完成
+        animationStarted = true
+    }
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(Color.Black.copy(alpha = animatedBackgroundAlpha))
             .pointerInput(Unit) {
                 detectTapGestures(
                     onTap = { onDismiss() }
                 )
             }
     ) {
-        // 图片内容 - 全屏显示
+        // 图片内容 - 带动画的显示
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = animatedOffsetX, y = animatedOffsetY)
+                .scale(animatedScale),
             contentAlignment = Alignment.Center
         ) {
             val imageRequest = remember(imagePath) {
@@ -112,32 +202,32 @@ private fun ImageViewerContent(
             }
         }
         
-        // 左上角返回按钮
+        // 左上角返回按钮 - 带淡入动画
         IconButton(
             onClick = onBack,
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(start = 8.dp, top = 16.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.5f))
+                .background(Color.Black.copy(alpha = 0.5f * animatedContentAlpha))
                 .size(48.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
                 contentDescription = "返回",
-                tint = Color.White,
+                tint = Color.White.copy(alpha = animatedContentAlpha),
                 modifier = Modifier.size(24.dp)
             )
         }
         
-        // 右上角用户信息（如果提供了的话）
+        // 右上角用户信息（如果提供了的话）- 带淡入动画
         if (senderName != null && timestamp != null) {
             Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(Color.Black.copy(alpha = 0.5f * animatedContentAlpha))
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -146,12 +236,12 @@ private fun ImageViewerContent(
                 ) {
                     Text(
                         text = senderName,
-                        color = Color.White,
+                        color = Color.White.copy(alpha = animatedContentAlpha),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
                         text = formatTimestamp(timestamp),
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = Color.White.copy(alpha = 0.7f * animatedContentAlpha),
                         style = MaterialTheme.typography.bodySmall
                     )
                 }

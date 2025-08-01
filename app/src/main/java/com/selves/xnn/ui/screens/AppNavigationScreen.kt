@@ -83,7 +83,7 @@ fun AppNavigationScreen(
             composable("dynamic") {
                 DynamicScreen(
                     currentMember = currentMember,
-                    onBackClick = {
+                    onNavigateBack = {
                         navController.popBackStack()
                     },
                     onDynamicClick = { dynamicId ->
