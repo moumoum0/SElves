@@ -151,8 +151,6 @@ class BackupService @Inject constructor(
         }
 
     companion object {
-        private const val TAG = "BackupService"
-        private const val BACKUP_FILE_NAME = "backup.json"
         private const val IMAGES_FOLDER = "images/"
         private const val DATABASE_FOLDER = "database/"
         private const val CACHE_FOLDER = "cache/"
