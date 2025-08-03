@@ -204,34 +204,36 @@ fun MemberItem(
             )
         }
         
-        // 操作菜单
-        if (!isCurrentMember) {
-            Box {
-                IconButton(
-                    onClick = { showMenu = true }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "更多操作",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+        // 操作菜单 - 所有成员都显示菜单，但当前成员只能编辑，不能删除
+        Box {
+            IconButton(
+                onClick = { showMenu = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "更多操作",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                // 编辑选项 - 所有成员都可以编辑
+                DropdownMenuItem(
+                    text = { Text("编辑") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                    },
+                    onClick = {
+                        showMenu = false
+                        onEditMember(member)
+                    }
+                )
                 
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("编辑") },
-                        leadingIcon = {
-                            Icon(Icons.Default.Edit, contentDescription = null)
-                        },
-                        onClick = {
-                            showMenu = false
-                            onEditMember(member)
-                        }
-                    )
-                    
+                // 删除选项 - 只有非当前成员才能删除
+                if (!isCurrentMember) {
                     DropdownMenuItem(
                         text = { Text("删除") },
                         leadingIcon = {
