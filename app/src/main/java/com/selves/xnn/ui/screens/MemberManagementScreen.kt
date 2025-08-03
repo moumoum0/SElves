@@ -30,7 +30,7 @@ fun MemberManagementScreen(
     members: List<Member>,
     currentMember: Member,
     onNavigateBack: () -> Unit,
-    mainViewModel: MainViewModel = hiltViewModel()
+    mainViewModel: MainViewModel // 移除默认的hiltViewModel()，强制使用传递的实例
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
     var showCreateMemberDialog by remember { mutableStateOf(false) }

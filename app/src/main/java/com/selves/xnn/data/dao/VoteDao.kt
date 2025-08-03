@@ -147,4 +147,11 @@ interface VoteDao {
 
     @Query("DELETE FROM vote_records")
     suspend fun deleteAllVoteRecords()
+
+    // 用户信息同步更新相关方法
+    @Query("UPDATE votes SET authorName = :newName, authorAvatar = :newAvatar WHERE authorId = :userId")
+    suspend fun updateVoteAuthorInfo(userId: String, newName: String, newAvatar: String?)
+
+    @Query("UPDATE vote_records SET userName = :newName, userAvatar = :newAvatar WHERE userId = :userId")
+    suspend fun updateVoteRecordUserInfo(userId: String, newName: String, newAvatar: String?)
 } 

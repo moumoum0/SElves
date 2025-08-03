@@ -103,4 +103,11 @@ interface DynamicDao {
 
     @Query("DELETE FROM dynamic_likes")
     suspend fun deleteAllLikes()
+
+    // 用户信息同步更新相关方法
+    @Query("UPDATE dynamics SET authorName = :newName, authorAvatar = :newAvatar WHERE authorId = :userId")
+    suspend fun updateAuthorInfo(userId: String, newName: String, newAvatar: String?)
+
+    @Query("UPDATE dynamic_comments SET authorName = :newName, authorAvatar = :newAvatar WHERE authorId = :userId")  
+    suspend fun updateCommentAuthorInfo(userId: String, newName: String, newAvatar: String?)
 } 

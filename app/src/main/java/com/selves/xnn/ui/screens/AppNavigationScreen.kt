@@ -204,7 +204,8 @@ fun AppNavigationScreen(
                     currentMember = currentMember!!,
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    mainViewModel = viewModel // 使用同一个 MainViewModel 实例，确保状态一致
                 )
             }
             

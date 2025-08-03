@@ -63,8 +63,27 @@ class MemberRepository @Inject constructor(private val database: AppDatabase) {
         // 不管成员是否存在，都保存/更新数据
         database.memberDao().insertMember(entity)
         
+        // 如果是更新现有成员，同步更新相关表中的用户信息
         if (exists > 0) {
             Log.d("MemberRepository", "成功更新成员: ${member.id} - ${member.name}")
+            
+            // 同步更新动态表中的用户信息
+            try {
+                database.dynamicDao().updateAuthorInfo(member.id, member.name, member.avatarUrl)
+                database.dynamicDao().updateCommentAuthorInfo(member.id, member.name, member.avatarUrl)
+                Log.d("MemberRepository", "已同步更新动态表中的用户信息: ${member.id}")
+            } catch (e: Exception) {
+                Log.e("MemberRepository", "同步更新动态表用户信息失败: ${e.message}", e)
+            }
+            
+            // 同步更新投票表中的用户信息
+            try {
+                database.voteDao().updateVoteAuthorInfo(member.id, member.name, member.avatarUrl)
+                database.voteDao().updateVoteRecordUserInfo(member.id, member.name, member.avatarUrl)
+                Log.d("MemberRepository", "已同步更新投票表中的用户信息: ${member.id}")
+            } catch (e: Exception) {
+                Log.e("MemberRepository", "同步更新投票表用户信息失败: ${e.message}", e)
+            }
         } else {
             Log.d("MemberRepository", "成功保存新成员: ${member.id} - ${member.name}")
         }

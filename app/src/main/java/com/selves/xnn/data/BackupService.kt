@@ -222,23 +222,54 @@ class BackupService @Inject constructor(
             context.contentResolver.openInputStream(inputUri)?.use { inputStream ->
                 ZipInputStream(inputStream).use { zipIn ->
                     var backupData: BackupData? = null
+                    val foundEntries = mutableListOf<String>()
+                    var jsonParseError: Exception? = null
+                    var jsonContent: String? = null
                     
                     // 读取ZIP文件内容
                     var entry = zipIn.nextEntry
                     while (entry != null) {
+                        foundEntries.add(entry.name)
+                        Log.d(TAG, "发现ZIP条目: ${entry.name}, 大小: ${entry.size}")
+                        
                         when {
                             entry.name == BACKUP_FILE_NAME -> {
                                 // 读取备份数据
                                 val jsonData = zipIn.readBytes().toString(Charsets.UTF_8)
+                                jsonContent = jsonData
                                 Log.d(TAG, "读取JSON数据，大小: ${jsonData.length} 字符")
-                                Log.d(TAG, "JSON片段预览: ${jsonData.take(500)}...")
                                 
-                                try {
-                                    backupData = gson.fromJson(jsonData, BackupData::class.java)
-                                    Log.d(TAG, "JSON反序列化成功")
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "JSON反序列化失败: ${e.message}", e)
-                                    throw e
+                                if (jsonData.isEmpty()) {
+                                    Log.e(TAG, "JSON文件为空")
+                                } else {
+                                    Log.d(TAG, "JSON片段预览: ${jsonData.take(500)}...")
+                                    
+                                    try {
+                                        backupData = gson.fromJson(jsonData, BackupData::class.java)
+                                        Log.d(TAG, "JSON反序列化成功")
+                                        
+                                        // 验证备份数据的基本结构
+                                        if (backupData != null) {
+                                            Log.d(TAG, "备份数据验证:")
+                                            Log.d(TAG, "  - 版本: ${backupData.version}")
+                                            Log.d(TAG, "  - 时间戳: ${backupData.timestamp}")
+                                            Log.d(TAG, "  - 成员数: ${backupData.members?.size ?: 0}")
+                                            Log.d(TAG, "  - 群组数: ${backupData.chatGroups?.size ?: 0}")
+                                            Log.d(TAG, "  - 消息数: ${backupData.messages?.size ?: 0}")
+                                            Log.d(TAG, "  - 动态数: ${backupData.dynamics?.size ?: 0}")
+                                            Log.d(TAG, "  - 投票数: ${backupData.votes?.size ?: 0}")
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "JSON反序列化失败: ${e.message}", e)
+                                        jsonParseError = e
+                                        
+                                        // 尝试分析JSON内容问题
+                                        if (jsonData.startsWith("{") && jsonData.endsWith("}")) {
+                                            Log.d(TAG, "JSON格式看起来正确（以{}包围）")
+                                        } else {
+                                            Log.e(TAG, "JSON格式可能有问题，开头: ${jsonData.take(10)}, 结尾: ${jsonData.takeLast(10)}")
+                                        }
+                                    }
                                 }
                             }
                             entry.name.startsWith(IMAGES_FOLDER) -> {
@@ -254,12 +285,41 @@ class BackupService @Inject constructor(
                         entry = zipIn.nextEntry
                     }
                     
+                    Log.d(TAG, "ZIP文件解析完成，共找到 ${foundEntries.size} 个条目:")
+                    foundEntries.forEach { entryName ->
+                        Log.d(TAG, "  - $entryName")
+                    }
+                    
                     // 导入数据到数据库
-                    backupData?.let { data ->
-                        importDataToDatabase(data)
-                    } ?: throw IllegalStateException("备份文件中未找到有效的备份数据")
+                    when {
+                        backupData != null -> {
+                            Log.d(TAG, "找到有效的备份数据，开始导入...")
+                            importDataToDatabase(backupData)
+                        }
+                        jsonParseError != null -> {
+                            val errorMsg = "备份文件JSON解析失败: ${jsonParseError.message}"
+                            Log.e(TAG, errorMsg)
+                            Log.e(TAG, "JSON内容长度: ${jsonContent?.length ?: 0}")
+                            throw IllegalStateException(errorMsg, jsonParseError)
+                        }
+                        !foundEntries.contains(BACKUP_FILE_NAME) -> {
+                            val errorMsg = "备份文件中未找到数据文件 '$BACKUP_FILE_NAME'。找到的文件: ${foundEntries.joinToString()}"
+                            Log.e(TAG, errorMsg)
+                            throw IllegalStateException(errorMsg)
+                        }
+                        jsonContent.isNullOrEmpty() -> {
+                            val errorMsg = "备份数据文件 '$BACKUP_FILE_NAME' 为空"
+                            Log.e(TAG, errorMsg)
+                            throw IllegalStateException(errorMsg)
+                        }
+                        else -> {
+                            val errorMsg = "备份文件中未找到有效的备份数据，原因未知"
+                            Log.e(TAG, errorMsg)
+                            throw IllegalStateException(errorMsg)
+                        }
+                    }
                 }
-            }
+            } ?: throw IllegalStateException("无法打开备份文件输入流")
             
             Log.d(TAG, "备份导入成功")
             BackupResult.Success
@@ -685,6 +745,12 @@ class BackupService @Inject constructor(
         
         // 恢复用户偏好设置
         restorePreferences(backupData.preferences)
+        
+        // 同步所有用户信息，确保数据一致性
+        Log.d(TAG, "开始同步用户信息，确保数据一致性...")
+        syncUserInfoAfterRestore()
+        
+        Log.d(TAG, "数据导入完成")
     }
     
     /**
@@ -718,6 +784,39 @@ class BackupService @Inject constructor(
             
         } catch (e: Exception) {
             Log.e(TAG, "恢复用户偏好设置失败: ${e.message}", e)
+        }
+    }
+
+    /**
+     * 恢复备份后同步用户信息，确保数据一致性
+     */
+    private suspend fun syncUserInfoAfterRestore() {
+        try {
+            // 获取所有成员
+            val members = database.memberDao().getAllMembersSync()
+            Log.d(TAG, "开始为 ${members.size} 个成员同步用户信息")
+            
+            var syncCount = 0
+            members.forEach { member ->
+                try {
+                    // 同步动态表中的用户信息
+                    database.dynamicDao().updateAuthorInfo(member.id, member.name, member.avatarUrl)
+                    database.dynamicDao().updateCommentAuthorInfo(member.id, member.name, member.avatarUrl)
+                    
+                    // 同步投票表中的用户信息
+                    database.voteDao().updateVoteAuthorInfo(member.id, member.name, member.avatarUrl)
+                    database.voteDao().updateVoteRecordUserInfo(member.id, member.name, member.avatarUrl)
+                    
+                    syncCount++
+                    Log.d(TAG, "已同步用户信息: ${member.id} - ${member.name}")
+                } catch (e: Exception) {
+                    Log.e(TAG, "同步用户信息失败: ${member.id} - ${member.name}, ${e.message}", e)
+                }
+            }
+            
+            Log.d(TAG, "用户信息同步完成，成功同步 $syncCount/${members.size} 个用户")
+        } catch (e: Exception) {
+            Log.e(TAG, "同步用户信息时发生错误: ${e.message}", e)
         }
     }
 
