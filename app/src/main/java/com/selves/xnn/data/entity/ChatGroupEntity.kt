@@ -11,6 +11,7 @@ data class ChatGroupEntity(
     @PrimaryKey
     val id: String,
     val name: String,
+    val avatarUrl: String? = null,
     val memberIds: String, // 存储为逗号分隔的成员ID
     val ownerId: String, // 群主ID
     val createdAt: Long

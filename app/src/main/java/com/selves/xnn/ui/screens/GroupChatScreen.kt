@@ -38,7 +38,7 @@ fun GroupChatScreen(
     members: List<Member>,
     onMemberSwitch: () -> Unit,
     onGroupClick: (ChatGroup) -> Unit,
-    onCreateGroup: (String, List<Member>) -> Unit
+    onCreateGroup: (String, String?, List<Member>) -> Unit  // 增加avatarUrl参数
 ) {
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -61,9 +61,9 @@ fun GroupChatScreen(
             availableMembers = members,
             currentMember = currentMember,
             onDismiss = { showCreateGroupDialog = false },
-            onConfirm = { groupName, selectedMembers ->
+            onConfirm = { groupName, avatarUrl, selectedMembers ->
                 showCreateGroupDialog = false
-                onCreateGroup(groupName, selectedMembers)
+                onCreateGroup(groupName, avatarUrl, selectedMembers)
             }
         )
     }
@@ -180,7 +180,9 @@ fun GroupItem(
                 .size(52.dp)
                 .clip(CircleShape)
                 .background(
-                    if (group.name.isNotEmpty()) {
+                    if (group.avatarUrl != null) {
+                        Color.Transparent
+                    } else if (group.name.isNotEmpty()) {
                         // 根据群聊名称生成颜色
                         val colors = listOf(
                             Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
@@ -193,12 +195,20 @@ fun GroupItem(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = if (group.name.isNotEmpty()) group.name.first().toString().uppercase() else "G",
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (group.avatarUrl != null) {
+                AvatarImage(
+                    avatarUrl = group.avatarUrl,
+                    contentDescription = "群聊头像",
+                    size = 52.dp
+                )
+            } else {
+                Text(
+                    text = if (group.name.isNotEmpty()) group.name.first().toString().uppercase() else "G",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
         
         Spacer(modifier = Modifier.width(12.dp))

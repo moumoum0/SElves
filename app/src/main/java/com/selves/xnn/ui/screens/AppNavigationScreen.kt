@@ -30,11 +30,45 @@ fun AppNavigationScreen(
     val groups by viewModel.groups.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val hasSystem by viewModel.hasSystem.collectAsState()
+    val needsGuide by viewModel.needsGuide.collectAsState()
     
     // 如果正在加载，显示加载界面
     if (isLoading) {
         val loadingState by viewModel.loadingState.collectAsState()
         LoadingScreen(loadingState = loadingState)
+    } else if (needsGuide == true) {
+        // 如果需要引导，显示引导界面
+        val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
+        val backupProgress by viewModel.backupProgress.collectAsState()
+        val backupProgressMessage by viewModel.backupProgressMessage.collectAsState()
+        val showImportWarningDialog by viewModel.showImportWarningDialog.collectAsState()
+        val backupImportSuccess by viewModel.backupImportSuccess.collectAsState()
+        
+        WelcomeGuideScreen(
+            onCreateSystem = { name, avatarUrl ->
+                viewModel.createSystem(name, avatarUrl)
+            },
+            onCreateMember = { name, avatarUrl ->
+                viewModel.createMember(name, avatarUrl)
+            },
+            onImportBackup = { uri ->
+                viewModel.showImportWarning(uri)
+            },
+            onCompleteGuide = {
+                viewModel.completeGuide()
+            },
+            isBackupInProgress = isBackupInProgress,
+            backupProgress = backupProgress,
+            backupProgressMessage = backupProgressMessage,
+            showImportWarningDialog = showImportWarningDialog,
+            onConfirmImport = {
+                viewModel.confirmImportBackup()
+            },
+            onCancelImport = {
+                viewModel.cancelImportBackup()
+            },
+            backupImportSuccess = backupImportSuccess
+        )
     } else {
         // 主导航结构
         NavHost(
@@ -60,6 +94,7 @@ fun AppNavigationScreen(
                     onNavigateToOnlineStats = {
                         navController.navigate("online_stats")
                     },
+
                     onNavigateToSettings = {
                         navController.navigate("settings")
                     },
@@ -180,8 +215,8 @@ fun AppNavigationScreen(
                         onRemoveMembers = { membersToRemove ->
                             viewModel.removeMembersFromGroup(groupId, membersToRemove)
                         },
-                        onUpdateGroupName = { newName ->
-                            viewModel.updateGroupName(groupId, newName)
+                        onUpdateGroupInfo = { newName, newAvatarUrl ->
+                            viewModel.updateGroupInfo(groupId, newName, newAvatarUrl)
                         },
                         onDeleteGroup = {
                             viewModel.deleteGroup(groupId)
@@ -244,6 +279,7 @@ fun AppNavigationScreen(
                 )
             }
             
+
             // 设置界面（作为独立页面）
             composable("settings") {
                 SettingsScreen(

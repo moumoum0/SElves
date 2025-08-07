@@ -71,7 +71,7 @@ fun ChatScreen(
     onDeleteMessage: (String) -> Unit = {},
     onAddMembers: (List<Member>) -> Unit = {},
     onRemoveMembers: (List<Member>) -> Unit = {},
-    onUpdateGroupName: (String) -> Unit = {},
+    onUpdateGroupInfo: (String, String?) -> Unit = { _, _ -> },  // 修改为支持名称和头像
     onDeleteGroup: () -> Unit = {},
     onNavigateBack: () -> Unit = {},
     onMemberSelected: (Member) -> Unit = {}
@@ -234,7 +234,7 @@ fun ChatScreen(
             onDismiss = { showGroupManagement = false },
             onAddMembers = onAddMembers,
             onRemoveMembers = onRemoveMembers,
-            onUpdateGroupName = onUpdateGroupName,
+            onUpdateGroupInfo = onUpdateGroupInfo,
             onDeleteGroup = onDeleteGroup
         )
     }

@@ -1,7 +1,6 @@
 package com.selves.xnn.data.di
 
 import android.content.Context
-import androidx.room.Room
 import com.selves.xnn.data.AppDatabase
 import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.Converters
@@ -38,13 +37,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "chat_database"
-        )
-        .fallbackToDestructiveMigration()
-        .build()
+        // Centralized factory registers all migrations and avoids destructive migration
+        return AppDatabase.getDatabase(context)
     }
 
     @Provides

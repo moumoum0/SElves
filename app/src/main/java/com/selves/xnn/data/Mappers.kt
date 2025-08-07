@@ -41,6 +41,7 @@ object Mappers {
         return ChatGroup(
             id = id,
             name = name,
+            avatarUrl = avatarUrl,
             members = members,
             ownerId = ownerId,
             createdAt = createdAt
@@ -51,6 +52,7 @@ object Mappers {
     fun ChatGroup.toEntity(): ChatGroupEntity = ChatGroupEntity(
         id = id,
         name = name,
+        avatarUrl = avatarUrl,
         memberIds = members.map { it.id }.joinToString(","),
         ownerId = ownerId,
         createdAt = createdAt
@@ -120,7 +122,6 @@ object Mappers {
         id = id,
         name = name,
         avatarUrl = avatarUrl,
-        description = description,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -129,7 +130,6 @@ object Mappers {
         id = id,
         name = name,
         avatarUrl = avatarUrl,
-        description = description,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

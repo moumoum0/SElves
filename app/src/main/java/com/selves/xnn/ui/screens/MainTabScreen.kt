@@ -29,6 +29,7 @@ fun MainTabScreen(
     onNavigateToVote: () -> Unit,
     onNavigateToMemberManagement: () -> Unit,
     onNavigateToOnlineStats: () -> Unit,
+
     onNavigateToSettings: () -> Unit,
     onNavigateToChat: (String) -> Unit
 ) {
@@ -70,10 +71,10 @@ fun MainTabScreen(
             onDismiss = { 
                 // 系统创建是必需的，不允许取消
             },
-            onConfirm = { name, avatarUrl, description ->
+            onConfirm = { name, avatarUrl ->
                 showCreateSystemDialog = false
                 // 创建系统
-                viewModel.createSystem(name, avatarUrl, description)
+                viewModel.createSystem(name, avatarUrl)
             },
             canDismiss = false
         )
@@ -144,8 +145,8 @@ fun MainTabScreen(
                             // 导航到聊天界面（作为独立页面）
                             onNavigateToChat(group.id)
                         },
-                        onCreateGroup = { groupName, selectedMembers ->
-                            val newGroup = viewModel.createGroup(groupName, selectedMembers, currentMember!!)
+                        onCreateGroup = { groupName, avatarUrl, selectedMembers ->
+                            val newGroup = viewModel.createGroup(groupName, avatarUrl, selectedMembers, currentMember!!)
                             // 不再自动进入群聊
                         }
                     )
@@ -157,6 +158,7 @@ fun MainTabScreen(
                         allMembers = members,
                         onNavigateToMemberManagement = onNavigateToMemberManagement,
                         onNavigateToOnlineStats = onNavigateToOnlineStats,
+
                         onNavigateToSettings = onNavigateToSettings
                     )
                 }

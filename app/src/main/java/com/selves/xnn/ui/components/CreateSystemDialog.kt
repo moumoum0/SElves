@@ -36,11 +36,10 @@ import java.util.*
 @Composable
 fun CreateSystemDialog(
     onDismiss: () -> Unit,
-    onConfirm: (name: String, avatarUrl: String?, description: String) -> Unit,
+    onConfirm: (name: String, avatarUrl: String?) -> Unit,
     canDismiss: Boolean = true
 ) {
     var systemName by remember { mutableStateOf("") }
-    var systemDescription by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var savedImagePath by remember { mutableStateOf<String?>(null) }
     
@@ -88,7 +87,7 @@ fun CreateSystemDialog(
                     TextButton(
                         onClick = {
                             if (systemName.isNotBlank()) {
-                                onConfirm(systemName.trim(), savedImagePath, systemDescription.trim())
+                                onConfirm(systemName.trim(), savedImagePath)
                             }
                         },
                         enabled = systemName.isNotBlank()
@@ -187,30 +186,12 @@ fun CreateSystemDialog(
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // 系统描述输入
-                OutlinedTextField(
-                    value = systemDescription,
-                    onValueChange = { systemDescription = it },
-                    label = { Text("系统描述（可选）") },
-                    placeholder = { Text("请输入系统描述") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
                         onDone = {
                             if (systemName.isNotBlank()) {
-                                onConfirm(systemName.trim(), savedImagePath, systemDescription.trim())
+                                onConfirm(systemName.trim(), savedImagePath)
                             }
                         }
                     ),

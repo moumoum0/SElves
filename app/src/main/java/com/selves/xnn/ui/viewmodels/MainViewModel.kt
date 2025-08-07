@@ -12,6 +12,8 @@ import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
 import com.selves.xnn.data.repository.SystemRepository
 import com.selves.xnn.data.repository.OnlineStatusRepository
+import com.selves.xnn.data.BackupService
+import com.selves.xnn.data.BackupResult
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Message
 import com.selves.xnn.model.MessageType
@@ -31,6 +33,8 @@ import javax.inject.Inject
 import android.content.Context
 import com.selves.xnn.util.ImageUtils
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 应用加载状态枚举
@@ -64,7 +68,8 @@ class MainViewModel @Inject constructor(
     private val messageReadStatusRepository: MessageReadStatusRepository,
     private val memberPreferences: MemberPreferences,
     private val systemRepository: SystemRepository,
-    private val onlineStatusRepository: OnlineStatusRepository
+    private val onlineStatusRepository: OnlineStatusRepository,
+    private val backupService: com.selves.xnn.data.BackupService
 ) : ViewModel() {
     
     private val TAG = "MainViewModel"
@@ -88,6 +93,29 @@ class MainViewModel @Inject constructor(
     // 系统是否存在
     private val _hasSystem = MutableStateFlow<Boolean?>(null)
     val hasSystem: StateFlow<Boolean?> = _hasSystem.asStateFlow()
+    
+    // 是否需要显示引导界面
+    private val _needsGuide = MutableStateFlow<Boolean?>(null)
+    val needsGuide: StateFlow<Boolean?> = _needsGuide.asStateFlow()
+    
+    // 备份导入相关状态
+    private val _isBackupInProgress = MutableStateFlow(false)
+    val isBackupInProgress: StateFlow<Boolean> = _isBackupInProgress.asStateFlow()
+    
+    private val _backupProgress = MutableStateFlow<Float?>(null)
+    val backupProgress: StateFlow<Float?> = _backupProgress.asStateFlow()
+    
+    private val _backupProgressMessage = MutableStateFlow("")
+    val backupProgressMessage: StateFlow<String> = _backupProgressMessage.asStateFlow()
+    
+    private val _showImportWarningDialog = MutableStateFlow(false)
+    val showImportWarningDialog: StateFlow<Boolean> = _showImportWarningDialog.asStateFlow()
+    
+    private val _backupImportSuccess = MutableStateFlow(false)
+    val backupImportSuccess: StateFlow<Boolean> = _backupImportSuccess.asStateFlow()
+    
+    // 存储待导入的URI，等用户确认后使用
+    private var pendingImportUri: Uri? = null
     
     // 统一的加载状态
     private val _loadingState = MutableStateFlow(LoadingState())
@@ -139,7 +167,7 @@ class MainViewModel @Inject constructor(
     /**
      * 开始统一的加载流程
      */
-    private fun startUnifiedLoading() {
+    private fun startUnifiedLoading(skipSystemCheck: Boolean = false) {
         // 防止重复加载
         if (isLoadingInProgress) {
             Log.d(TAG, "加载已在进行中，跳过重复加载")
@@ -151,8 +179,10 @@ class MainViewModel @Inject constructor(
             try {
                 updateLoadingState(LoadingPhase.INITIALIZING, 0f, "正在初始化应用...")
                 
-                // 阶段0：检查系统是否存在
-                checkSystemExists()
+                // 阶段0：检查系统是否存在（备份导入后跳过）
+                if (!skipSystemCheck) {
+                    checkSystemExists()
+                }
                 
                 // 阶段1：并行加载基础数据
                 updateLoadingState(LoadingPhase.LOADING_MEMBERS, 0.1f, "正在加载成员数据...")
@@ -301,45 +331,26 @@ class MainViewModel @Inject constructor(
     }
     
     private suspend fun loadGroups() {
-        val groupsDeferred = CompletableDeferred<Unit>()
-        
-        viewModelScope.launch(exceptionHandler) {
-            try {
-                // 监听当前成员变化，当成员变化时重新加载群聊
-                combine(
-                    chatGroupRepository.getAllGroups(),
-                    _currentMember
-                ) { allGroups, currentMember ->
-                    if (currentMember != null) {
-                        // 过滤出当前成员所属的群聊
-                        allGroups.filter { group ->
-                            group.members.any { it.id == currentMember.id }
-                        }
-                    } else {
-                        emptyList()
-                    }
-                }.collect { groupList ->
-                    _groups.value = groupList
-                    Log.d(TAG, "已加载 ${groupList.size} 个群聊")
-                    if (!groupsLoaded) {
-                        groupsLoaded = true
-                        groupsDeferred.complete(Unit)
-                    }
-                }
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) {
-                    Log.d(TAG, "加载群聊任务被取消")
-                } else {
-                    Log.e(TAG, "加载群聊失败: ${e.message}", e)
-                }
-                if (!groupsLoaded) {
-                    groupsLoaded = true
-                    groupsDeferred.complete(Unit)
-                }
+        try {
+            val allGroups = withContext(Dispatchers.IO) {
+                chatGroupRepository.getAllGroups().first()
             }
+            val currentMember = _currentMember.value
+            val filteredGroups = if (currentMember != null) {
+                allGroups.filter { group ->
+                    group.members.any { it.id == currentMember.id }
+                }
+            } else {
+                allGroups
+            }
+            _groups.value = filteredGroups
+            groupsLoaded = true
+            Log.d(TAG, "已加载 ${filteredGroups.size} 个群聊（IO线程获取）")
+        } catch (e: Exception) {
+            Log.e(TAG, "加载群聊失败: ${e.message}", e)
+            _groups.value = emptyList()
+            groupsLoaded = true
         }
-        
-        groupsDeferred.await()
     }
     
     private suspend fun loadSavedMember() {
@@ -473,13 +484,14 @@ class MainViewModel @Inject constructor(
     }
     
     // 创建群聊
-    fun createGroup(name: String, selectedMembers: List<Member>, creator: Member): ChatGroup {
+    fun createGroup(name: String, avatarUrl: String?, selectedMembers: List<Member>, creator: Member): ChatGroup {
         val groupId = UUID.randomUUID().toString()
         
         // 创建群聊对象，创建者为群主
         val newGroup = ChatGroup(
             id = groupId,
             name = name,
+            avatarUrl = avatarUrl,
             members = selectedMembers,
             ownerId = creator.id,
             createdAt = System.currentTimeMillis()
@@ -850,8 +862,8 @@ class MainViewModel @Inject constructor(
         }
     }
     
-    // 更新群聊名称
-    fun updateGroupName(groupId: String, newName: String) {
+    // 更新群聊信息
+    fun updateGroupInfo(groupId: String, newName: String, newAvatarUrl: String?) {
         viewModelScope.launch(exceptionHandler) {
             try {
                 // 找到目标群聊
@@ -860,16 +872,19 @@ class MainViewModel @Inject constructor(
                 
                 if (groupIndex != -1) {
                     val group = currentGroups[groupIndex]
-                    val updatedGroup = group.copy(name = newName)
+                    val updatedGroup = group.copy(
+                        name = newName,
+                        avatarUrl = newAvatarUrl
+                    )
                     currentGroups[groupIndex] = updatedGroup
                     _groups.value = currentGroups
                     
                     // 保存到数据库
                     chatGroupRepository.updateGroup(updatedGroup)
-                    Log.d(TAG, "已更新群聊名称: ${group.name} -> $newName")
+                    Log.d(TAG, "已更新群聊信息: 名称 ${group.name} -> $newName, 头像: ${group.avatarUrl} -> $newAvatarUrl")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "更新群聊名称失败: ${e.message}", e)
+                Log.e(TAG, "更新群聊信息失败: ${e.message}", e)
             }
         }
     }
@@ -912,24 +927,30 @@ class MainViewModel @Inject constructor(
         try {
             val hasSystemResult = systemRepository.hasSystem()
             _hasSystem.value = hasSystemResult
-            Log.d(TAG, "系统存在检查结果: $hasSystemResult")
+            
+            // 检查是否需要引导界面：系统不存在或没有成员
+            val membersCount = memberRepository.getAllMembers().first().size
+            val needsGuideResult = !hasSystemResult || membersCount == 0
+            _needsGuide.value = needsGuideResult
+            
+            Log.d(TAG, "系统存在检查结果: $hasSystemResult, 成员数量: $membersCount, 需要引导: $needsGuideResult")
         } catch (e: Exception) {
             Log.e(TAG, "检查系统存在性失败: ${e.message}", e)
             _hasSystem.value = false
+            _needsGuide.value = true // 出错时默认显示引导界面
         }
     }
     
     /**
      * 创建系统
      */
-    fun createSystem(name: String, avatarUrl: String?, description: String) {
+    fun createSystem(name: String, avatarUrl: String?) {
         viewModelScope.launch(exceptionHandler) {
             try {
                 val system = com.selves.xnn.model.System(
                     id = UUID.randomUUID().toString(),
                     name = name,
                     avatarUrl = avatarUrl,
-                    description = description,
                     createdAt = java.lang.System.currentTimeMillis(),
                     updatedAt = java.lang.System.currentTimeMillis()
                 )
@@ -940,6 +961,134 @@ class MainViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "创建系统失败: ${e.message}", e)
             }
+        }
+    }
+    
+    /**
+     * 完成引导流程
+     */
+    fun completeGuide() {
+        viewModelScope.launch(exceptionHandler) {
+            _needsGuide.value = false
+            Log.d(TAG, "引导流程已完成")
+        }
+    }
+    
+    /**
+     * 显示导入备份警告对话框（引导时直接导入）
+     */
+    fun showImportWarning(inputUri: Uri) {
+        // 如果在引导流程中，直接导入，不显示警告
+        if (_needsGuide.value == true) {
+            importBackup(inputUri)
+        } else {
+            pendingImportUri = inputUri
+            _showImportWarningDialog.value = true
+        }
+    }
+    
+    /**
+     * 确认导入备份
+     */
+    fun confirmImportBackup() {
+        _showImportWarningDialog.value = false
+        pendingImportUri?.let { uri ->
+            importBackup(uri)
+        }
+        pendingImportUri = null
+    }
+    
+    /**
+     * 取消导入备份
+     */
+    fun cancelImportBackup() {
+        _showImportWarningDialog.value = false
+        pendingImportUri = null
+    }
+    
+    /**
+     * 导入备份（内部方法）
+     */
+    private fun importBackup(inputUri: Uri) {
+        viewModelScope.launch(exceptionHandler) {
+            _isBackupInProgress.value = true
+            _backupProgress.value = null
+            _backupProgressMessage.value = "正在清除现有数据..."
+            _backupImportSuccess.value = false
+            
+            try {
+                _backupProgress.value = 0.3f
+                _backupProgressMessage.value = "正在解析备份文件..."
+                
+                _backupProgress.value = 0.6f
+                _backupProgressMessage.value = "正在恢复数据..."
+                
+                _backupProgress.value = 0.9f
+                _backupProgressMessage.value = "正在恢复图片..."
+                
+                when (val result = backupService.importBackup(inputUri)) {
+                    is BackupResult.Success -> {
+                        _backupProgress.value = 1.0f
+                        _backupProgressMessage.value = "导入完成！"
+                        kotlinx.coroutines.delay(500) // 让用户看到完成状态
+                        
+                        // 导入成功后设置状态
+                        _backupImportSuccess.value = true
+                        _hasSystem.value = true
+                        _needsGuide.value = false
+                        
+                        // 重置加载状态并重新加载数据
+                        membersLoaded = false
+                        currentMemberLoaded = false
+                        groupsLoaded = false
+                        messagesLoaded = false
+                        imagesPreloaded = false
+                        isLoadingInProgress = false
+                        
+                        // 清空现有数据
+                        _members.value = emptyList()
+                        _allMembers.value = emptyList()
+                        _currentMember.value = null
+                        _groups.value = emptyList()
+                        _messages.value = emptyMap()
+                        _unreadCounts.value = emptyMap()
+                        loadedMessageGroups.clear()
+                        
+                        // 设置默认当前成员（取第一个成员）
+                        setDefaultCurrentMemberAfterImport()
+                        
+                        // 重新开始加载流程（跳过系统检查）
+                        startUnifiedLoading(skipSystemCheck = true)
+                        
+                        Log.d(TAG, "备份导入成功，重新加载数据")
+                    }
+                    is BackupResult.Error -> {
+                        Log.e(TAG, "导入失败: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "导入失败: ${e.message}", e)
+            } finally {
+                _isBackupInProgress.value = false
+                _backupProgress.value = null
+            }
+        }
+    }
+    
+    /**
+     * 导入备份后设置默认当前成员
+     */
+    private suspend fun setDefaultCurrentMemberAfterImport() {
+        try {
+            val allMembers = memberRepository.getAllMembers().first()
+            if (allMembers.isNotEmpty()) {
+                val firstMember = allMembers.first()
+                // 保存为当前成员
+                memberPreferences.saveCurrentMemberId(firstMember.id)
+                Log.d(TAG, "备份导入后设置默认成员: ${firstMember.name}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "设置默认成员失败: ${e.message}", e)
         }
     }
     

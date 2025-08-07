@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
@@ -26,7 +26,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.System
+import com.selves.xnn.ui.components.SystemAvatarImage
 import com.selves.xnn.viewmodel.SystemViewModel
+import com.selves.xnn.ui.components.SystemEditDialog
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,11 +38,13 @@ fun SystemScreen(
     allMembers: List<Member>,
     onNavigateToMemberManagement: () -> Unit,
     onNavigateToOnlineStats: () -> Unit,
+
     onNavigateToSettings: () -> Unit,
     systemViewModel: SystemViewModel = hiltViewModel()
 ) {
     val currentSystem by systemViewModel.currentSystem.collectAsState()
     val isLoading by systemViewModel.isLoading.collectAsState()
+    var showSystemEditDialog by remember { mutableStateOf(false) }
     
     LazyColumn(
         modifier = Modifier
@@ -69,6 +73,15 @@ fun SystemScreen(
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
+            )
+        }
+        
+        item {
+            SystemManagementItem(
+                icon = Icons.Default.Edit,
+                title = "系统编辑",
+                subtitle = "修改系统名称和头像",
+                onClick = { showSystemEditDialog = true }
             )
         }
         
@@ -109,6 +122,14 @@ fun SystemScreen(
             )
         }
     }
+    
+    // 系统编辑对话框
+    if (showSystemEditDialog) {
+        SystemEditDialog(
+            onDismiss = { showSystemEditDialog = false },
+            onConfirm = { showSystemEditDialog = false }
+        )
+    }
 }
 
 @Composable
@@ -127,28 +148,11 @@ fun SystemInfoCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 系统头像
-            Box(
-                modifier = Modifier.size(60.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                if (system.avatarUrl != null) {
-                    AsyncImage(
-                        model = system.avatarUrl,
-                        contentDescription = "系统头像",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                        Icons.Default.AccountCircle,
-                        contentDescription = "系统头像",
-                        modifier = Modifier.fillMaxSize(),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            SystemAvatarImage(
+                avatarUrl = system.avatarUrl,
+                contentDescription = "系统头像",
+                size = 60.dp
+            )
             
             Spacer(modifier = Modifier.width(16.dp))
             

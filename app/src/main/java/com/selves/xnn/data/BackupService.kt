@@ -121,6 +121,7 @@ data class BackupData(
 ) {
     companion object {
         const val BACKUP_VERSION = 2  // 增加版本号，因为添加了新字段
+        // 如果后续需要扩展其他静态常量，可在此处添加
     }
 }
 
@@ -157,6 +158,23 @@ class BackupService @Inject constructor(
         private const val DATABASE_FOLDER = "database/"
         private const val CACHE_FOLDER = "cache/"
         private const val OTHER_FILES_FOLDER = "files/"
+        // 兼容旧版本备份所需的字段常量
+        private val REQUIRED_ARRAY_FIELDS = listOf(
+            "members",
+            "chatGroups",
+            "messages",
+            "messageReadStatus",
+            "todos",
+            "dynamics",
+            "dynamicComments",
+            "dynamicLikes",
+            "votes",
+            "voteOptions",
+            "voteRecords",
+            "systems",
+            "onlineStatus"
+        )
+        private const val PREFERENCES_FIELD = "preferences"
     }
 
     /**
@@ -213,6 +231,43 @@ class BackupService @Inject constructor(
     }
 
     /**
+     * 兼容旧版本备份：为缺失的字段填充默认值，避免Gson因非空参数为null抛异常。
+     */
+    private fun upgradeLegacyBackupJson(originalJson: String): String {
+        return try {
+            val jsonElement = JsonParser.parseString(originalJson)
+            if (!jsonElement.isJsonObject) return originalJson // 非对象，直接返回
+            val root = jsonElement.asJsonObject
+
+            // 设置默认版本号
+            if (!root.has("version")) {
+                root.addProperty("version", 1)
+            }
+
+            // 确保所有必需的数组字段存在
+            REQUIRED_ARRAY_FIELDS.forEach { field ->
+                if (!root.has(field) || root.get(field).isJsonNull) {
+                    root.add(field, JsonArray())
+                }
+            }
+
+            // 确保preferences字段存在
+            if (!root.has(PREFERENCES_FIELD) || root.get(PREFERENCES_FIELD).isJsonNull) {
+                val prefObj = JsonObject()
+                prefObj.add("currentMemberId", JsonNull.INSTANCE)
+                prefObj.addProperty("themeMode", ThemeMode.SYSTEM.name)
+                prefObj.addProperty("quickMemberSwitchEnabled", false)
+                root.add(PREFERENCES_FIELD, prefObj)
+            }
+
+            root.toString()
+        } catch (e: Exception) {
+            Log.w(TAG, "升级旧版本备份JSON失败，使用原始JSON: ${e.message}")
+            originalJson
+        }
+    }
+
+    /**
      * 从ZIP文件导入备份
      */
     suspend fun importBackup(inputUri: Uri): BackupResult = withContext(Dispatchers.IO) {
@@ -244,20 +299,21 @@ class BackupService @Inject constructor(
                                 } else {
                                     Log.d(TAG, "JSON片段预览: ${jsonData.take(500)}...")
                                     
+                                    val upgradedJson = upgradeLegacyBackupJson(jsonData)
                                     try {
-                                        backupData = gson.fromJson(jsonData, BackupData::class.java)
-                                        Log.d(TAG, "JSON反序列化成功")
+                                        backupData = gson.fromJson(upgradedJson, BackupData::class.java)
+                                        Log.d(TAG, "JSON反序列化成功 (升级后)")
                                         
                                         // 验证备份数据的基本结构
                                         if (backupData != null) {
                                             Log.d(TAG, "备份数据验证:")
                                             Log.d(TAG, "  - 版本: ${backupData.version}")
                                             Log.d(TAG, "  - 时间戳: ${backupData.timestamp}")
-                                            Log.d(TAG, "  - 成员数: ${backupData.members?.size ?: 0}")
-                                            Log.d(TAG, "  - 群组数: ${backupData.chatGroups?.size ?: 0}")
-                                            Log.d(TAG, "  - 消息数: ${backupData.messages?.size ?: 0}")
-                                            Log.d(TAG, "  - 动态数: ${backupData.dynamics?.size ?: 0}")
-                                            Log.d(TAG, "  - 投票数: ${backupData.votes?.size ?: 0}")
+                                            Log.d(TAG, "  - 成员数: ${backupData.members.size}")
+                                            Log.d(TAG, "  - 群组数: ${backupData.chatGroups.size}")
+                                            Log.d(TAG, "  - 消息数: ${backupData.messages.size}")
+                                            Log.d(TAG, "  - 动态数: ${backupData.dynamics.size}")
+                                            Log.d(TAG, "  - 投票数: ${backupData.votes.size}")
                                         }
                                     } catch (e: Exception) {
                                         Log.e(TAG, "JSON反序列化失败: ${e.message}", e)

@@ -47,7 +47,7 @@ import android.util.Log
         SystemEntity::class,
         OnlineStatusEntity::class
     ],
-    version = 9,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -340,6 +340,54 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 为chat_groups表添加avatarUrl字段
+                    database.execSQL("ALTER TABLE chat_groups ADD COLUMN avatarUrl TEXT")
+                    
+                    Log.d("AppDatabase", "数据库迁移 9->10 完成：chat_groups表已添加avatarUrl字段")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                    throw e // 重新抛出异常，让Room知道迁移失败
+                }
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 删除systems表的description字段
+                    // SQLite不支持直接删除列，需要重建表
+                    database.execSQL(
+                        "CREATE TABLE systems_new (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "name TEXT NOT NULL, " +
+                                "avatarUrl TEXT, " +
+                                "createdAt INTEGER NOT NULL, " +
+                                "updatedAt INTEGER NOT NULL)"
+                    )
+                    
+                    // 复制数据（不包括description字段）
+                    database.execSQL(
+                        "INSERT INTO systems_new (id, name, avatarUrl, createdAt, updatedAt) " +
+                                "SELECT id, name, avatarUrl, createdAt, updatedAt FROM systems"
+                    )
+                    
+                    // 删除旧表
+                    database.execSQL("DROP TABLE systems")
+                    
+                    // 重命名新表
+                    database.execSQL("ALTER TABLE systems_new RENAME TO systems")
+                    
+                    Log.d("AppDatabase", "数据库迁移 10->11 完成：systems表已删除description字段")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移失败: ${e.message}", e)
+                    throw e // 重新抛出异常，让Room知道迁移失败
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -347,8 +395,8 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
-                .fallbackToDestructiveMigration()
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                // 移除 .fallbackToDestructiveMigration() 以防止数据丢失
                 .build()
                 INSTANCE = instance
                 instance

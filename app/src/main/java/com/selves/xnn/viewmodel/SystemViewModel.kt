@@ -6,8 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.selves.xnn.data.repository.SystemRepository
 import com.selves.xnn.model.System
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -30,6 +30,17 @@ class SystemViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
     
+    // 异常处理器，用于处理协程取消
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        if (throwable is CancellationException) {
+            Log.d(TAG, "协程被取消: ${throwable.message}")
+        } else {
+            Log.e(TAG, "协程异常: ${throwable.message}", throwable)
+            _error.value = "系统操作失败: ${throwable.message}"
+            _isLoading.value = false
+        }
+    }
+    
     init {
         loadCurrentSystem()
     }
@@ -38,18 +49,30 @@ class SystemViewModel @Inject constructor(
      * 加载当前系统
      */
     private fun loadCurrentSystem() {
-        viewModelScope.launch {
+        viewModelScope.launch(exceptionHandler) {
             try {
                 _isLoading.value = true
-                systemRepository.getCurrentSystem().collect { system ->
-                    _currentSystem.value = system
-                    _isLoading.value = false
-                    Log.d(TAG, "当前系统已加载: ${system?.name}")
-                }
+                systemRepository.getCurrentSystem()
+                    .catch { e ->
+                        if (e is CancellationException) {
+                            Log.d(TAG, "加载系统流被取消")
+                        } else {
+                            Log.e(TAG, "加载系统失败: ${e.message}", e)
+                            _error.value = "加载系统失败: ${e.message}"
+                        }
+                        _isLoading.value = false
+                    }
+                    .collect { system ->
+                        _currentSystem.value = system
+                        _isLoading.value = false
+                        Log.d(TAG, "当前系统已加载: ${system?.name}")
+                    }
             } catch (e: Exception) {
-                Log.e(TAG, "加载系统失败: ${e.message}", e)
-                _error.value = "加载系统失败: ${e.message}"
-                _isLoading.value = false
+                if (e !is CancellationException) {
+                    Log.e(TAG, "加载系统失败: ${e.message}", e)
+                    _error.value = "加载系统失败: ${e.message}"
+                    _isLoading.value = false
+                }
             }
         }
     }
@@ -57,14 +80,13 @@ class SystemViewModel @Inject constructor(
     /**
      * 创建系统
      */
-    fun createSystem(name: String, avatarUrl: String?, description: String) {
-        viewModelScope.launch {
+    fun createSystem(name: String, avatarUrl: String?) {
+        viewModelScope.launch(exceptionHandler) {
             try {
                 val system = System(
                     id = UUID.randomUUID().toString(),
                     name = name,
                     avatarUrl = avatarUrl,
-                    description = description,
                     createdAt = java.lang.System.currentTimeMillis(),
                     updatedAt = java.lang.System.currentTimeMillis()
                 )
@@ -73,8 +95,10 @@ class SystemViewModel @Inject constructor(
                 _currentSystem.value = system
                 Log.d(TAG, "系统已创建: $name")
             } catch (e: Exception) {
-                Log.e(TAG, "创建系统失败: ${e.message}", e)
-                _error.value = "创建系统失败: ${e.message}"
+                if (e !is CancellationException) {
+                    Log.e(TAG, "创建系统失败: ${e.message}", e)
+                    _error.value = "创建系统失败: ${e.message}"
+                }
             }
         }
     }
@@ -83,15 +107,17 @@ class SystemViewModel @Inject constructor(
      * 更新系统
      */
     fun updateSystem(system: System) {
-        viewModelScope.launch {
+        viewModelScope.launch(exceptionHandler) {
             try {
                 val updatedSystem = system.copy(updatedAt = java.lang.System.currentTimeMillis())
                 systemRepository.updateSystem(updatedSystem)
                 _currentSystem.value = updatedSystem
                 Log.d(TAG, "系统已更新: ${system.name}")
             } catch (e: Exception) {
-                Log.e(TAG, "更新系统失败: ${e.message}", e)
-                _error.value = "更新系统失败: ${e.message}"
+                if (e !is CancellationException) {
+                    Log.e(TAG, "更新系统失败: ${e.message}", e)
+                    _error.value = "更新系统失败: ${e.message}"
+                }
             }
         }
     }
@@ -103,7 +129,9 @@ class SystemViewModel @Inject constructor(
         return try {
             systemRepository.hasSystem()
         } catch (e: Exception) {
-            Log.e(TAG, "检查系统存在性失败: ${e.message}", e)
+            if (e !is CancellationException) {
+                Log.e(TAG, "检查系统存在性失败: ${e.message}", e)
+            }
             false
         }
     }
