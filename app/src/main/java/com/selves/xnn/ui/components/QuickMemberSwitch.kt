@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
 import com.selves.xnn.model.Member
+import com.selves.xnn.data.entity.OnlineStatusEntity
 
 /**
  * 快捷成员切换组件
@@ -27,7 +28,8 @@ fun QuickMemberSwitch(
     members: List<Member>,
     onMemberSelected: (Member) -> Unit,
     modifier: Modifier = Modifier,
-    size: DpSize = DpSize(48.dp, 48.dp)
+    size: DpSize = DpSize(48.dp, 48.dp),
+    loginRecordsMap: Map<String, List<OnlineStatusEntity>> = emptyMap()
 ) {
     var showMemberSwitchDialog by remember { mutableStateOf(false) }
     
@@ -72,7 +74,8 @@ fun QuickMemberSwitch(
                 // 这里可以添加删除成员的逻辑
                 showMemberSwitchDialog = false
             },
-            onDismiss = { showMemberSwitchDialog = false }
+            onDismiss = { showMemberSwitchDialog = false },
+            loginRecordsMap = loginRecordsMap
         )
     }
 }

@@ -48,6 +48,8 @@ import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
 import com.selves.xnn.ui.components.AvatarImage
+import com.selves.xnn.util.MemberSortingUtils
+import com.selves.xnn.data.entity.OnlineStatusEntity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -59,7 +61,8 @@ fun MemberSwitchDialog(
     onDismiss: () -> Unit,
     onMemberSelected: (Member) -> Unit,
     onCreateNewMember: () -> Unit,
-    onDeleteMember: (Member) -> Unit
+    onDeleteMember: (Member) -> Unit,
+    loginRecordsMap: Map<String, List<OnlineStatusEntity>> = emptyMap()
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
     var menuExpandedForMember by remember { mutableStateOf<Member?>(null) }
@@ -73,6 +76,15 @@ fun MemberSwitchDialog(
     var tapPosition by remember { mutableStateOf(Offset.Zero) }
     var rowWidth by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
+    
+    // 根据登录活跃度对成员进行排序
+    val sortedMembers = remember(members, loginRecordsMap, currentMemberId) {
+        MemberSortingUtils.sortMembersByLoginActivity(
+            members = members,
+            loginRecordsMap = loginRecordsMap,
+            currentMemberId = currentMemberId
+        )
+    }
     
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -88,7 +100,7 @@ fun MemberSwitchDialog(
                     contentPadding = PaddingValues(vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(members) { member ->
+                    items(sortedMembers) { member ->
                         Box {
                             Row(
                                 modifier = Modifier

@@ -38,6 +38,7 @@ fun MainTabScreen(
     val groups by viewModel.groups.collectAsState()
     val hasSystem by viewModel.hasSystem.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val memberLoginRecords by viewModel.memberLoginRecords.collectAsState()
     
     var showCreateMemberDialog by remember { mutableStateOf(false) }
     var showMemberSwitchDialog by remember { mutableStateOf(false) }
@@ -109,7 +110,8 @@ fun MainTabScreen(
                 // 成员删除功能可在后续实现
                 showMemberSwitchDialog = false
             },
-            onDismiss = { showMemberSwitchDialog = false }
+            onDismiss = { showMemberSwitchDialog = false },
+            loginRecordsMap = memberLoginRecords
         )
     }
 

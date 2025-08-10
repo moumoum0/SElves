@@ -34,6 +34,7 @@ import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.CreateMemberDialog
 import com.selves.xnn.ui.components.EditMemberDialog
 import com.selves.xnn.ui.viewmodels.MainViewModel
+import com.selves.xnn.util.PinyinUtils
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,35 +55,41 @@ fun MemberManagementScreen(
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     
-    // 根据搜索条件过滤成员
+    // 根据搜索条件过滤成员（支持拼音搜索）
     val filteredMembers = remember(members, searchQuery) {
         if (searchQuery.isBlank()) {
             members
         } else {
             members.filter { member ->
-                member.name.contains(searchQuery, ignoreCase = true)
+                PinyinUtils.matchesKeyword(member.name, searchQuery)
             }
         }
     }
     
-    // 按首字母分组成员
+    // 按首字母分组成员（支持拼音排序）
     val groupedMembers = remember(filteredMembers) {
         filteredMembers
-            .sortedBy { it.name }
+            .sortedWith { a, b ->
+                val pinyinA = PinyinUtils.getPinyin(a.name)
+                val pinyinB = PinyinUtils.getPinyin(b.name)
+                pinyinA.compareTo(pinyinB)
+            }
             .groupBy { member ->
-                val firstChar = member.name.first().uppercaseChar()
+                PinyinUtils.getFirstLetter(member.name)
+            }
+            .toSortedMap { a, b ->
+                // 确保 # 排在最后
                 when {
-                    firstChar in 'A'..'Z' -> firstChar.toString()
-                    firstChar.isDigit() -> "#"
-                    else -> "#"
+                    a == "#" && b != "#" -> 1
+                    a != "#" && b == "#" -> -1
+                    else -> a.compareTo(b)
                 }
             }
-            .toSortedMap()
     }
     
-    // 获取所有可用的字母
+    // 获取所有可用的字母（包含#但排序时#在最后）
     val availableLetters = remember(groupedMembers) {
-        groupedMembers.keys.filter { it != "#" }.sorted()
+        groupedMembers.keys.toList()
     }
     
     Scaffold(

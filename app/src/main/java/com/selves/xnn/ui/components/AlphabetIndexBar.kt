@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
 
 /**
- * 字母表索引栏组件，类似微信的字母索引功能
+ * 字母表索引栏组件，支持中英文索引功能
  * @param availableLetters 可用的字母列表
  * @param selectedLetter 当前选中的字母
  * @param onLetterSelected 字母选择回调
@@ -40,10 +40,10 @@ fun AlphabetIndexBar(
     var columnHeight by remember { mutableStateOf(0) }
     var isDragging by remember { mutableStateOf(false) }
     
-    // 完整的字母表
+    // 完整的字母表，包含数字和特殊字符
     val allLetters = listOf(
         "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+        "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "#"
     )
     
     // 计算触摸位置对应的字母

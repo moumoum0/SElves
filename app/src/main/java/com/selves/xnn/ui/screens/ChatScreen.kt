@@ -114,7 +114,10 @@ fun ChatScreen(
             state = listState,
             reverseLayout = true
         ) {
-            items(messages.reversed()) { message ->
+            items(
+                items = messages.reversed(),
+                key = { it.id }
+            ) { message ->
                 MessageItem(
                     message = message,
                     isFromCurrentMember = message.senderId == currentMember.id,
@@ -444,7 +447,8 @@ fun ImageMessage(
                 model = imageRequest,
                 contentDescription = "消息图片",
                 modifier = Modifier
-                    .size(200.dp)
+                    .widthIn(max = 240.dp)
+                    .heightIn(max = 360.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .onSizeChanged { size ->
                         imageSize = with(density) {
@@ -462,7 +466,7 @@ fun ImageMessage(
                             }
                         )
                     },
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Fit,
                 onError = {
                     // 图片加载失败时的处理
                 }

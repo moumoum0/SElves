@@ -12,6 +12,7 @@ import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
 import com.selves.xnn.data.repository.SystemRepository
 import com.selves.xnn.data.repository.OnlineStatusRepository
+import com.selves.xnn.data.entity.OnlineStatusEntity
 import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.BackupResult
 import com.selves.xnn.model.ChatGroup
@@ -136,6 +137,10 @@ class MainViewModel @Inject constructor(
     private val _unreadCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
     val unreadCounts: StateFlow<Map<String, Int>> = _unreadCounts.asStateFlow()
     
+    // 成员登录记录管理
+    private val _memberLoginRecords = MutableStateFlow<Map<String, List<OnlineStatusEntity>>>(emptyMap())
+    val memberLoginRecords: StateFlow<Map<String, List<OnlineStatusEntity>>> = _memberLoginRecords.asStateFlow()
+    
     // 已加载消息的群组ID列表
     private val loadedMessageGroups = mutableSetOf<String>()
     
@@ -205,6 +210,10 @@ class MainViewModel @Inject constructor(
                 // 阶段4：预加载图片
                 updateLoadingState(LoadingPhase.PRELOADING_IMAGES, 0.8f, "正在预加载图片...")
                 preloadImages()
+                
+                // 阶段5：加载成员登录记录
+                updateLoadingState(LoadingPhase.COMPLETED, 0.95f, "正在加载成员活跃度数据...")
+                loadMemberLoginRecords()
                 
                 // 完成加载
                 updateLoadingState(LoadingPhase.COMPLETED, 1.0f, "加载完成")
@@ -293,6 +302,47 @@ class MainViewModel @Inject constructor(
         }
         
         imagesPreloaded = true
+    }
+    
+    /**
+     * 加载成员登录记录（用于排序）
+     */
+    private suspend fun loadMemberLoginRecords() {
+        try {
+            val members = _members.value
+            if (members.isEmpty()) {
+                Log.d(TAG, "没有成员，跳过登录记录加载")
+                return
+            }
+            
+            val loginRecordsMap = mutableMapOf<String, List<OnlineStatusEntity>>()
+            
+            // 为每个成员获取登录记录（最近90天）
+            val currentTime = System.currentTimeMillis()
+            val threeMonthsAgo = currentTime - (90L * 24 * 60 * 60 * 1000) // 90天前
+            
+            members.forEach { member ->
+                try {
+                    val records = onlineStatusRepository.getLoginLogsByDateRange(
+                        threeMonthsAgo, 
+                        currentTime
+                    ).filter { it.memberId == member.id }
+                    
+                    loginRecordsMap[member.id] = records
+                    Log.d(TAG, "成员 ${member.name} 加载了 ${records.size} 条登录记录")
+                } catch (e: Exception) {
+                    Log.e(TAG, "加载成员 ${member.name} 的登录记录失败: ${e.message}", e)
+                    loginRecordsMap[member.id] = emptyList()
+                }
+            }
+            
+            _memberLoginRecords.value = loginRecordsMap
+            Log.d(TAG, "成员登录记录加载完成，共 ${loginRecordsMap.size} 个成员")
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "加载成员登录记录失败: ${e.message}", e)
+            _memberLoginRecords.value = emptyMap()
+        }
     }
     
     private suspend fun loadMembers() {
