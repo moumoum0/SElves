@@ -45,6 +45,19 @@ class ChatGroupRepository @Inject constructor(
     }
 
     /**
+     * 通过ID获取特定群聊（带权限验证）
+     * 只有群聊成员才能获取群聊信息
+     */
+    suspend fun getGroupByIdForMember(groupId: String, memberId: String): ChatGroup? {
+        val group = chatGroupDao.getGroupById(groupId)?.toDomain(memberDao)
+        return if (group?.members?.any { it.id == memberId } == true) {
+            group
+        } else {
+            null // 不是群聊成员，返回null
+        }
+    }
+
+    /**
      * 保存一个群聊
      */
     suspend fun saveGroup(group: ChatGroup) {

@@ -1,10 +1,19 @@
 package com.selves.xnn.ui.screens
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -14,11 +23,105 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.ui.viewmodels.LoadingState
 import com.selves.xnn.viewmodel.OnlineStatsViewModel
+
+// 动画配置常量
+private const val ANIMATION_DURATION = 450
+private const val BACKGROUND_FADE_DURATION = 300
+
+// 页面进入动画：从右侧滑入 + 背景淡入
+private val slideInFromRight = slideInHorizontally(
+    initialOffsetX = { fullWidth -> fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION,
+        easing = FastOutSlowInEasing
+    )
+) + fadeIn(
+    animationSpec = tween(
+        durationMillis = BACKGROUND_FADE_DURATION,
+        easing = EaseInOutCubic
+    )
+)
+
+// 页面退出动画：向左侧滑出 + 背景淡出
+private val slideOutToLeft = slideOutHorizontally(
+    targetOffsetX = { fullWidth -> -fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION - 100, // 稍快退出
+        easing = EaseInOutCubic
+    )
+) + fadeOut(
+    animationSpec = tween(
+        durationMillis = BACKGROUND_FADE_DURATION,
+        easing = EaseInOutCubic
+    )
+)
+
+// 页面进入动画：从左侧滑入（返回时使用）+ 背景淡入
+private val slideInFromLeft = slideInHorizontally(
+    initialOffsetX = { fullWidth -> -fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION,
+        easing = FastOutSlowInEasing
+    )
+) + fadeIn(
+    animationSpec = tween(
+        durationMillis = BACKGROUND_FADE_DURATION,
+        easing = EaseInOutCubic
+    )
+)
+
+// 页面退出动画：向右侧滑出（返回时使用）+ 背景淡出
+private val slideOutToRight = slideOutHorizontally(
+    targetOffsetX = { fullWidth -> fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION - 100, // 稍快退出
+        easing = EaseInOutCubic
+    )
+) + fadeOut(
+    animationSpec = tween(
+        durationMillis = BACKGROUND_FADE_DURATION,
+        easing = EaseInOutCubic
+    )
+)
+
+// 专门为聊天等核心功能页面设计的动画：纯滑动，无淡入淡出
+private val chatSlideInFromRight = slideInHorizontally(
+    initialOffsetX = { fullWidth -> fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION,
+        easing = FastOutSlowInEasing
+    )
+)
+
+private val chatSlideOutToLeft = slideOutHorizontally(
+    targetOffsetX = { fullWidth -> -fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION - 100,
+        easing = EaseInOutCubic
+    )
+)
+
+private val chatSlideInFromLeft = slideInHorizontally(
+    initialOffsetX = { fullWidth -> -fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION,
+        easing = FastOutSlowInEasing
+    )
+)
+
+private val chatSlideOutToRight = slideOutHorizontally(
+    targetOffsetX = { fullWidth -> fullWidth },
+    animationSpec = tween(
+        durationMillis = ANIMATION_DURATION - 100,
+        easing = EaseInOutCubic
+    )
+)
 
 @Composable
 fun AppNavigationScreen(
@@ -71,10 +174,37 @@ fun AppNavigationScreen(
         )
     } else {
         // 主导航结构
-        NavHost(
-            navController = navController,
-            startDestination = "main"
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        
+        // 动画背景暗化效果：只对特定页面应用暗化，聊天等主要功能页面保持正常背景
+        val shouldDarkenBackground = currentRoute != null && 
+            currentRoute != "main" && 
+            !currentRoute.startsWith("chat/") && 
+            !currentRoute.startsWith("dynamic_detail/") &&
+            !currentRoute.startsWith("vote_detail/")
+            
+        val backgroundAlpha by animateFloatAsState(
+            targetValue = if (shouldDarkenBackground) 0.4f else 0f,
+            animationSpec = tween(
+                durationMillis = BACKGROUND_FADE_DURATION,
+                easing = EaseInOutCubic
+            ),
+            label = "backgroundAlpha"
+        )
+        
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    // 使用主题的表面色调暗化，创造更和谐的视觉效果
+                    MaterialTheme.colorScheme.scrim.copy(alpha = backgroundAlpha)
+                )
         ) {
+            NavHost(
+                navController = navController,
+                startDestination = "main"
+            ) {
             // 主页（包含底部导航栏）
             composable("main") {
                 MainTabScreen(
@@ -105,7 +235,13 @@ fun AppNavigationScreen(
             }
             
             // 待办事项界面（作为独立全屏页面）
-            composable("todo") {
+            composable(
+                route = "todo",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 TodoScreen(
                     onNavigateBack = {
                         navController.popBackStack()
@@ -115,7 +251,13 @@ fun AppNavigationScreen(
             }
             
             // 动态界面（作为独立全屏页面）
-            composable("dynamic") {
+            composable(
+                route = "dynamic",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 DynamicScreen(
                     currentMember = currentMember,
                     onNavigateBack = {
@@ -127,10 +269,14 @@ fun AppNavigationScreen(
                 )
             }
             
-            // 动态详情界面
+            // 动态详情界面 - 使用纯滑动动画
             composable(
                 route = "dynamic_detail/{dynamicId}",
-                arguments = listOf(navArgument("dynamicId") { type = NavType.StringType })
+                arguments = listOf(navArgument("dynamicId") { type = NavType.StringType }),
+                enterTransition = { chatSlideInFromRight },
+                exitTransition = { chatSlideOutToLeft },
+                popEnterTransition = { chatSlideInFromLeft },
+                popExitTransition = { chatSlideOutToRight }
             ) { backStackEntry ->
                 val dynamicId = backStackEntry.arguments?.getString("dynamicId") ?: return@composable
                 
@@ -144,7 +290,13 @@ fun AppNavigationScreen(
             }
             
             // 投票界面（作为独立全屏页面）
-            composable("vote") {
+            composable(
+                route = "vote",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 VoteScreen(
                     currentMember = currentMember,
                     members = members,
@@ -160,10 +312,14 @@ fun AppNavigationScreen(
                 )
             }
             
-            // 投票详情界面
+            // 投票详情界面 - 使用纯滑动动画
             composable(
                 route = "vote_detail/{voteId}",
-                arguments = listOf(navArgument("voteId") { type = NavType.StringType })
+                arguments = listOf(navArgument("voteId") { type = NavType.StringType }),
+                enterTransition = { chatSlideInFromRight },
+                exitTransition = { chatSlideOutToLeft },
+                popEnterTransition = { chatSlideInFromLeft },
+                popExitTransition = { chatSlideOutToRight }
             ) { backStackEntry ->
                 val voteId = backStackEntry.arguments?.getString("voteId") ?: return@composable
                 
@@ -180,10 +336,14 @@ fun AppNavigationScreen(
                 )
             }
 
-            // 聊天界面（作为独立页面）
+            // 聊天界面（作为独立页面） - 使用纯滑动动画，无淡入淡出
             composable(
                 route = "chat/{groupId}",
-                arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+                arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
+                enterTransition = { chatSlideInFromRight },
+                exitTransition = { chatSlideOutToLeft },
+                popEnterTransition = { chatSlideInFromLeft },
+                popExitTransition = { chatSlideOutToRight }
             ) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 val group = groups.find { it.id == groupId }
@@ -233,7 +393,13 @@ fun AppNavigationScreen(
             }
             
             // 成员管理界面（作为独立页面）
-            composable("member_management") {
+            composable(
+                route = "member_management",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 MemberManagementScreen(
                     members = members,
                     currentMember = currentMember!!,
@@ -245,7 +411,13 @@ fun AppNavigationScreen(
             }
             
             // 在线统计界面（作为独立页面）
-            composable("online_stats") {
+            composable(
+                route = "online_stats",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 val onlineStatsViewModel: OnlineStatsViewModel = hiltViewModel()
                 val onlineStats by onlineStatsViewModel.onlineStats.collectAsState()
                 val isLoading by onlineStatsViewModel.isLoading.collectAsState()
@@ -281,7 +453,13 @@ fun AppNavigationScreen(
             
 
             // 设置界面（作为独立页面）
-            composable("settings") {
+            composable(
+                route = "settings",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 SettingsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
@@ -293,13 +471,20 @@ fun AppNavigationScreen(
             }
             
             // 关于界面（作为独立页面）
-            composable("about") {
+            composable(
+                route = "about",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
                 AboutScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     }
                 )
             }
+        }
         }
     }
 }

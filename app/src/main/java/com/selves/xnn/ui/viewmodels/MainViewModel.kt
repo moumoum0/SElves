@@ -382,20 +382,19 @@ class MainViewModel @Inject constructor(
     
     private suspend fun loadGroups() {
         try {
-            val allGroups = withContext(Dispatchers.IO) {
-                chatGroupRepository.getAllGroups().first()
-            }
             val currentMember = _currentMember.value
             val filteredGroups = if (currentMember != null) {
-                allGroups.filter { group ->
-                    group.members.any { it.id == currentMember.id }
+                // 只获取当前成员所属的群聊
+                withContext(Dispatchers.IO) {
+                    chatGroupRepository.getGroupsByMemberId(currentMember.id).first()
                 }
             } else {
-                allGroups
+                // 如果没有当前成员，返回空列表
+                emptyList()
             }
             _groups.value = filteredGroups
             groupsLoaded = true
-            Log.d(TAG, "已加载 ${filteredGroups.size} 个群聊（IO线程获取）")
+            Log.d(TAG, "已加载 ${filteredGroups.size} 个群聊（成员 ${currentMember?.name ?: "未知"} 所属）")
         } catch (e: Exception) {
             Log.e(TAG, "加载群聊失败: ${e.message}", e)
             _groups.value = emptyList()
@@ -521,6 +520,9 @@ class MainViewModel @Inject constructor(
             onlineStatusRepository.loginMember(member.id)
             Log.d(TAG, "用户 ${member.name} 已上线")
             
+            // 重新加载群聊列表（基于新的当前成员）
+            loadGroups()
+            
             // 重新加载所有群组的未读数量
             _groups.value.forEach { group ->
                 loadUnreadCount(group.id)
@@ -529,7 +531,7 @@ class MainViewModel @Inject constructor(
         
         viewModelScope.launch(exceptionHandler) {
             memberPreferences.saveCurrentMemberId(member.id)
-            Log.d(TAG, "已保存当前成员ID: ${member.id}, 将重新加载群聊列表")
+            Log.d(TAG, "已保存当前成员ID: ${member.id}, 群聊列表已重新加载")
         }
     }
     

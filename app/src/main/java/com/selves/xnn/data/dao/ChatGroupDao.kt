@@ -14,7 +14,7 @@ interface ChatGroupDao {
     @Query("SELECT * FROM chat_groups ORDER BY createdAt DESC")
     fun getAllGroups(): Flow<List<ChatGroupEntity>>
     
-    @Query("SELECT * FROM chat_groups WHERE memberIds LIKE '%' || :memberId || '%' ORDER BY createdAt DESC")
+    @Query("SELECT * FROM chat_groups WHERE memberIds = :memberId OR memberIds LIKE :memberId || ',%' OR memberIds LIKE '%,' || :memberId || ',%' OR memberIds LIKE '%,' || :memberId ORDER BY createdAt DESC")
     fun getGroupsByMemberId(memberId: String): Flow<List<ChatGroupEntity>>
     
     @Query("SELECT * FROM chat_groups WHERE id = :groupId")
