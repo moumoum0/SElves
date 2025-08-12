@@ -5,8 +5,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,94 +34,43 @@ import androidx.compose.ui.graphics.luminance
 private const val ANIMATION_DURATION = 450
 private const val BACKGROUND_FADE_DURATION = 300
 
-// 页面进入动画：从右侧滑入 + 背景淡入
+// 页面进入动画：从右侧滑入
 private val slideInFromRight = slideInHorizontally(
     initialOffsetX = { fullWidth -> fullWidth },
     animationSpec = tween(
         durationMillis = ANIMATION_DURATION,
         easing = FastOutSlowInEasing
     )
-) + fadeIn(
-    animationSpec = tween(
-        durationMillis = BACKGROUND_FADE_DURATION,
-        easing = EaseInOutCubic
-    )
 )
 
-// 页面退出动画：向左侧滑出 + 背景淡出
+// 页面退出动画：向左侧滑出
 private val slideOutToLeft = slideOutHorizontally(
     targetOffsetX = { fullWidth -> -fullWidth },
     animationSpec = tween(
         durationMillis = ANIMATION_DURATION - 100, // 稍快退出
         easing = EaseInOutCubic
     )
-) + fadeOut(
-    animationSpec = tween(
-        durationMillis = BACKGROUND_FADE_DURATION,
-        easing = EaseInOutCubic
-    )
 )
 
-// 页面进入动画：从左侧滑入（返回时使用）+ 背景淡入
+// 页面进入动画：从左侧滑入（返回时使用）
 private val slideInFromLeft = slideInHorizontally(
     initialOffsetX = { fullWidth -> -fullWidth },
     animationSpec = tween(
         durationMillis = ANIMATION_DURATION,
         easing = FastOutSlowInEasing
     )
-) + fadeIn(
-    animationSpec = tween(
-        durationMillis = BACKGROUND_FADE_DURATION,
-        easing = EaseInOutCubic
-    )
 )
 
-// 页面退出动画：向右侧滑出（返回时使用）+ 背景淡出
+// 页面退出动画：向右侧滑出（返回时使用）
 private val slideOutToRight = slideOutHorizontally(
     targetOffsetX = { fullWidth -> fullWidth },
     animationSpec = tween(
         durationMillis = ANIMATION_DURATION - 100, // 稍快退出
         easing = EaseInOutCubic
     )
-) + fadeOut(
-    animationSpec = tween(
-        durationMillis = BACKGROUND_FADE_DURATION,
-        easing = EaseInOutCubic
-    )
 )
 
-// 专门为聊天等核心功能页面设计的动画：纯滑动，无淡入淡出
-private val chatSlideInFromRight = slideInHorizontally(
-    initialOffsetX = { fullWidth -> fullWidth },
-    animationSpec = tween(
-        durationMillis = ANIMATION_DURATION,
-        easing = FastOutSlowInEasing
-    )
-)
-
-private val chatSlideOutToLeft = slideOutHorizontally(
-    targetOffsetX = { fullWidth -> -fullWidth },
-    animationSpec = tween(
-        durationMillis = ANIMATION_DURATION - 100,
-        easing = EaseInOutCubic
-    )
-)
-
-private val chatSlideInFromLeft = slideInHorizontally(
-    initialOffsetX = { fullWidth -> -fullWidth },
-    animationSpec = tween(
-        durationMillis = ANIMATION_DURATION,
-        easing = FastOutSlowInEasing
-    )
-)
-
-private val chatSlideOutToRight = slideOutHorizontally(
-    targetOffsetX = { fullWidth -> fullWidth },
-    animationSpec = tween(
-        durationMillis = ANIMATION_DURATION - 100,
-        easing = EaseInOutCubic
-    )
-)
+// 统一动画：所有页面与“动态”页面一致（滑入/滑出 + 背景淡入淡出）
 
 @Composable
 fun AppNavigationScreen(
@@ -179,12 +126,10 @@ fun AppNavigationScreen(
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         
-        // 动画背景暗化效果：只对特定页面应用暗化，聊天等主要功能页面保持正常背景
-        val shouldDarkenBackground = currentRoute != null && 
-            currentRoute != "main" && 
-            !currentRoute.startsWith("chat/") && 
-            !currentRoute.startsWith("dynamic_detail/") &&
-            !currentRoute.startsWith("vote_detail/")
+        // 动画背景暗化效果：排除聊天页，其他二级页面保持暗化
+        val shouldDarkenBackground = currentRoute != null &&
+            currentRoute != "main" &&
+            !currentRoute.startsWith("chat/")
 
         val backgroundAlpha by animateFloatAsState(
             targetValue = if (shouldDarkenBackground) 0.4f else 0f,
@@ -298,14 +243,14 @@ fun AppNavigationScreen(
                 )
             }
             
-            // 动态详情界面 - 使用纯滑动动画
+            // 动态详情界面 - 与动态页一致的过渡动画
             composable(
                 route = "dynamic_detail/{dynamicId}",
                 arguments = listOf(navArgument("dynamicId") { type = NavType.StringType }),
-                enterTransition = { chatSlideInFromRight },
-                exitTransition = { chatSlideOutToLeft },
-                popEnterTransition = { chatSlideInFromLeft },
-                popExitTransition = { chatSlideOutToRight }
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
             ) { backStackEntry ->
                 val dynamicId = backStackEntry.arguments?.getString("dynamicId") ?: return@composable
                 
@@ -341,14 +286,14 @@ fun AppNavigationScreen(
                 )
             }
             
-            // 投票详情界面 - 使用纯滑动动画
+            // 投票详情界面 - 与动态页一致的过渡动画
             composable(
                 route = "vote_detail/{voteId}",
                 arguments = listOf(navArgument("voteId") { type = NavType.StringType }),
-                enterTransition = { chatSlideInFromRight },
-                exitTransition = { chatSlideOutToLeft },
-                popEnterTransition = { chatSlideInFromLeft },
-                popExitTransition = { chatSlideOutToRight }
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
             ) { backStackEntry ->
                 val voteId = backStackEntry.arguments?.getString("voteId") ?: return@composable
                 
@@ -365,14 +310,14 @@ fun AppNavigationScreen(
                 )
             }
 
-            // 聊天界面（作为独立页面） - 使用纯滑动动画，无淡入淡出
+            // 聊天界面（作为独立页面） - 与动态页一致的过渡动画
             composable(
                 route = "chat/{groupId}",
                 arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
-                enterTransition = { chatSlideInFromRight },
-                exitTransition = { chatSlideOutToLeft },
-                popEnterTransition = { chatSlideInFromLeft },
-                popExitTransition = { chatSlideOutToRight }
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
             ) { backStackEntry ->
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: return@composable
                 val group = groups.find { it.id == groupId }
