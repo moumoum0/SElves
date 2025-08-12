@@ -29,6 +29,8 @@ import androidx.navigation.navArgument
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.ui.viewmodels.LoadingState
 import com.selves.xnn.viewmodel.OnlineStatsViewModel
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.ui.graphics.luminance
 
 // 动画配置常量
 private const val ANIMATION_DURATION = 450
@@ -183,7 +185,7 @@ fun AppNavigationScreen(
             !currentRoute.startsWith("chat/") && 
             !currentRoute.startsWith("dynamic_detail/") &&
             !currentRoute.startsWith("vote_detail/")
-            
+
         val backgroundAlpha by animateFloatAsState(
             targetValue = if (shouldDarkenBackground) 0.4f else 0f,
             animationSpec = tween(
@@ -192,6 +194,33 @@ fun AppNavigationScreen(
             ),
             label = "backgroundAlpha"
         )
+
+        // 根据当前页面动态设置系统系统栏颜色：
+        // - 主页（含底部导航）使用 surfaceVariant 与 BottomNav 保持一致
+        // - 二级页面使用背景色，保证与页面背景一致
+        // 进入二级页面的过渡动画期间（有暗化背景时），将系统栏设为透明，让阴影覆盖到状态栏与导航栏区域，实现整页滑入的观感
+        val systemUiController = rememberSystemUiController()
+        val baseBarColor = if (currentRoute == "main") MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.background
+        val navBarColor = baseBarColor
+        val useDarkIcons = navBarColor.luminance() > 0.5f
+        // 恢复状态栏时遵循应用原有策略：浅色主题为白色，深色主题为 surface
+        val isLightTheme = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+        val defaultStatusBarColor = if (isLightTheme) Color.White else MaterialTheme.colorScheme.surface
+        val defaultStatusBarDarkIcons = defaultStatusBarColor.luminance() > 0.5f
+        // 使用背景透明度判断动画阶段，确保退出动画期间也透明覆盖到顶/底部
+        LaunchedEffect(backgroundAlpha, navBarColor) {
+            if (backgroundAlpha > 0.01f) {
+                // 动画阴影期间（含进入与退出），透明系统栏以覆盖到顶/底部
+                systemUiController.setStatusBarColor(color = Color.Transparent, darkIcons = false)
+                systemUiController.setNavigationBarColor(color = Color.Transparent, darkIcons = false)
+            } else {
+                // 非阴影状态
+                // - 状态栏：恢复为原始策略（浅色白、深色 surface）
+                // - 导航栏：与页面背景一致
+                systemUiController.setStatusBarColor(color = defaultStatusBarColor, darkIcons = defaultStatusBarDarkIcons)
+                systemUiController.setNavigationBarColor(color = navBarColor, darkIcons = useDarkIcons)
+            }
+        }
         
         Box(
             modifier = Modifier
