@@ -8,6 +8,44 @@
         android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" 
         tools:ignore="ScopedStorage" />
+    
+    <!-- 位置权限 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    
+    <!-- 前台服务权限 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    
+    <!-- 精确闹钟权限（Android 12+需要，用于自动重启功能） -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    
+    <!-- 查询其他应用包信息权限（Android 11+需要，用于检测地图应用） -->
+    <uses-permission android:name="android.permission.QUERY_PACKAGES" />
+    
+    <!-- 中国工信部规范：获取应用列表权限（YD/T 2407-2021标准要求） -->
+    <!-- 适用于所有在中国销售的Android设备，不仅限于小米 -->
+    <uses-permission android:name="com.android.permission.GET_INSTALLED_APPS" />
+    
+    <!-- 查询特定应用包（Android 11+需要，明确声明要检测的地图应用） -->
+    <queries>
+        <!-- 高德地图 -->
+        <package android:name="com.autonavi.minimap" />
+        <!-- 百度地图 -->
+        <package android:name="com.baidu.BaiduMap" />
+        <!-- 腾讯地图 -->
+        <package android:name="com.tencent.map" />
+        <!-- Google地图 -->
+        <package android:name="com.google.android.apps.maps" />
+        
+        <!-- 通用地图意图查询 -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+    </queries>
 
     <application
         android:name=".ChatApplication"
@@ -36,6 +74,18 @@
         <activity
             android:name="com.canhub.cropper.CropImageActivity"
             android:theme="@style/Theme.Selves.Crop" />
+
+        <!-- 位置跟踪服务 -->
+        <service
+            android:name=".service.LocationTrackingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- 自动重启接收器 -->
+        <receiver
+            android:name=".service.AutoRestartReceiver"
+            android:exported="false" />
 
     </application>
 

@@ -198,7 +198,9 @@ fun AppNavigationScreen(
                     onNavigateToOnlineStats = {
                         navController.navigate("online_stats")
                     },
-
+                    onNavigateToLocation = {
+                        navController.navigate("location")
+                    },
                     onNavigateToSettings = {
                         navController.navigate("settings")
                     },
@@ -425,6 +427,22 @@ fun AppNavigationScreen(
                 )
             }
             
+            // 轨迹记录界面（作为独立全屏页面）
+            composable(
+                route = "location",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
+                LocationTrackingScreen(
+                    currentMemberId = currentMember?.id ?: "",
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
 
             // 设置界面（作为独立页面）
             composable(

@@ -29,7 +29,7 @@ fun MainTabScreen(
     onNavigateToVote: () -> Unit,
     onNavigateToMemberManagement: () -> Unit,
     onNavigateToOnlineStats: () -> Unit,
-
+    onNavigateToLocation: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToChat: (String) -> Unit
 ) {
@@ -132,7 +132,8 @@ fun MainTabScreen(
                         onMemberSwitch = { showMemberSwitchDialog = true },
                         onNavigateToTodo = onNavigateToTodo,
                         onNavigateToDynamic = onNavigateToDynamic,
-                        onNavigateToVote = onNavigateToVote
+                        onNavigateToVote = onNavigateToVote,
+                        onNavigateToLocation = onNavigateToLocation
                     )
                 }
                 
@@ -160,7 +161,6 @@ fun MainTabScreen(
                         allMembers = members,
                         onNavigateToMemberManagement = onNavigateToMemberManagement,
                         onNavigateToOnlineStats = onNavigateToOnlineStats,
-
                         onNavigateToSettings = onNavigateToSettings
                     )
                 }

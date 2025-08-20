@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Poll
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.UserInfoHeader
+import com.selves.xnn.ui.components.LocationTrackingPreview
 import com.selves.xnn.ui.screens.TodoScreen
 import com.selves.xnn.ui.screens.DynamicScreen
 import com.selves.xnn.viewmodel.TodoViewModel
@@ -39,7 +41,8 @@ fun HomeScreen(
     onMemberSwitch: () -> Unit,
     onNavigateToTodo: () -> Unit,
     onNavigateToDynamic: () -> Unit,
-    onNavigateToVote: () -> Unit
+    onNavigateToVote: () -> Unit,
+    onNavigateToLocation: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     
@@ -53,7 +56,8 @@ fun HomeScreen(
                 onMemberSwitch = onMemberSwitch,
                 onNavigateToTodo = onNavigateToTodo,
                 onNavigateToDynamic = onNavigateToDynamic,
-                onNavigateToVote = onNavigateToVote
+                onNavigateToVote = onNavigateToVote,
+                onNavigateToLocation = onNavigateToLocation
             )
         }
     }
@@ -66,6 +70,7 @@ fun HomeMainScreen(
     onNavigateToTodo: () -> Unit,
     onNavigateToDynamic: () -> Unit,
     onNavigateToVote: () -> Unit,
+    onNavigateToLocation: () -> Unit = {},
     todoViewModel: TodoViewModel = hiltViewModel(),
     dynamicViewModel: DynamicViewModel = hiltViewModel(),
     voteViewModel: VoteViewModel = hiltViewModel()
@@ -112,8 +117,20 @@ fun HomeMainScreen(
             FunctionModulesSection(
                 onNavigateToTodo = onNavigateToTodo,
                 onNavigateToDynamic = onNavigateToDynamic,
-                onNavigateToVote = onNavigateToVote
+                onNavigateToVote = onNavigateToVote,
+                onNavigateToLocation = onNavigateToLocation
             )
+        }
+        
+        // 轨迹记录预览区域
+        item {
+            if (currentMember != null) {
+                LocationTrackingPreview(
+                    currentMemberId = currentMember.id,
+                    onNavigateToLocationPage = onNavigateToLocation,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
         
         item {
@@ -150,7 +167,8 @@ fun HomeMainScreen(
 fun FunctionModulesSection(
     onNavigateToTodo: () -> Unit = {},
     onNavigateToDynamic: () -> Unit = {},
-    onNavigateToVote: () -> Unit = {}
+    onNavigateToVote: () -> Unit = {},
+    onNavigateToLocation: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -173,7 +191,8 @@ fun FunctionModulesSection(
                     listOf(
                         "待办" to Icons.Default.Assignment,
                         "动态" to Icons.Default.Timeline,
-                        "投票" to Icons.Default.Poll
+                        "投票" to Icons.Default.Poll,
+                        "轨迹" to Icons.Default.LocationOn
                     )
                 ) { (title, icon) ->
                     FunctionModuleItem(
@@ -184,7 +203,7 @@ fun FunctionModulesSection(
                                 "待办" -> onNavigateToTodo()
                                 "动态" -> onNavigateToDynamic()
                                 "投票" -> onNavigateToVote()
-                                // 其他功能模块的点击事件可以在这里添加
+                                "轨迹" -> onNavigateToLocation()
                             }
                         }
                     )

@@ -14,6 +14,7 @@ import com.selves.xnn.data.dao.TodoDao
 import com.selves.xnn.data.dao.VoteDao
 import com.selves.xnn.data.dao.SystemDao
 import com.selves.xnn.data.dao.OnlineStatusDao
+import com.selves.xnn.data.dao.LocationRecordDao
 import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.DynamicRepository
 import com.selves.xnn.data.repository.MemberRepository
@@ -23,6 +24,7 @@ import com.selves.xnn.data.repository.TodoRepository
 import com.selves.xnn.data.repository.VoteRepository
 import com.selves.xnn.data.repository.SystemRepository
 import com.selves.xnn.data.repository.OnlineStatusRepository
+import com.selves.xnn.data.repository.LocationRecordRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -97,6 +99,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideLocationRecordDao(database: AppDatabase): LocationRecordDao {
+        return database.locationRecordDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideMemberRepository(database: AppDatabase): MemberRepository {
         return MemberRepository(database)
     }
@@ -147,6 +155,12 @@ object DatabaseModule {
     @Singleton
     fun provideOnlineStatusRepository(onlineStatusDao: OnlineStatusDao): OnlineStatusRepository {
         return OnlineStatusRepository(onlineStatusDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationRecordRepository(locationRecordDao: LocationRecordDao): LocationRecordRepository {
+        return LocationRecordRepository(locationRecordDao)
     }
 
     @Provides

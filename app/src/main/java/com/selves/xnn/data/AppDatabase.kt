@@ -16,6 +16,7 @@ import com.selves.xnn.data.dao.TodoDao
 import com.selves.xnn.data.dao.VoteDao
 import com.selves.xnn.data.dao.SystemDao
 import com.selves.xnn.data.dao.OnlineStatusDao
+import com.selves.xnn.data.dao.LocationRecordDao
 import com.selves.xnn.data.entity.ChatGroupEntity
 import com.selves.xnn.data.entity.DynamicEntity
 import com.selves.xnn.data.entity.DynamicCommentEntity
@@ -29,6 +30,7 @@ import com.selves.xnn.data.entity.VoteOptionEntity
 import com.selves.xnn.data.entity.VoteRecordEntity
 import com.selves.xnn.data.entity.SystemEntity
 import com.selves.xnn.data.entity.OnlineStatusEntity
+import com.selves.xnn.data.entity.LocationRecordEntity
 import android.util.Log
 
 @Database(
@@ -45,9 +47,10 @@ import android.util.Log
         VoteOptionEntity::class,
         VoteRecordEntity::class,
         SystemEntity::class,
-        OnlineStatusEntity::class
+        OnlineStatusEntity::class,
+        LocationRecordEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -61,6 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun voteDao(): VoteDao
     abstract fun systemDao(): SystemDao
     abstract fun onlineStatusDao(): OnlineStatusDao
+    abstract fun locationRecordDao(): LocationRecordDao
 
     companion object {
         @Volatile
@@ -388,6 +392,31 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    // 创建位置记录表（不包含外键约束和索引，与实体类定义保持一致）
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS location_records (" +
+                                "id TEXT PRIMARY KEY NOT NULL, " +
+                                "latitude REAL NOT NULL, " +
+                                "longitude REAL NOT NULL, " +
+                                "altitude REAL, " +
+                                "accuracy REAL, " +
+                                "address TEXT, " +
+                                "timestamp INTEGER NOT NULL, " +
+                                "memberId TEXT NOT NULL, " +
+                                "note TEXT)"
+                    )
+
+                    Log.d("AppDatabase", "数据库迁移 11->12 完成：位置记录表已创建")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移 11->12 失败: ${e.message}", e)
+                    throw e // 重新抛出异常，确保Room知道迁移失败
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -395,7 +424,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                 // 移除 .fallbackToDestructiveMigration() 以防止数据丢失
                 .build()
                 INSTANCE = instance

@@ -10,6 +10,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import com.selves.xnn.model.ThemeMode
+import com.selves.xnn.model.TrackingConfig
+import androidx.datastore.preferences.core.intPreferencesKey
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "member_preferences")
 
@@ -22,6 +24,11 @@ class MemberPreferences(private val context: Context) {
         private val CURRENT_MEMBER_ID = stringPreferencesKey("current_member_id")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val QUICK_MEMBER_SWITCH_ENABLED = booleanPreferencesKey("quick_member_switch_enabled")
+        
+        // 轨迹记录配置
+        private val TRACKING_RECORDING_INTERVAL = intPreferencesKey("tracking_recording_interval")
+        private val TRACKING_AUTO_RESTART_DELAY = intPreferencesKey("tracking_auto_restart_delay")
+        private val TRACKING_ENABLE_AUTO_START = booleanPreferencesKey("tracking_enable_auto_start")
     }
     
     /**
@@ -86,6 +93,29 @@ class MemberPreferences(private val context: Context) {
     suspend fun saveQuickMemberSwitchEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[QUICK_MEMBER_SWITCH_ENABLED] = enabled
+        }
+    }
+    
+    /**
+     * 获取轨迹记录配置
+     */
+    val trackingConfig: Flow<TrackingConfig> = context.dataStore.data
+        .map { preferences ->
+            TrackingConfig(
+                recordingInterval = preferences[TRACKING_RECORDING_INTERVAL] ?: 60,
+                autoRestartDelay = preferences[TRACKING_AUTO_RESTART_DELAY] ?: 300,
+                enableAutoStart = preferences[TRACKING_ENABLE_AUTO_START] ?: false
+            )
+        }
+    
+    /**
+     * 保存轨迹记录配置
+     */
+    suspend fun saveTrackingConfig(config: TrackingConfig) {
+        context.dataStore.edit { preferences ->
+            preferences[TRACKING_RECORDING_INTERVAL] = config.recordingInterval
+            preferences[TRACKING_AUTO_RESTART_DELAY] = config.autoRestartDelay
+            preferences[TRACKING_ENABLE_AUTO_START] = config.enableAutoStart
         }
     }
 } 
