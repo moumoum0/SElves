@@ -5,7 +5,18 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -14,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
@@ -32,16 +44,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -93,11 +108,17 @@ fun ChatScreen(
         uri?.let { onSendImageMessage(it) }
     }
     
+    // 当消息列表变化时，自动滚动到最新消息
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(0)
+        }
+    }
+    
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .imePadding()
+            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
     ) {
         // 顶部栏
         ChatTopBar(
@@ -174,7 +195,7 @@ fun ChatScreen(
                     placeholder = { Text("输入消息") },
                     maxLines = 5
                 )
-                
+
                 // 当启用快捷切换时，图片按钮移到这里
                 if (quickMemberSwitchEnabled) {
                     IconButton(
@@ -256,6 +277,7 @@ fun MessageItem(
     var showMenu by remember { mutableStateOf(false) }
     var pressPosition by remember { mutableStateOf(DpOffset.Zero) }
     val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
     
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -301,6 +323,10 @@ fun MessageItem(
                         MessageMenu(
                             showMenu = showMenu,
                             onDismiss = { showMenu = false },
+                            onCopy = {
+                                clipboardManager.setText(AnnotatedString(message.content))
+                                showMenu = false
+                            },
                             onDelete = {
                                 onDeleteMessage(message.id)
                                 showMenu = false
@@ -321,6 +347,10 @@ fun MessageItem(
                     MessageMenu(
                         showMenu = showMenu,
                         onDismiss = { showMenu = false },
+                        onCopy = {
+                            clipboardManager.setText(AnnotatedString(message.content))
+                            showMenu = false
+                        },
                         onDelete = {
                             onDeleteMessage(message.id)
                             showMenu = false
@@ -495,6 +525,7 @@ fun ImageMessage(
 fun MessageMenu(
     showMenu: Boolean,
     onDismiss: () -> Unit,
+    onCopy: () -> Unit,
     onDelete: () -> Unit
 ) {
     if (showMenu) {
@@ -503,6 +534,16 @@ fun MessageMenu(
             onDismissRequest = onDismiss,
             properties = PopupProperties(focusable = true)
         ) {
+            DropdownMenuItem(
+                text = { Text("复制") },
+                onClick = onCopy,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "复制"
+                    )
+                }
+            )
             DropdownMenuItem(
                 text = { Text("删除") },
                 onClick = onDelete,
