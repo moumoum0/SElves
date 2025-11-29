@@ -118,6 +118,7 @@ fun ChatScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
     ) {
         // 顶部栏

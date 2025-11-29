@@ -1,5 +1,9 @@
 package com.selves.xnn.ui.screens
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -10,6 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Member
 import com.selves.xnn.navigation.BottomNavItem
@@ -19,6 +24,19 @@ import com.selves.xnn.ui.components.CreateMemberDialog
 import com.selves.xnn.ui.components.CreateSystemDialog
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import kotlinx.coroutines.launch
+
+// 底部导航栏动画配置
+private const val TAB_ANIMATION_DURATION = 300
+
+// 获取Tab索引的辅助函数
+private fun getTabIndex(route: String?): Int {
+    return when (route) {
+        BottomNavItem.Home.route -> 0
+        BottomNavItem.Chat.route -> 1
+        BottomNavItem.Settings.route -> 2
+        else -> 0
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,12 +139,64 @@ fun MainTabScreen(
                 BottomNavBar(navController = mainNavController)
             }
         ) { paddingValues ->
+            // 获取当前路由用于判断滑动方向
+            val navBackStackEntry by mainNavController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            
             NavHost(
                 navController = mainNavController,
                 startDestination = BottomNavItem.Home.route,
                 modifier = Modifier.padding(paddingValues)
             ) {
-                composable(BottomNavItem.Home.route) {
+                composable(
+                    route = BottomNavItem.Home.route,
+                    enterTransition = {
+                        val targetIndex = getTabIndex(BottomNavItem.Home.route)
+                        val initialIndex = getTabIndex(initialState.destination.route)
+                        if (targetIndex > initialIndex) {
+                            // 向右切换：从右侧滑入
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        } else {
+                            // 向左切换：从左侧滑入
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    },
+                    exitTransition = {
+                        val currentIndex = getTabIndex(initialState.destination.route)
+                        val targetIndex = getTabIndex(targetState.destination.route)
+                        if (currentIndex > targetIndex) {
+                            // 向右滑出
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        } else {
+                            // 向左滑出
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    }
+                ) {
                     HomeScreen(
                         currentMember = currentMember,
                         onMemberSwitch = { showMemberSwitchDialog = true },
@@ -137,7 +207,53 @@ fun MainTabScreen(
                     )
                 }
                 
-                composable(BottomNavItem.Chat.route) {
+                composable(
+                    route = BottomNavItem.Chat.route,
+                    enterTransition = {
+                        val targetIndex = getTabIndex(BottomNavItem.Chat.route)
+                        val initialIndex = getTabIndex(initialState.destination.route)
+                        if (targetIndex > initialIndex) {
+                            // 向右切换：从右侧滑入
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        } else {
+                            // 向左切换：从左侧滑入
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    },
+                    exitTransition = {
+                        val currentIndex = getTabIndex(initialState.destination.route)
+                        val targetIndex = getTabIndex(targetState.destination.route)
+                        if (currentIndex > targetIndex) {
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    }
+                ) {
                     GroupChatScreen(
                         viewModel = viewModel,
                         currentMember = currentMember!!,
@@ -155,7 +271,53 @@ fun MainTabScreen(
                     )
                 }
                 
-                composable(BottomNavItem.Settings.route) {
+                composable(
+                    route = BottomNavItem.Settings.route,
+                    enterTransition = {
+                        val targetIndex = getTabIndex(BottomNavItem.Settings.route)
+                        val initialIndex = getTabIndex(initialState.destination.route)
+                        if (targetIndex > initialIndex) {
+                            // 向右切换：从右侧滑入
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        } else {
+                            // 向左切换：从左侧滑入
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    },
+                    exitTransition = {
+                        val currentIndex = getTabIndex(initialState.destination.route)
+                        val targetIndex = getTabIndex(targetState.destination.route)
+                        if (currentIndex > targetIndex) {
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        } else {
+                            slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> -fullWidth },
+                                animationSpec = tween(
+                                    durationMillis = TAB_ANIMATION_DURATION,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    }
+                ) {
                     SystemScreen(
                         currentMember = currentMember!!,
                         allMembers = members,

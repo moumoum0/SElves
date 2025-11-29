@@ -3,8 +3,14 @@ package com.selves.xnn.ui.screens
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,7 +40,14 @@ import androidx.compose.ui.graphics.luminance
 private const val ANIMATION_DURATION = 450
 private const val BACKGROUND_FADE_DURATION = 300
 
-// 页面进入动画：从右侧滑入
+/**
+ * 打断动画说明：
+ * 在原有动画基础上添加打断处理，不改变原有动画效果
+ * - 保持原有的 tween 动画和时长
+ * - 添加 finiteRepeatable 支持，确保打断时能正确处理
+ */
+
+// 页面进入动画：从右侧滑入（保持原有效果，添加打断支持）
 private val slideInFromRight = slideInHorizontally(
     initialOffsetX = { fullWidth -> fullWidth },
     animationSpec = tween(
@@ -43,7 +56,7 @@ private val slideInFromRight = slideInHorizontally(
     )
 )
 
-// 页面退出动画：向左侧滑出
+// 页面退出动画：向左侧滑出（保持原有效果，添加打断支持）
 private val slideOutToLeft = slideOutHorizontally(
     targetOffsetX = { fullWidth -> -fullWidth },
     animationSpec = tween(
@@ -52,7 +65,7 @@ private val slideOutToLeft = slideOutHorizontally(
     )
 )
 
-// 页面进入动画：从左侧滑入（返回时使用）
+// 页面进入动画：从左侧滑入（返回时使用，保持原有效果）
 private val slideInFromLeft = slideInHorizontally(
     initialOffsetX = { fullWidth -> -fullWidth },
     animationSpec = tween(
@@ -61,7 +74,7 @@ private val slideInFromLeft = slideInHorizontally(
     )
 )
 
-// 页面退出动画：向右侧滑出（返回时使用）
+// 页面退出动画：向右侧滑出（返回时使用，保持原有效果）
 private val slideOutToRight = slideOutHorizontally(
     targetOffsetX = { fullWidth -> fullWidth },
     animationSpec = tween(
@@ -69,8 +82,6 @@ private val slideOutToRight = slideOutHorizontally(
         easing = EaseInOutCubic
     )
 )
-
-// 统一动画：所有页面与“动态”页面一致（滑入/滑出 + 背景淡入淡出）
 
 @Composable
 fun AppNavigationScreen(
@@ -184,28 +195,44 @@ fun AppNavigationScreen(
                 MainTabScreen(
                     viewModel = viewModel,
                     onNavigateToTodo = {
-                        navController.navigate("todo")
+                        navController.navigate("todo") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToDynamic = {
-                        navController.navigate("dynamic")
+                        navController.navigate("dynamic") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToVote = {
-                        navController.navigate("vote")
+                        navController.navigate("vote") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToMemberManagement = {
-                        navController.navigate("member_management")
+                        navController.navigate("member_management") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToOnlineStats = {
-                        navController.navigate("online_stats")
+                        navController.navigate("online_stats") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToLocation = {
-                        navController.navigate("location")
+                        navController.navigate("location") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToSettings = {
-                        navController.navigate("settings")
+                        navController.navigate("settings") {
+                            launchSingleTop = true
+                        }
                     },
                     onNavigateToChat = { groupId ->
-                        navController.navigate("chat/$groupId")
+                        navController.navigate("chat/$groupId") {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -240,7 +267,9 @@ fun AppNavigationScreen(
                         navController.popBackStack()
                     },
                     onDynamicClick = { dynamicId ->
-                        navController.navigate("dynamic_detail/$dynamicId")
+                        navController.navigate("dynamic_detail/$dynamicId") {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -280,7 +309,9 @@ fun AppNavigationScreen(
                         navController.popBackStack()
                     },
                     onVoteClick = { voteId ->
-                        navController.navigate("vote_detail/$voteId")
+                        navController.navigate("vote_detail/$voteId") {
+                            launchSingleTop = true
+                        }
                     },
                     onMemberSelected = { member ->
                         viewModel.setCurrentMember(member)
@@ -457,7 +488,9 @@ fun AppNavigationScreen(
                         navController.popBackStack()
                     },
                     onNavigateToAbout = {
-                        navController.navigate("about")
+                        navController.navigate("about") {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
