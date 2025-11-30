@@ -337,6 +337,9 @@ android/key.properties
 
 # Kotlin
 *.kt.bak
+.kotlin/
+kotlin-compiler-*
+*.salive
 
 # Proguard
 proguard/
