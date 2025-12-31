@@ -38,26 +38,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * 应用加载状态枚举
- */
-enum class LoadingPhase {
-    INITIALIZING,           // 初始化阶段
-    LOADING_MEMBERS,        // 加载成员数据
-    LOADING_CURRENT_MEMBER, // 加载当前成员
-    LOADING_GROUPS,         // 加载群组数据
-    LOADING_MESSAGES,       // 加载消息数据
-    PRELOADING_IMAGES,      // 预加载图片
-    COMPLETED               // 加载完成
-}
-
-/**
  * 加载状态数据类
  */
 data class LoadingState(
-    val isLoading: Boolean = true,
-    val currentPhase: LoadingPhase = LoadingPhase.INITIALIZING,
-    val progress: Float = 0f,
-    val message: String = "正在初始化..."
+    val isLoading: Boolean = true
 )
 
 @HiltViewModel
@@ -182,41 +166,31 @@ class MainViewModel @Inject constructor(
         isLoadingInProgress = true
         viewModelScope.launch(exceptionHandler) {
             try {
-                updateLoadingState(LoadingPhase.INITIALIZING, 0f, "正在初始化应用...")
-                
-                // 阶段0：检查系统是否存在（备份导入后跳过）
+                // 检查系统是否存在（备份导入后跳过）
                 if (!skipSystemCheck) {
                     checkSystemExists()
                 }
                 
-                // 阶段1：并行加载基础数据
-                updateLoadingState(LoadingPhase.LOADING_MEMBERS, 0.1f, "正在加载成员数据...")
+                // 并行加载基础数据
                 val membersJob = async { loadMembers() }
-                
-                updateLoadingState(LoadingPhase.LOADING_CURRENT_MEMBER, 0.2f, "正在加载当前成员...")
                 val currentMemberJob = async { loadSavedMember() }
                 
                 // 等待基础数据加载完成
                 awaitAll(membersJob, currentMemberJob)
                 
-                // 阶段2：加载群组数据
-                updateLoadingState(LoadingPhase.LOADING_GROUPS, 0.4f, "正在加载群组数据...")
+                // 加载群组数据
                 loadGroups()
                 
-                // 阶段3：加载消息数据
-                updateLoadingState(LoadingPhase.LOADING_MESSAGES, 0.6f, "正在加载消息数据...")
+                // 加载消息数据
                 loadInitialMessages()
                 
-                // 阶段4：预加载图片
-                updateLoadingState(LoadingPhase.PRELOADING_IMAGES, 0.8f, "正在预加载图片...")
+                // 预加载图片
                 preloadImages()
                 
-                // 阶段5：加载成员登录记录
-                updateLoadingState(LoadingPhase.COMPLETED, 0.95f, "正在加载成员活跃度数据...")
+                // 加载成员登录记录
                 loadMemberLoginRecords()
                 
                 // 完成加载
-                updateLoadingState(LoadingPhase.COMPLETED, 1.0f, "加载完成")
                 completeLoading()
                 
             } catch (e: Exception) {
@@ -231,27 +205,11 @@ class MainViewModel @Inject constructor(
 
     
     /**
-     * 更新加载状态
-     */
-    private fun updateLoadingState(phase: LoadingPhase, progress: Float, message: String) {
-        _loadingState.value = LoadingState(
-            isLoading = true,
-            currentPhase = phase,
-            progress = progress,
-            message = message
-        )
-        Log.d(TAG, "加载状态更新: $phase - $message (${(progress * 100).toInt()}%)")
-    }
-    
-    /**
      * 完成加载
      */
     private fun completeLoading() {
         _loadingState.value = LoadingState(
-            isLoading = false,
-            currentPhase = LoadingPhase.COMPLETED,
-            progress = 1.0f,
-            message = "加载完成"
+            isLoading = false
         )
         isLoadingInProgress = false
         Log.d(TAG, "应用加载完成")

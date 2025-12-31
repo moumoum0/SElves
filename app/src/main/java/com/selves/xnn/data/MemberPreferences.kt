@@ -24,6 +24,7 @@ class MemberPreferences(private val context: Context) {
         private val CURRENT_MEMBER_ID = stringPreferencesKey("current_member_id")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val QUICK_MEMBER_SWITCH_ENABLED = booleanPreferencesKey("quick_member_switch_enabled")
+        private val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
         
         // 轨迹记录配置
         private val TRACKING_RECORDING_INTERVAL = intPreferencesKey("tracking_recording_interval")
@@ -116,6 +117,23 @@ class MemberPreferences(private val context: Context) {
             preferences[TRACKING_RECORDING_INTERVAL] = config.recordingInterval
             preferences[TRACKING_AUTO_RESTART_DELAY] = config.autoRestartDelay
             preferences[TRACKING_ENABLE_AUTO_START] = config.enableAutoStart
+        }
+    }
+    
+    /**
+     * 获取动态颜色是否启用
+     */
+    val dynamicColorEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[DYNAMIC_COLOR_ENABLED] ?: false
+        }
+    
+    /**
+     * 保存动态颜色启用状态
+     */
+    suspend fun saveDynamicColorEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[DYNAMIC_COLOR_ENABLED] = enabled
         }
     }
 } 

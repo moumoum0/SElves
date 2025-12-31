@@ -23,6 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.graphics.drawable.toBitmap
+import com.selves.xnn.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -521,36 +526,26 @@ fun AppNavigationScreen(
 fun LoadingScreen(
     loadingState: LoadingState
 ) {
+    val context = LocalContext.current
+    val iconBitmap = remember {
+        val drawable = androidx.core.content.ContextCompat.getDrawable(context, R.mipmap.ic_launcher)
+        drawable?.toBitmap()?.asImageBitmap()
+    }
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(48.dp)
-        ) {
-            // 进度条
-            LinearProgressIndicator(
-                progress = loadingState.progress,
+        // 显示应用图标
+        iconBitmap?.let { bitmap ->
+            Image(
+                bitmap = bitmap,
+                contentDescription = "App Icon",
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // 进度百分比
-            Text(
-                text = "${(loadingState.progress * 100).toInt()}%",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Medium
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(12.dp))
             )
         }
     }

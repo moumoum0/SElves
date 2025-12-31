@@ -29,6 +29,9 @@ class SettingsViewModel @Inject constructor(
     private val _quickMemberSwitchEnabled = MutableStateFlow(false)
     val quickMemberSwitchEnabled: StateFlow<Boolean> = _quickMemberSwitchEnabled.asStateFlow()
     
+    private val _dynamicColorEnabled = MutableStateFlow(false)
+    val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
+    
     private val _isBackupInProgress = MutableStateFlow(false)
     val isBackupInProgress: StateFlow<Boolean> = _isBackupInProgress.asStateFlow()
     
@@ -62,6 +65,12 @@ class SettingsViewModel @Inject constructor(
                 _quickMemberSwitchEnabled.value = enabled
             }
         }
+        
+        viewModelScope.launch {
+            memberPreferences.dynamicColorEnabled.collect { enabled ->
+                _dynamicColorEnabled.value = enabled
+            }
+        }
     }
     
     fun setThemeMode(themeMode: ThemeMode) {
@@ -81,6 +90,12 @@ class SettingsViewModel @Inject constructor(
     fun setQuickMemberSwitchEnabled(enabled: Boolean) {
         viewModelScope.launch {
             memberPreferences.saveQuickMemberSwitchEnabled(enabled)
+        }
+    }
+    
+    fun setDynamicColorEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            memberPreferences.saveDynamicColorEnabled(enabled)
         }
     }
     

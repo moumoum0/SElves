@@ -9,14 +9,14 @@ plugins {
 
 android {
     namespace = "com.selves.xnn"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.selves.xnn"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 9
-        versionName = "0.9.3"
+        targetSdk = 36
+        versionCode = 10
+        versionName = "0.9.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -29,6 +29,11 @@ android {
         
         // 只保留必要的资源密度
         resourceConfigurations += listOf("zh", "en")
+        
+        // 16KB页面大小支持配置
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+        }
     }
 
     ksp {
@@ -80,25 +85,25 @@ android {
 
 dependencies {
     val roomVersion = "2.6.1"
-    val hiltVersion = "2.48"
-    val datastoreVersion = "1.0.0"
+    val hiltVersion = "2.52"
+    val datastoreVersion = "1.1.1"
 
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.22"))
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.1.0"))
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.navigation:navigation-compose:2.7.6")
+    implementation("androidx.navigation:navigation-compose:2.8.5")
     
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended")
     
     // AppCompat (for CropImageActivity)
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
     
     // DataStore
     implementation("androidx.datastore:datastore-preferences:$datastoreVersion")
@@ -112,19 +117,19 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     ksp("com.google.dagger:hilt-compiler:$hiltVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
     
     // Image cropper
     implementation("com.github.CanHub:Android-Image-Cropper:4.3.2")
     
     // Accompanist for System UI Controller
-    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
     
     // Gson for JSON serialization
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.code.gson:gson:2.11.0")
     
     // TinyPinyin for Chinese pinyin conversion
     implementation("com.github.promeg:tinypinyin:2.0.3")

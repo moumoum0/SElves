@@ -43,6 +43,7 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val showThemeModeDialog by viewModel.showThemeModeDialog.collectAsState()
     val quickMemberSwitchEnabled by viewModel.quickMemberSwitchEnabled.collectAsState()
+    val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
     val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
     val backupMessage by viewModel.backupMessage.collectAsState()
     val showBackupProgressDialog by viewModel.showBackupProgressDialog.collectAsState()
@@ -126,6 +127,23 @@ fun SettingsScreen(
                     title = "深色模式",
                     subtitle = themeMode.getDisplayName(),
                     onClick = { viewModel.showThemeModeDialog() }
+                )
+            }
+            
+            item {
+                SettingsSwitchItem(
+                    icon = Icons.Default.Palette,
+                    title = "动态颜色",
+                    subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        "根据壁纸自动调整应用配色 (Android 12+)"
+                    } else {
+                        "需要 Android 12 及以上版本"
+                    },
+                    checked = dynamicColorEnabled,
+                    enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+                    onCheckedChange = { enabled ->
+                        viewModel.setDynamicColorEnabled(enabled)
+                    }
                 )
             }
             
@@ -293,19 +311,23 @@ fun SettingsSwitchItem(
     title: String,
     subtitle: String,
     checked: Boolean,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
             .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (enabled) 
+                MaterialTheme.colorScheme.onSurfaceVariant
+            else 
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
             modifier = Modifier.size(24.dp)
         )
         
@@ -317,18 +339,25 @@ fun SettingsSwitchItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = if (enabled)
+                    MaterialTheme.colorScheme.onSurface
+                else
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
             
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled)
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
             )
         }
         
         Switch(
             checked = checked,
+            enabled = enabled,
             onCheckedChange = onCheckedChange
         )
     }

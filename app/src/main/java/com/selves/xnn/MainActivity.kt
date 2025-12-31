@@ -49,8 +49,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeMode by memberPreferences.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+            val dynamicColorEnabled by memberPreferences.dynamicColorEnabled.collectAsState(initial = false)
             
-            SelvesTheme(themeMode = themeMode) {
+            SelvesTheme(
+                themeMode = themeMode,
+                dynamicColor = dynamicColorEnabled
+            ) {
                 val systemUiController = rememberSystemUiController()
                 val isDarkTheme = shouldUseDarkTheme(themeMode)
                 val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
