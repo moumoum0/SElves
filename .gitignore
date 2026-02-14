@@ -183,6 +183,9 @@ Thumbs.db
 # Trae AI IDE
 .trae/
 
+# Windsurf AI IDE
+.windsurf/
+
 # JetBrains IDEs
 .idea/
 *.iws
