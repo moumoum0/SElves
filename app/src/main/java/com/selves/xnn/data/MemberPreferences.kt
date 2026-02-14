@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.TrackingConfig
+import com.selves.xnn.model.ColorScheme
 import androidx.datastore.preferences.core.intPreferencesKey
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "member_preferences")
@@ -25,6 +26,7 @@ class MemberPreferences(private val context: Context) {
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val QUICK_MEMBER_SWITCH_ENABLED = booleanPreferencesKey("quick_member_switch_enabled")
         private val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
+        private val COLOR_SCHEME = stringPreferencesKey("color_scheme")
         
         // 轨迹记录配置
         private val TRACKING_RECORDING_INTERVAL = intPreferencesKey("tracking_recording_interval")
@@ -134,6 +136,33 @@ class MemberPreferences(private val context: Context) {
     suspend fun saveDynamicColorEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[DYNAMIC_COLOR_ENABLED] = enabled
+        }
+    }
+    
+    /**
+     * 获取配色方案
+     */
+    val colorScheme: Flow<ColorScheme> = context.dataStore.data
+        .map { preferences ->
+            val colorSchemeString = preferences[COLOR_SCHEME]
+            if (colorSchemeString != null) {
+                try {
+                    ColorScheme.valueOf(colorSchemeString)
+                } catch (e: IllegalArgumentException) {
+                    ColorScheme.APP_DEFAULT
+                }
+            } else {
+                val dynamicColorEnabled = preferences[DYNAMIC_COLOR_ENABLED] ?: false
+                if (dynamicColorEnabled) ColorScheme.WALLPAPER else ColorScheme.APP_DEFAULT
+            }
+        }
+    
+    /**
+     * 保存配色方案
+     */
+    suspend fun saveColorScheme(colorScheme: ColorScheme) {
+        context.dataStore.edit { preferences ->
+            preferences[COLOR_SCHEME] = colorScheme.name
         }
     }
 } 

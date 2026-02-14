@@ -171,7 +171,7 @@ fun OnlineStatItem(
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (memberStat.isOnline) {
-                    Color.Green
+                    MaterialTheme.colorScheme.tertiary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
@@ -181,7 +181,7 @@ fun OnlineStatItem(
         // 在线状态指示器
         Surface(
             shape = CircleShape,
-            color = if (memberStat.isOnline) Color.Green else MaterialTheme.colorScheme.outline,
+            color = if (memberStat.isOnline) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline,
             modifier = Modifier.size(8.dp)
         ) {}
     }
@@ -234,7 +234,11 @@ private fun formatLastActiveTime(timestamp: Long): String {
 @Composable
 fun LoginLogSummaryCard(summary: LoginLogSummary) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Column(
             modifier = Modifier
@@ -339,7 +343,11 @@ fun FilterChips(
 @Composable
 fun LoginLogItem(loginLog: LoginLog) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Row(
             modifier = Modifier
@@ -528,7 +536,11 @@ fun LoginLogTab(
             if (loginLogs.isEmpty()) {
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        )
                     ) {
                         Box(
                             modifier = Modifier
@@ -555,7 +567,11 @@ fun OnlineTimeStatItem(
     isCurrentMember: Boolean
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Row(
             modifier = Modifier

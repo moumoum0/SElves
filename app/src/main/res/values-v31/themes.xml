@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ Splash Screen API -->
+    <!-- Splash Screen会保持显示直到数据加载完成，然后直接显示主界面 -->
+    <style name="Theme.Selves.Starting" parent="Theme.SplashScreen">
+        <!-- 启动画面背景色 -->
+        <item name="windowSplashScreenBackground">@color/splash_background_color</item>
+        <!-- 使用圆角应用图标 -->
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
+        <!-- 图标动画时长 -->
+        <item name="windowSplashScreenAnimationDuration">200</item>
+        <!-- 启动后的主题 -->
+        <item name="postSplashScreenTheme">@style/Theme.Selves</item>
+    </style>
+</resources>

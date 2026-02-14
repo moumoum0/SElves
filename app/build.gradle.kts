@@ -7,16 +7,56 @@ plugins {
     id("dagger.hilt.android.plugin")
 }
 
+import java.util.Properties
+
+val roomVersion = "2.6.1"
+val hiltVersion = "2.52"
+val datastoreVersion = "1.1.1"
+val coilVersion = "2.7.0"
+val navigationComposeVersion = "2.8.5"
+val accompanistVersion = "0.36.0"
+val imageCropperVersion = "4.3.2"
+val composeBomVersion = "2024.12.01"
+val gsonVersion = "2.11.0"
+val kotlinCoroutinesVersion = "2.1.0"
+val coreKtxVersion = "1.15.0"
+val lifecycleVersion = "2.8.7"
+val activityComposeVersion = "1.9.3"
+val appcompatVersion = "1.7.0"
+val splashScreenVersion = "1.0.1"
+val hiltNavigationComposeVersion = "1.2.0"
+val tinyPinyinVersion = "2.0.3"
+
+// 读取 local.properties 中的签名配置
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 android {
     namespace = "com.selves.xnn"
     compileSdk = 36
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProperties.getProperty("KEYSTORE_FILE", ""))
+            storePassword = localProperties.getProperty("KEYSTORE_PASSWORD", "")
+            keyAlias = localProperties.getProperty("KEY_ALIAS", "")
+            keyPassword = localProperties.getProperty("KEY_PASSWORD", "")
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
+        }
+    }
 
     defaultConfig {
         applicationId = "com.selves.xnn"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "0.9.4"
+        versionCode = 11
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -34,6 +74,24 @@ android {
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
+
+        buildConfigField("String", "COMPOSE_BOM_VERSION", "\"$composeBomVersion\"")
+        buildConfigField("String", "ROOM_VERSION", "\"$roomVersion\"")
+        buildConfigField("String", "HILT_VERSION", "\"$hiltVersion\"")
+        buildConfigField("String", "NAVIGATION_COMPOSE_VERSION", "\"$navigationComposeVersion\"")
+        buildConfigField("String", "COIL_VERSION", "\"$coilVersion\"")
+        buildConfigField("String", "DATASTORE_VERSION", "\"$datastoreVersion\"")
+        buildConfigField("String", "IMAGE_CROPPER_VERSION", "\"$imageCropperVersion\"")
+        buildConfigField("String", "ACCOMPANIST_VERSION", "\"$accompanistVersion\"")
+        buildConfigField("String", "GSON_VERSION", "\"$gsonVersion\"")
+        buildConfigField("String", "KOTLIN_BOM_VERSION", "\"$kotlinCoroutinesVersion\"")
+        buildConfigField("String", "CORE_KTX_VERSION", "\"$coreKtxVersion\"")
+        buildConfigField("String", "LIFECYCLE_VERSION", "\"$lifecycleVersion\"")
+        buildConfigField("String", "ACTIVITY_COMPOSE_VERSION", "\"$activityComposeVersion\"")
+        buildConfigField("String", "APPCOMPAT_VERSION", "\"$appcompatVersion\"")
+        buildConfigField("String", "SPLASH_SCREEN_VERSION", "\"$splashScreenVersion\"")
+        buildConfigField("String", "HILT_NAVIGATION_COMPOSE_VERSION", "\"$hiltNavigationComposeVersion\"")
+        buildConfigField("String", "TINYPINYIN_VERSION", "\"$tinyPinyinVersion\"")
     }
 
     ksp {
@@ -45,6 +103,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             isMinifyEnabled = false
@@ -60,6 +119,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     lint {
         disable += setOf(
@@ -79,31 +139,30 @@ android {
             excludes += "/META-INF/notice.txt"
             excludes += "/META-INF/ASL2.0"
             excludes += "/META-INF/*.kotlin_module"
+            excludes += "DebugProbesKt.bin"
+            excludes += "/kotlin/**"
+            excludes += "/*.properties"
         }
     }
 }
 
 dependencies {
-    val roomVersion = "2.6.1"
-    val hiltVersion = "2.52"
-    val datastoreVersion = "1.1.1"
-
-    implementation("androidx.core:core-ktx:1.15.0")
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.1.0"))
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation(platform("androidx.compose:compose-bom:2024.12.01"))
+    implementation("androidx.core:core-ktx:$coreKtxVersion")
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:$kotlinCoroutinesVersion"))
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    implementation("androidx.activity:activity-compose:$activityComposeVersion")
+    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.navigation:navigation-compose:2.8.5")
+    implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
     
     // Material Icons Extended
     implementation("androidx.compose.material:material-icons-extended")
     
     // AppCompat (for CropImageActivity)
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.appcompat:appcompat:$appcompatVersion")
     
     // DataStore
     implementation("androidx.datastore:datastore-preferences:$datastoreVersion")
@@ -117,22 +176,25 @@ dependencies {
     // Hilt
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     ksp("com.google.dagger:hilt-compiler:$hiltVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("androidx.hilt:hilt-navigation-compose:$hiltNavigationComposeVersion")
     
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-compose:$coilVersion")
     
     // Image cropper
-    implementation("com.github.CanHub:Android-Image-Cropper:4.3.2")
+    implementation("com.github.CanHub:Android-Image-Cropper:$imageCropperVersion")
+    
+    // SplashScreen
+    implementation("androidx.core:core-splashscreen:$splashScreenVersion")
     
     // Accompanist for System UI Controller
-    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
     
     // Gson for JSON serialization
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.google.code.gson:gson:$gsonVersion")
     
     // TinyPinyin for Chinese pinyin conversion
-    implementation("com.github.promeg:tinypinyin:2.0.3")
+    implementation("com.github.promeg:tinypinyin:$tinyPinyinVersion")
     
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

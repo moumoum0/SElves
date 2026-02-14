@@ -13,6 +13,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.view.WindowCompat
@@ -22,6 +26,7 @@ import com.selves.xnn.ui.theme.shouldUseDarkTheme
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.model.ThemeMode
+import com.selves.xnn.model.ColorScheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -48,12 +53,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val themeMode by memberPreferences.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
-            val dynamicColorEnabled by memberPreferences.dynamicColorEnabled.collectAsState(initial = false)
+            // 使用remember + LaunchedEffect异步读取配置，避免阻塞UI渲染
+            var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+            var colorScheme by remember { mutableStateOf(ColorScheme.APP_DEFAULT) }
+            
+            LaunchedEffect(Unit) {
+                memberPreferences.themeMode.collect { themeMode = it }
+            }
+            
+            LaunchedEffect(Unit) {
+                memberPreferences.colorScheme.collect { colorScheme = it }
+            }
             
             SelvesTheme(
                 themeMode = themeMode,
-                dynamicColor = dynamicColorEnabled
+                colorScheme = colorScheme
             ) {
                 val systemUiController = rememberSystemUiController()
                 val isDarkTheme = shouldUseDarkTheme(themeMode)

@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,14 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -60,14 +60,13 @@ fun CreateVoteDialog(
             // 顶部工具栏
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 4.dp
+                color = MaterialTheme.colorScheme.surface
             ) {
                 TopAppBar(
                     title = { Text("创建投票") },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                         }
                     },
                     actions = {
@@ -106,70 +105,32 @@ fun CreateVoteDialog(
             }
             
             // 内容区域
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // 投票标题
-                item {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("投票标题") },
-                        placeholder = { Text("请输入投票标题") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                // 投票信息卡片
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DialogSectionHeader(
+                            icon = Icons.Default.Description,
+                            title = "投票信息",
+                            subtitle = "填写投票的基本信息"
                         )
-                    )
-                }
-                
-                // 投票描述
-                item {
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("投票描述") },
-                        placeholder = { Text("请输入投票描述") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                        maxLines = 6,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
-                        )
-                    )
-                }
-                
-                // 投票选项
-                item {
-                    Text(
-                        text = "投票选项",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                
-                itemsIndexed(options) { index, option ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
                         OutlinedTextField(
-                            value = option,
-                            onValueChange = { newValue ->
-                                options = options.toMutableList().apply {
-                                    this[index] = newValue
-                                }
-                            },
-                            label = { Text("选项 ${index + 1}") },
-                            placeholder = { Text("请输入选项内容") },
-                            modifier = Modifier.weight(1f),
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("投票标题") },
+                            modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -177,184 +138,285 @@ fun CreateVoteDialog(
                             )
                         )
                         
-                        // 删除选项按钮（至少保留2个选项）
-                        if (options.size > 2) {
-                            IconButton(
-                                onClick = {
-                                    options = options.toMutableList().apply {
-                                        removeAt(index)
-                                    }
-                                }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = description,
+                            onValueChange = { description = it },
+                            label = { Text("投票描述") },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            maxLines = 6,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                            )
+                        )
+                    }
+                }
+                
+                // 投票选项卡片
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DialogSectionHeader(
+                            icon = Icons.Default.Notes,
+                            title = "投票选项",
+                            subtitle = "至少添加2个选项"
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        options.forEachIndexed { index, option ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "删除选项",
-                                    tint = MaterialTheme.colorScheme.error
+                                OutlinedTextField(
+                                    value = option,
+                                    onValueChange = { newValue ->
+                                        options = options.toMutableList().apply { this[index] = newValue }
+                                    },
+                                    label = { Text("选项 ${index + 1}") },
+                                    modifier = Modifier.weight(1f),
+                                    singleLine = true,
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                    )
                                 )
+                                
+                                if (options.size > 2) {
+                                    IconButton(
+                                        onClick = { options = options.toMutableList().apply { removeAt(index) } }
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "删除选项", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.width(48.dp))
+                                }
                             }
-                        } else {
-                            Spacer(modifier = Modifier.width(48.dp))
+                            
+                            if (index < options.size - 1) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        if (options.size < 10) {
+                            OutlinedButton(
+                                onClick = { options = options.toMutableList().apply { add("") } },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "添加选项")
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("添加选项")
+                            }
                         }
                     }
                 }
                 
-                // 添加选项按钮
-                item {
-                    if (options.size < 10) {
-                        OutlinedButton(
-                            onClick = {
-                                options = options.toMutableList().apply {
-                                    add("")
+                // 投票设置卡片
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        DialogSectionHeader(
+                            icon = Icons.Default.Settings,
+                            title = "投票设置",
+                            subtitle = "配置投票的附加选项"
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        DialogSettingsRow(
+                            icon = Icons.Default.List,
+                            title = "允许多选",
+                            subtitle = "允许用户选择多个选项",
+                            trailing = {
+                                Switch(checked = allowMultipleChoice, onCheckedChange = { allowMultipleChoice = it })
+                            }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        DialogSettingsRow(
+                            icon = Icons.Default.VisibilityOff,
+                            title = "匿名投票",
+                            subtitle = "投票结果不显示投票者",
+                            trailing = {
+                                Switch(checked = isAnonymous, onCheckedChange = { isAnonymous = it })
+                            }
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        DialogSettingsRow(
+                            icon = Icons.Default.Schedule,
+                            title = "投票截止时间",
+                            subtitle = endTime?.let {
+                                "截止: ${it.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))}"
+                            } ?: "不限制",
+                            trailing = {
+                                if (endTime != null) {
+                                    IconButton(onClick = { endTime = null }) {
+                                        Icon(Icons.Default.Clear, contentDescription = "清除")
+                                    }
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = "添加选项")
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("添加选项")
-                        }
+                            onClick = { showDatePicker = true }
+                        )
                     }
                 }
                 
-                // 投票设置
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = "投票设置",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            // 允许多选
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "允许多选",
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Switch(
-                                    checked = allowMultipleChoice,
-                                    onCheckedChange = { allowMultipleChoice = it }
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            // 匿名投票
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "匿名投票",
-                                    fontSize = 14.sp,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Switch(
-                                    checked = isAnonymous,
-                                    onCheckedChange = { isAnonymous = it }
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            // 结束时间
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showDatePicker = true },
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = "结束时间",
-                                        fontSize = 14.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = endTime?.let { com.selves.xnn.util.TimeFormatter.formatDetailDateTime(it) } 
-                                               ?: "不限制",
-                                        fontSize = 12.sp,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                
-                                Row {
-                                    if (endTime != null) {
-                                        IconButton(
-                                            onClick = { endTime = null }
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Clear,
-                                                contentDescription = "清除时间",
-                                                tint = MaterialTheme.colorScheme.error
-                                            )
-                                        }
-                                    }
-                                    
-                                    IconButton(
-                                        onClick = { showDatePicker = true }
-                                    ) {
-                                        Icon(
-                                            Icons.Default.DateRange,
-                                            contentDescription = "选择时间",
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
     
-    // 日期选择器（这里简化处理，实际项目中可以使用DatePicker）
     if (showDatePicker) {
-        AlertDialog(
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
-            title = { Text("选择结束时间") },
-            text = {
-                Column {
-                    Text("当前时间: ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(LocalDateTime.now())}")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("您可以选择一个未来的时间作为投票结束时间")
-                }
-            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // 设置为24小时后结束（示例）
-                        endTime = LocalDateTime.now().plusHours(24)
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            selectedDate = java.time.Instant.ofEpochMilli(millis)
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDateTime()
+                        }
                         showDatePicker = false
+                        showTimePicker = true
                     }
                 ) {
-                    Text("24小时后")
+                    Text("下一步")
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showDatePicker = false }
-                ) {
+                TextButton(onClick = { showDatePicker = false }) {
                     Text("取消")
                 }
             }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+    
+    if (showTimePicker && selectedDate != null) {
+        val timePickerState = rememberTimePickerState()
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        endTime = selectedDate?.withHour(timePickerState.hour)?.withMinute(timePickerState.minute)
+                        showTimePicker = false
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("取消")
+                }
+            },
+            title = { Text("选择时间") },
+            text = {
+                TimePicker(state = timePickerState)
+            }
         )
     }
-} 
+}
+
+@Composable
+private fun DialogSectionHeader(
+    icon: ImageVector,
+    title: String,
+    subtitle: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.size(36.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun DialogSettingsRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    trailing: @Composable () -> Unit,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) Modifier.clickable { onClick() }
+                else Modifier
+            )
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        trailing()
+    }
+}

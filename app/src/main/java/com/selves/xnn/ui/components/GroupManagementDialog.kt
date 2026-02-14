@@ -524,11 +524,9 @@ fun EditGroupInfoDialog(
                                     Color.Transparent
                                 } else {
                                     // 根据群聊名称生成背景色
-                                    val colors = listOf(
-                                        Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
-                                        Color(0xFF9C27B0), Color(0xFFF44336), Color(0xFF00BCD4)
-                                    )
-                                    colors[group.name.hashCode().rem(colors.size).let { if (it < 0) -it else it }]
+                                    val hash = group.name.hashCode().let { if (it < 0) -it else it }
+                                    val hue = (hash % 360).toFloat()
+                                    androidx.compose.ui.graphics.Color.hsl(hue, 0.6f, 0.5f)
                                 }
                             )
                             .clickable {
@@ -548,7 +546,7 @@ fun EditGroupInfoDialog(
                             if (group.avatarUrl == null) {
                                 Text(
                                     text = if (group.name.isNotEmpty()) group.name.first().toString().uppercase() else "G",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.surface,
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -556,7 +554,7 @@ fun EditGroupInfoDialog(
                                 Icon(
                                     imageVector = Icons.Default.CameraAlt,
                                     contentDescription = "更换头像",
-                                    tint = Color.White,
+                                    tint = MaterialTheme.colorScheme.surface,
                                     modifier = Modifier.size(32.dp)
                                 )
                             }

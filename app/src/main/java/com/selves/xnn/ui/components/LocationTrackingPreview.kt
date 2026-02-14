@@ -40,7 +40,10 @@ fun LocationTrackingPreview(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onNavigateToLocationPage() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -118,43 +121,6 @@ fun LocationTrackingPreview(
                     value = trackingStats.lastRecordTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--:--",
                     icon = Icons.Default.Schedule
                 )
-            }
-            
-            // 显示快捷控制
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            when (uiState.trackingStatus) {
-                TrackingStatus.RECORDING -> {
-                    Button(
-                        onClick = { viewModel.handleEvent(com.selves.xnn.viewmodel.LocationTrackingEvent.StopTracking) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Icon(
-                            Icons.Default.Stop,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("停止记录")
-                    }
-                }
-                TrackingStatus.STOPPED -> {
-                    Button(
-                        onClick = { viewModel.handleEvent(com.selves.xnn.viewmodel.LocationTrackingEvent.StartTracking) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("开始记录轨迹")
-                    }
-                }
             }
         }
     }

@@ -116,7 +116,6 @@ class LocationTrackingService : Service(), LocationListener {
                 } else {
                     alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMs, pendingIntent)
                 }
-                Log.d(TAG, "Auto-restart scheduled in ${delaySeconds}s for member=$memberId")
             } catch (e: SecurityException) {
                 Log.e(TAG, "Failed to schedule auto-restart: ${e.message}")
             }
@@ -134,7 +133,6 @@ class LocationTrackingService : Service(), LocationListener {
             }
             val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, flags)
             alarmManager.cancel(pendingIntent)
-            Log.d(TAG, "Auto-restart canceled")
         }
 
 
@@ -147,7 +145,6 @@ class LocationTrackingService : Service(), LocationListener {
         geocoder = Geocoder(this, Locale.getDefault())
         
         createNotificationChannel()
-        Log.d(TAG, "Location tracking service created")
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -174,7 +171,6 @@ class LocationTrackingService : Service(), LocationListener {
         serviceScope.cancel()
         // 确保静态状态变量被重置
         currentlyTracking = false
-        Log.d(TAG, "Location tracking service destroyed")
     }
     
     private fun startLocationTracking() {
@@ -218,7 +214,6 @@ class LocationTrackingService : Service(), LocationListener {
             }
             
             startForeground(NOTIFICATION_ID, createNotification("位置记录中..."))
-            Log.d(TAG, "Location tracking started for member: $currentMemberId")
             
             // 广播状态变化
             broadcastTrackingStatusChanged(true)
@@ -233,7 +228,6 @@ class LocationTrackingService : Service(), LocationListener {
         currentlyTracking = false
         locationManager.removeUpdates(this)
         stopForeground(true)
-        Log.d(TAG, "Location tracking stopped")
         
         // 广播状态变化
         broadcastTrackingStatusChanged(false)
@@ -273,7 +267,6 @@ class LocationTrackingService : Service(), LocationListener {
             }
             
             bestLocation?.let { location ->
-                Log.d(TAG, "Recording initial location: ${location.latitude}, ${location.longitude}")
                 serviceScope.launch {
                     try {
                         // 获取地址信息
@@ -297,9 +290,7 @@ class LocationTrackingService : Service(), LocationListener {
                         )
                         // 记录最近一次保存时间，避免紧接着的 provider 回调再次保存
                         lastSavedAtMs = System.currentTimeMillis()
-                        
-                        Log.d(TAG, "Initial location record saved: $address")
-                        
+                    
                     } catch (e: Exception) {
                         Log.e(TAG, "Error saving initial location record", e)
                     }
@@ -314,7 +305,6 @@ class LocationTrackingService : Service(), LocationListener {
     override fun onLocationChanged(location: Location) {
         if (!isTracking) return
         
-        Log.d(TAG, "Location changed: ${location.latitude}, ${location.longitude}")
         // 节流：合并来自不同 provider 的频繁回调，确保最小间隔
         val shouldSave = synchronized(saveLock) {
             val now = System.currentTimeMillis()
@@ -346,8 +336,6 @@ class LocationTrackingService : Service(), LocationListener {
                     address = address,
                     memberId = currentMemberId
                 )
-                
-                Log.d(TAG, "Location record saved: $address")
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving location record", e)
@@ -412,7 +400,6 @@ class LocationTrackingService : Service(), LocationListener {
             putExtra(EXTRA_INTERVAL, recordingInterval)
         }
         sendBroadcast(intent)
-        Log.d(TAG, "Broadcasted tracking status change: $isTracking for member: $currentMemberId")
     }
 }
 

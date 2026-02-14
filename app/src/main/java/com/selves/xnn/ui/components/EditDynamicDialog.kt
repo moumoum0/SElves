@@ -264,7 +264,10 @@ fun ImageItem(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(8.dp)),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            )
         ) {
             val imageRequest = remember(imagePath) {
                 ImageUtils.createMessageImageRequest(context, imagePath)
@@ -505,7 +508,7 @@ private fun SingleImageItem(
                     }
                 )
             },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         val imageRequest = remember(imagePath) {
             ImageUtils.createMessageImageRequest(context, imagePath)
@@ -566,7 +569,7 @@ private fun GridImageItem(
                     }
                 )
             },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         val imageRequest = remember(imagePath) {
             ImageUtils.createMessageImageRequest(context, imagePath)

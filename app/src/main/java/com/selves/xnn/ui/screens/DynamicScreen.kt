@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -29,11 +28,9 @@ import com.selves.xnn.model.Dynamic
 import com.selves.xnn.model.DynamicType
 import com.selves.xnn.model.Member
 import com.selves.xnn.ui.components.AvatarImage
-import com.selves.xnn.ui.components.EditDynamicDialog
 import com.selves.xnn.ui.components.DynamicImageGrid
 import com.selves.xnn.ui.components.ImageViewer
 import com.selves.xnn.viewmodel.DynamicViewModel
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +38,7 @@ fun DynamicScreen(
     currentMember: Member?,
     onDynamicClick: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToCreateDynamic: () -> Unit = {},
     dynamicViewModel: DynamicViewModel = hiltViewModel()
 ) {
     val uiState by dynamicViewModel.uiState.collectAsState()
@@ -49,7 +47,6 @@ fun DynamicScreen(
     val filterType by dynamicViewModel.filterType.collectAsState()
     
     var showSearchBar by remember { mutableStateOf(false) }
-    var showEditDialog by remember { mutableStateOf(false) }
     var previewImagePath by remember { mutableStateOf<String?>(null) }
     var previewImagePosition by remember { mutableStateOf<Offset?>(null) }
     var previewImageSize by remember { mutableStateOf<DpSize?>(null) }
@@ -61,51 +58,31 @@ fun DynamicScreen(
         }
     }
     
-    // 如果显示编辑对话框，则显示全屏编辑界面
-    if (showEditDialog) {
-        EditDynamicDialog(
-            onDismiss = { showEditDialog = false },
-            onConfirm = { content, images ->
-                currentMember?.let { member ->
-                    dynamicViewModel.createDynamic(
-                        title = "",
-                        content = content,
-                        authorName = member.name,
-                        authorAvatar = member.avatarUrl,
-                        type = if (images.isNotEmpty()) DynamicType.IMAGE else DynamicType.TEXT,
-                        images = images,
-                        tags = emptyList()
-                    )
+    // 正常的动态列表界面
+    Scaffold(
+        topBar = {
+            DynamicTopBar(
+                showSearchBar = showSearchBar,
+                searchQuery = searchQuery,
+                filterType = filterType,
+                onBackClick = onNavigateBack,
+                onSearchClick = { showSearchBar = !showSearchBar },
+                onSearchChange = { dynamicViewModel.searchDynamics(it) },
+                onFilterChange = { dynamicViewModel.setFilterType(it) },
+                onSearchClose = {
+                    showSearchBar = false
+                    dynamicViewModel.searchDynamics("")
                 }
-                showEditDialog = false
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onNavigateToCreateDynamic
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "创建动态")
             }
-        )
-    } else {
-        // 正常的动态列表界面
-        Scaffold(
-            topBar = {
-                DynamicTopBar(
-                    showSearchBar = showSearchBar,
-                    searchQuery = searchQuery,
-                    filterType = filterType,
-                    onBackClick = onNavigateBack,
-                    onSearchClick = { showSearchBar = !showSearchBar },
-                    onSearchChange = { dynamicViewModel.searchDynamics(it) },
-                    onFilterChange = { dynamicViewModel.setFilterType(it) },
-                    onSearchClose = { 
-                        showSearchBar = false
-                        dynamicViewModel.searchDynamics("")
-                    }
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = { showEditDialog = true }
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "创建动态")
-                }
-            }
-        ) { paddingValues ->
+        }
+    ) { paddingValues ->
             // 动态列表
             if (uiState.isLoading) {
                 Box(
@@ -148,18 +125,34 @@ fun DynamicScreen(
                                     .padding(32.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "暂无动态",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 16.sp
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Timeline,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(64.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "暂无动态",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontSize = 16.sp
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "点击右下角按钮发布第一条动态",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                        fontSize = 14.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
     
     // 错误提示
     uiState.error?.let { error ->
@@ -200,8 +193,7 @@ fun DynamicTopBar(
         // 主导航栏
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = Color.White,
-            shadowElevation = 4.dp
+            color = MaterialTheme.colorScheme.surface
         ) {
             TopAppBar(
                 title = {
@@ -329,7 +321,10 @@ fun DynamicCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onCardClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -441,7 +436,7 @@ fun DynamicCard(
                         Icon(
                             imageVector = if (dynamic.isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "点赞",
-                            tint = if (dynamic.isLiked) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = if (dynamic.isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))

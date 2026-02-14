@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.ui.viewmodels.SettingsViewModel
 import com.selves.xnn.ui.components.ThemeModeDialog
+import com.selves.xnn.ui.components.ColorSchemeDialog
 import com.selves.xnn.ui.components.BackupProgressDialog
 import com.selves.xnn.ui.components.ImportBackupWarningDialog
 import com.selves.xnn.model.getDisplayName
@@ -44,6 +45,8 @@ fun SettingsScreen(
     val showThemeModeDialog by viewModel.showThemeModeDialog.collectAsState()
     val quickMemberSwitchEnabled by viewModel.quickMemberSwitchEnabled.collectAsState()
     val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
+    val colorScheme by viewModel.colorScheme.collectAsState()
+    val showColorSchemeDialog by viewModel.showColorSchemeDialog.collectAsState()
     val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
     val backupMessage by viewModel.backupMessage.collectAsState()
     val showBackupProgressDialog by viewModel.showBackupProgressDialog.collectAsState()
@@ -131,19 +134,11 @@ fun SettingsScreen(
             }
             
             item {
-                SettingsSwitchItem(
+                SettingsItem(
                     icon = Icons.Default.Palette,
-                    title = "动态颜色",
-                    subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        "根据壁纸自动调整应用配色 (Android 12+)"
-                    } else {
-                        "需要 Android 12 及以上版本"
-                    },
-                    checked = dynamicColorEnabled,
-                    enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                    onCheckedChange = { enabled ->
-                        viewModel.setDynamicColorEnabled(enabled)
-                    }
+                    title = "颜色与个性化",
+                    subtitle = colorScheme.getDisplayName(),
+                    onClick = { viewModel.showColorSchemeDialog() }
                 )
             }
             
@@ -225,6 +220,16 @@ fun SettingsScreen(
                 viewModel.setThemeMode(selectedMode)
             },
             onDismiss = { viewModel.hideThemeModeDialog() }
+        )
+        
+        // 配色方案选择对话框
+        ColorSchemeDialog(
+            isOpen = showColorSchemeDialog,
+            selectedColorScheme = colorScheme,
+            onColorSchemeSelected = { selectedScheme ->
+                viewModel.setColorScheme(selectedScheme)
+            },
+            onDismiss = { viewModel.hideColorSchemeDialog() }
         )
         
         // 备份进度对话框

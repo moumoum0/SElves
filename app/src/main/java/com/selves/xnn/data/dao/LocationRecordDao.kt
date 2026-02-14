@@ -20,6 +20,12 @@ interface LocationRecordDao {
     @Query("SELECT * FROM location_records WHERE timestamp BETWEEN :startDate AND :endDate AND memberId = :memberId ORDER BY timestamp ASC")
     fun getLocationRecordsByDateRange(startDate: LocalDateTime, endDate: LocalDateTime, memberId: String): Flow<List<LocationRecordEntity>>
     
+    @Query("SELECT * FROM location_records WHERE timestamp BETWEEN :startDate AND :endDate ORDER BY timestamp ASC")
+    fun getLocationRecordsByDateRangeAllMembers(startDate: LocalDateTime, endDate: LocalDateTime): Flow<List<LocationRecordEntity>>
+    
+    @Query("SELECT * FROM location_records WHERE timestamp BETWEEN :startDate AND :endDate ORDER BY timestamp DESC")
+    fun getLocationRecordsByDateRangeAllMembersDesc(startDate: LocalDateTime, endDate: LocalDateTime): Flow<List<LocationRecordEntity>>
+    
     @Query("SELECT * FROM location_records WHERE id = :id")
     suspend fun getLocationRecordById(id: String): LocationRecordEntity?
     

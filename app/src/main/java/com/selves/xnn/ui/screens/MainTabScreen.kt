@@ -56,7 +56,6 @@ fun MainTabScreen(
     val groups by viewModel.groups.collectAsState()
     val hasSystem by viewModel.hasSystem.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val memberLoginRecords by viewModel.memberLoginRecords.collectAsState()
     
     var showCreateMemberDialog by remember { mutableStateOf(false) }
     var showMemberSwitchDialog by remember { mutableStateOf(false) }
@@ -113,6 +112,7 @@ fun MainTabScreen(
     }
 
     if (showMemberSwitchDialog) {
+        val memberLoginRecords by viewModel.memberLoginRecords.collectAsState()
         MemberSwitchDialog(
             members = members,
             currentMemberId = currentMember?.id ?: "",
@@ -203,7 +203,8 @@ fun MainTabScreen(
                         onNavigateToTodo = onNavigateToTodo,
                         onNavigateToDynamic = onNavigateToDynamic,
                         onNavigateToVote = onNavigateToVote,
-                        onNavigateToLocation = onNavigateToLocation
+                        onNavigateToLocation = onNavigateToLocation,
+                        viewModel = viewModel
                     )
                 }
                 

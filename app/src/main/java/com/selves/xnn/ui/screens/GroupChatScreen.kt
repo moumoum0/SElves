@@ -68,6 +68,20 @@ fun GroupChatScreen(
         )
     }
 
+    // 在列表层级统一收集状态，避免每个 GroupItem 独立 collectAsState
+    val messages by viewModel.messages.collectAsState()
+    val allMembers by viewModel.allMembers.collectAsState()
+    val unreadCounts by viewModel.unreadCounts.collectAsState()
+    
+    // 用 remember 缓存排序结果，仅在 groups 或 messages 变化时重新排序
+    val sortedGroups = remember(groups, messages) {
+        groups.sortedByDescending { group ->
+            val groupMessages = messages[group.id] ?: emptyList()
+            val latestMessage = groupMessages.lastOrNull()
+            latestMessage?.timestamp ?: group.createdAt
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column {
             // 顶部成员信息栏
@@ -77,7 +91,7 @@ fun GroupChatScreen(
             )
 
             // 群聊列表
-            if (groups.isEmpty()) {
+            if (sortedGroups.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -87,16 +101,6 @@ fun GroupChatScreen(
                     Text("暂无群聊，请点击右下角创建")
                 }
             } else {
-                // 获取消息状态用于排序
-                val messages by viewModel.messages.collectAsState()
-                
-                // 按最新消息时间排序群聊列表
-                val sortedGroups = groups.sortedByDescending { group ->
-                    val groupMessages = messages[group.id] ?: emptyList()
-                    val latestMessage = groupMessages.lastOrNull()
-                    latestMessage?.timestamp ?: group.createdAt
-                }
-                
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -105,18 +109,35 @@ fun GroupChatScreen(
                 ) {
                     items(sortedGroups.size * 2 - 1) { index ->
                         if (index % 2 == 0) {
-                            // 群聊项目
                             val groupIndex = index / 2
                             val group = sortedGroups[groupIndex]
+                            val groupMessages = remember(messages, group.id) {
+                                messages[group.id] ?: emptyList()
+                            }
+                            val latestMessage = remember(groupMessages) {
+                                groupMessages.lastOrNull()
+                            }
+                            val sender = remember(latestMessage, allMembers) {
+                                latestMessage?.let { msg -> allMembers.find { it.id == msg.senderId } }
+                            }
+                            val unreadCount = remember(unreadCounts, group.id) {
+                                unreadCounts[group.id] ?: 0
+                            }
                             GroupItem(
-                                viewModel = viewModel,
                                 group = group,
                                 currentMember = currentMember,
+                                latestMessage = latestMessage,
+                                sender = sender,
+                                unreadCount = unreadCount,
+                                formattedTime = remember(latestMessage, group.createdAt) {
+                                    viewModel.formatMessageTime(
+                                        latestMessage?.timestamp ?: group.createdAt
+                                    )
+                                },
                                 onClick = { onGroupClick(group) }
                             )
                         } else {
-                            // 分隔线
-                            Divider(
+                            HorizontalDivider(
                                 modifier = Modifier
                                     .padding(start = 72.dp)
                                     .fillMaxWidth(),
@@ -144,28 +165,16 @@ fun GroupChatScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupItem(
-    viewModel: MainViewModel,
     group: ChatGroup,
     currentMember: Member,
+    latestMessage: com.selves.xnn.model.Message?,
+    sender: Member?,
+    unreadCount: Int,
+    formattedTime: String,
     onClick: () -> Unit
 ) {
-    // 获取消息状态
-    val messages by viewModel.messages.collectAsState()
-    val groupMessages = messages[group.id] ?: emptyList()
-    
-    // 获取最新消息和未读数量
-    val latestMessage = groupMessages.lastOrNull()
-    val unreadCount = viewModel.getUnreadCount(group.id)
-    val allMembers by viewModel.allMembers.collectAsState()
-    
-    // 获取发送者信息
-    val sender = latestMessage?.let { message ->
-        allMembers.find { it.id == message.senderId }
-    }
-    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -184,11 +193,9 @@ fun GroupItem(
                         Color.Transparent
                     } else if (group.name.isNotEmpty()) {
                         // 根据群聊名称生成颜色
-                        val colors = listOf(
-                            Color(0xFF2196F3), Color(0xFF4CAF50), Color(0xFFFF9800),
-                            Color(0xFF9C27B0), Color(0xFFF44336), Color(0xFF00BCD4)
-                        )
-                        colors[group.name.hashCode().rem(colors.size).let { if (it < 0) -it else it }]
+                        val hash = group.name.hashCode().let { if (it < 0) -it else it }
+                        val hue = (hash % 360).toFloat()
+                        androidx.compose.ui.graphics.Color.hsl(hue, 0.6f, 0.5f)
                     } else {
                         MaterialTheme.colorScheme.primary
                     }
@@ -204,7 +211,7 @@ fun GroupItem(
             } else {
                 Text(
                     text = if (group.name.isNotEmpty()) group.name.first().toString().uppercase() else "G",
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.surface,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -274,23 +281,13 @@ fun GroupItem(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // 时间
-            if (latestMessage != null) {
-                Text(
-                    text = viewModel.formatMessageTime(latestMessage.timestamp),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            } else {
-                Text(
-                    text = viewModel.formatMessageTime(group.createdAt),
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
-            }
+            Text(
+                text = formattedTime,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 12.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            )
             
             // 未读消息数量
             if (unreadCount > 0) {
@@ -306,7 +303,7 @@ fun GroupItem(
                 ) {
                     Text(
                         text = if (unreadCount > 99) "99+" else unreadCount.toString(),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.surface,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )

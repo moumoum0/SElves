@@ -2,21 +2,16 @@
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
 
-# 保持 Compose 相关类
--keep class androidx.compose.** { *; }
--keep class androidx.compose.runtime.** { *; }
+# 注意：不要使用 -keep class androidx.compose.** { *; } 这种宽泛规则
+# R8 已原生支持 Compose，无需额外 keep 规则
+# 宽泛的 keep 规则会阻止 R8 移除未使用的 material-icons-extended 图标类(~30MB)
 
 # 保持 Room 相关类
 -keep class * extends androidx.room.RoomDatabase
 -keep @androidx.room.Entity class *
 -keep @androidx.room.Dao class *
 
-# 保持 Hilt 相关类
--keep class dagger.hilt.** { *; }
--keep class javax.inject.** { *; }
--keep class * extends dagger.hilt.android.AndroidEntryPoint
-
-# 保持数据类
+# 保持数据类（Gson 序列化需要）
 -keep class com.selves.xnn.model.** { *; }
 -keep class com.selves.xnn.data.entity.** { *; }
 

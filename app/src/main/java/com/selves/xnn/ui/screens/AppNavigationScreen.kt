@@ -93,12 +93,15 @@ fun AppNavigationScreen(
     viewModel: MainViewModel
 ) {
     val navController = rememberNavController()
-    val currentMember by viewModel.currentMember.collectAsState()
-    val members by viewModel.members.collectAsState()
-    val groups by viewModel.groups.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val hasSystem by viewModel.hasSystem.collectAsState()
     val needsGuide by viewModel.needsGuide.collectAsState()
+    
+    // 在UI渲染完成后触发数据加载（参考LibChecker的做法）
+    LaunchedEffect(Unit) {
+        // 延迟到下一帧，确保LoadingScreen已经显示
+        kotlinx.coroutines.delay(16) // 一帧的时间
+        viewModel.startLoading()
+    }
     
     // 如果正在加载，显示加载界面
     if (isLoading) {
@@ -138,14 +141,21 @@ fun AppNavigationScreen(
             backupImportSuccess = backupImportSuccess
         )
     } else {
-        // 主导航结构
+        // 主导航结构 - 仅在主导航区域收集这些状态，避免引导页面阶段的无效重组
+        val currentMember by viewModel.currentMember.collectAsState()
+        val members by viewModel.members.collectAsState()
+        val groups by viewModel.groups.collectAsState()
+        
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
         
-        // 动画背景暗化效果：排除聊天页，其他二级页面保持暗化
+        // 动画背景暗化效果：只在导航栈深度为1时(即从主页进入第一层二级页面)显示暗化
+        // 这样可以避免在多层二级页面之间切换时触发背景动画
+        val backStackDepth = navController.currentBackStack.value.size
         val shouldDarkenBackground = currentRoute != null &&
             currentRoute != "main" &&
-            !currentRoute.startsWith("chat/")
+            !currentRoute.startsWith("chat/") &&
+            backStackDepth <= 2  // NavHost自身占1层,主页占1层,所以<=2表示只有一层二级页面
 
         val backgroundAlpha by animateFloatAsState(
             targetValue = if (shouldDarkenBackground) 0.4f else 0f,
@@ -275,6 +285,11 @@ fun AppNavigationScreen(
                         navController.navigate("dynamic_detail/$dynamicId") {
                             launchSingleTop = true
                         }
+                    },
+                    onNavigateToCreateDynamic = {
+                        navController.navigate("create_dynamic") {
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
@@ -320,6 +335,43 @@ fun AppNavigationScreen(
                     },
                     onMemberSelected = { member ->
                         viewModel.setCurrentMember(member)
+                    },
+                    onNavigateToCreateVote = {
+                        navController.navigate("create_vote") {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            // 创建投票界面（作为独立页面）
+            composable(
+                route = "create_vote",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
+                CreateVoteScreen(
+                    currentMember = currentMember,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            // 创建动态界面（作为独立页面）
+            composable(
+                route = "create_dynamic",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
+                CreateDynamicScreen(
+                    currentMember = currentMember,
+                    onNavigateBack = {
+                        navController.popBackStack()
                     }
                 )
             }

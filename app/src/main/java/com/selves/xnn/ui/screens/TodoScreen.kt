@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -147,26 +148,43 @@ fun TodoScreen(
                 }
             } else if (pendingTodos.isEmpty() && completedTodos.isEmpty()) {
                 // 空状态
-                Box(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentAlignment = Alignment.Center
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "暂无待办事项",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "点击右下角按钮创建第一个待办事项",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Assignment,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "暂无待办",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 16.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "点击右下角按钮创建第一个待办",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
                     }
                 }
             } else {
@@ -324,7 +342,10 @@ fun TodoStatsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Row(
             modifier = Modifier
@@ -389,7 +410,7 @@ fun TodoItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -428,8 +449,8 @@ fun TodoItem(
                         Surface(
                             color = when (todo.priority) {
                                 TodoPriority.HIGH -> MaterialTheme.colorScheme.error
-                                TodoPriority.LOW -> MaterialTheme.colorScheme.outline
-                                else -> Color.Transparent
+                                TodoPriority.LOW -> MaterialTheme.colorScheme.tertiaryContainer
+                                else -> MaterialTheme.colorScheme.secondaryContainer
                             },
                             shape = RoundedCornerShape(12.dp)
                         ) {
@@ -441,8 +462,8 @@ fun TodoItem(
                                 },
                                 color = when (todo.priority) {
                                     TodoPriority.HIGH -> MaterialTheme.colorScheme.onError
-                                    TodoPriority.LOW -> MaterialTheme.colorScheme.onSurface
-                                    else -> MaterialTheme.colorScheme.onSurface
+                                    TodoPriority.LOW -> MaterialTheme.colorScheme.onTertiaryContainer
+                                    else -> MaterialTheme.colorScheme.onSecondaryContainer
                                 },
                                 fontSize = 10.sp,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -551,8 +572,8 @@ fun TodoDetailBottomSheet(
             Surface(
                 color = when (todo.priority) {
                     TodoPriority.HIGH -> MaterialTheme.colorScheme.error
-                    TodoPriority.LOW -> MaterialTheme.colorScheme.outline
-                    else -> MaterialTheme.colorScheme.secondary
+                    TodoPriority.LOW -> MaterialTheme.colorScheme.tertiaryContainer
+                    else -> MaterialTheme.colorScheme.secondaryContainer
                 },
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -564,8 +585,8 @@ fun TodoDetailBottomSheet(
                     },
                     color = when (todo.priority) {
                         TodoPriority.HIGH -> MaterialTheme.colorScheme.onError
-                        TodoPriority.LOW -> MaterialTheme.colorScheme.onSurface
-                        else -> MaterialTheme.colorScheme.onSecondary
+                        TodoPriority.LOW -> MaterialTheme.colorScheme.onTertiaryContainer
+                        else -> MaterialTheme.colorScheme.onSecondaryContainer
                     },
                     fontSize = 12.sp,
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)

@@ -37,13 +37,22 @@ class LocationRecordRepository @Inject constructor(
         }
     }
     
-    // 获取日期范围内的位置记录
+    // 获取日期范围内的位置记录（所有成员共享，按时间正序）
     fun getLocationRecordsByDateRange(
         startDate: LocalDateTime, 
-        endDate: LocalDateTime, 
-        memberId: String
+        endDate: LocalDateTime
     ): Flow<List<LocationRecord>> {
-        return locationRecordDao.getLocationRecordsByDateRange(startDate, endDate, memberId).map { entities ->
+        return locationRecordDao.getLocationRecordsByDateRangeAllMembers(startDate, endDate).map { entities ->
+            entities.map { it.toLocationRecord() }
+        }
+    }
+    
+    // 获取日期范围内的位置记录（所有成员共享，按时间倒序）
+    fun getLocationRecordsByDateRangeDesc(
+        startDate: LocalDateTime, 
+        endDate: LocalDateTime
+    ): Flow<List<LocationRecord>> {
+        return locationRecordDao.getLocationRecordsByDateRangeAllMembersDesc(startDate, endDate).map { entities ->
             entities.map { it.toLocationRecord() }
         }
     }

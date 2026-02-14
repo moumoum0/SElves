@@ -96,7 +96,7 @@ fun OnlineStatsDialog(
                         StatItem(
                             title = "在线",
                             value = onlineStats.onlineCount.toString(),
-                            color = Color.Green
+                            color = MaterialTheme.colorScheme.tertiary
                         )
                     }
                 }
@@ -215,7 +215,7 @@ fun OnlineStatItem(
         // 在线状态指示器
         Surface(
             shape = CircleShape,
-            color = if (memberStat.isOnline) Color.Green else MaterialTheme.colorScheme.outline,
+            color = if (memberStat.isOnline) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.outline,
             modifier = Modifier.size(8.dp)
         ) {}
     }

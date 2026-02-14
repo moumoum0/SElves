@@ -49,24 +49,25 @@ class LocationTrackingViewModel @Inject constructor(
     private val _currentMemberId = MutableStateFlow("")
     private val currentMemberId: StateFlow<String> = _currentMemberId.asStateFlow()
 
-    // 获取指定日期的位置记录
-    val locationRecords = combine(
-        selectedDate,
-        currentMemberId
-    ) { date, memberId ->
-        if (memberId.isNotEmpty()) {
-            val startDateTime = date.atStartOfDay()
-            val endDateTime = date.atTime(LocalTime.MAX)
-            locationRecordRepository.getLocationRecordsByDateRange(startDateTime, endDateTime, memberId)
-        } else {
-            flowOf(emptyList())
-        }
+    // 获取指定日期的位置记录（所有成员共享）
+    val locationRecords = selectedDate.map { date ->
+        val startDateTime = date.atStartOfDay()
+        val endDateTime = date.atTime(LocalTime.MAX)
+        locationRecordRepository.getLocationRecordsByDateRange(startDateTime, endDateTime)
     }.flatMapLatest { it }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+    
+    // 获取今日记录（主页面专用，不受selectedDate影响，所有成员共享，按时间倒序）
+    fun getTodayRecords(): Flow<List<LocationRecord>> {
+        val today = LocalDate.now()
+        val startDateTime = today.atStartOfDay()
+        val endDateTime = today.atTime(LocalTime.MAX)
+        return locationRecordRepository.getLocationRecordsByDateRangeDesc(startDateTime, endDateTime)
+    }
 
     // 轨迹统计信息
     private val _trackingStats = MutableStateFlow(TrackingStats())
@@ -88,8 +89,6 @@ class LocationTrackingViewModel @Inject constructor(
                         memberPreferences.saveTrackingConfig(currentConfig.copy(isEnabled = isTracking))
                     }
                 }
-                
-                android.util.Log.d("LocationTrackingViewModel", "Received tracking status change: $trackingStatus")
             }
         }
     }
@@ -124,8 +123,6 @@ class LocationTrackingViewModel @Inject constructor(
                 memberPreferences.saveTrackingConfig(currentConfig.copy(isEnabled = true))
             }
         }
-        
-        android.util.Log.d("LocationTrackingViewModel", "Initial service status check: isTracking=$isCurrentlyTracking, status=$initialStatus")
     }
 
     // 设置当前成员ID
@@ -198,10 +195,8 @@ class LocationTrackingViewModel @Inject constructor(
                         interval = currentConfig.recordingInterval * 1000L,
                         delaySeconds = currentConfig.autoRestartDelay.toLong()
                     )
-                    android.util.Log.d("LocationTrackingViewModel", "Auto-restart scheduled: enableAutoStart=${currentConfig.enableAutoStart}, delay=${currentConfig.autoRestartDelay}s")
                 } else {
                     LocationTrackingService.cancelAutoRestart(context)
-                    android.util.Log.d("LocationTrackingViewModel", "Auto-restart not scheduled: enableAutoStart=${currentConfig.enableAutoStart}, memberId=${currentMemberId.value}")
                 }
                 
                 // 延迟检查确保服务状态同步
@@ -219,8 +214,6 @@ class LocationTrackingViewModel @Inject constructor(
             // 保存配置到持久化存储
             memberPreferences.saveTrackingConfig(config)
             _uiState.update { it.copy(showConfigDialog = false) }
-            
-            android.util.Log.d("LocationTrackingViewModel", "Tracking config updated: enableAutoStart=${config.enableAutoStart}, autoRestartDelay=${config.autoRestartDelay}s")
         }
     }
 

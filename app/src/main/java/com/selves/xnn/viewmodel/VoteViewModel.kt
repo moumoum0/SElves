@@ -100,7 +100,6 @@ class VoteViewModel @Inject constructor(
     fun setCurrentUser(userId: String) {
         _currentUserId.value = userId
         voteRepository.setCurrentUserId(userId)
-        Log.d(TAG, "设置当前用户: $userId")
     }
     
     // 加载投票
@@ -156,7 +155,6 @@ class VoteViewModel @Inject constructor(
                     isAnonymous = isAnonymous
                 )
                 
-                Log.d(TAG, "创建投票成功: $voteId")
                 _uiState.value = _uiState.value.copy(isCreating = false)
                 
             } catch (e: Exception) {
@@ -189,9 +187,7 @@ class VoteViewModel @Inject constructor(
                     userAvatar = userAvatar
                 )
                 
-                if (success) {
-                    Log.d(TAG, "投票成功: $voteId")
-                } else {
+                if (!success) {
                     _uiState.value = _uiState.value.copy(error = "投票失败")
                 }
                 
@@ -212,8 +208,6 @@ class VoteViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 voteRepository.deleteVote(voteId)
-                Log.d(TAG, "删除投票成功: $voteId")
-                
             } catch (e: Exception) {
                 Log.e(TAG, "删除投票失败", e)
                 _uiState.value = _uiState.value.copy(
@@ -228,8 +222,6 @@ class VoteViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 voteRepository.endVote(voteId)
-                Log.d(TAG, "结束投票成功: $voteId")
-                
             } catch (e: Exception) {
                 Log.e(TAG, "结束投票失败", e)
                 _uiState.value = _uiState.value.copy(

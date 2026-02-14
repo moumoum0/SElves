@@ -12,11 +12,89 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.selves.xnn.model.ThemeMode
+import com.selves.xnn.model.ColorScheme
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80
+)
+
+// ============================================
+// 云野配色 (Cloud Field) - 自然清新绿色主题
+// ============================================
+private val CloudFieldLightColorScheme = lightColorScheme(
+    primary = CloudFieldPrimaryLight,
+    onPrimary = CloudFieldOnPrimaryLight,
+    primaryContainer = CloudFieldPrimaryContainerLight,
+    onPrimaryContainer = CloudFieldOnPrimaryContainerLight,
+    secondary = CloudFieldSecondaryLight,
+    onSecondary = CloudFieldOnSecondaryLight,
+    secondaryContainer = CloudFieldSecondaryContainerLight,
+    onSecondaryContainer = CloudFieldOnSecondaryContainerLight,
+    tertiary = CloudFieldTertiaryLight,
+    onTertiary = CloudFieldOnTertiaryLight,
+    tertiaryContainer = CloudFieldTertiaryContainerLight,
+    onTertiaryContainer = CloudFieldOnTertiaryContainerLight,
+    error = CloudFieldErrorLight,
+    onError = CloudFieldOnErrorLight,
+    errorContainer = CloudFieldErrorContainerLight,
+    onErrorContainer = CloudFieldOnErrorContainerLight,
+    background = CloudFieldBackgroundLight,
+    onBackground = CloudFieldOnBackgroundLight,
+    surface = CloudFieldSurfaceLight,
+    onSurface = CloudFieldOnSurfaceLight,
+    surfaceVariant = CloudFieldSurfaceVariantLight,
+    onSurfaceVariant = CloudFieldOnSurfaceVariantLight,
+    outline = CloudFieldOutlineLight,
+    outlineVariant = CloudFieldOutlineVariantLight,
+    inverseSurface = Color(0xFF2D322B),
+    inverseOnSurface = Color(0xFFEFF2E9),
+    inversePrimary = Color(0xFFA2D399),
+    surfaceDim = Color(0xFFD8DBD2),
+    surfaceBright = Color(0xFFF7FBF1),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF1F5EB),
+    surfaceContainer = Color(0xFFECEFE6),
+    surfaceContainerHigh = Color(0xFFE6E9E0),
+    surfaceContainerHighest = Color(0xFFE0E4DA)
+)
+
+private val CloudFieldDarkColorScheme = darkColorScheme(
+    primary = CloudFieldPrimaryDark,
+    onPrimary = CloudFieldOnPrimaryDark,
+    primaryContainer = CloudFieldPrimaryContainerDark,
+    onPrimaryContainer = CloudFieldOnPrimaryContainerDark,
+    secondary = CloudFieldSecondaryDark,
+    onSecondary = CloudFieldOnSecondaryDark,
+    secondaryContainer = CloudFieldSecondaryContainerDark,
+    onSecondaryContainer = CloudFieldOnSecondaryContainerDark,
+    tertiary = CloudFieldTertiaryDark,
+    onTertiary = CloudFieldOnTertiaryDark,
+    tertiaryContainer = CloudFieldTertiaryContainerDark,
+    onTertiaryContainer = CloudFieldOnTertiaryContainerDark,
+    error = CloudFieldErrorDark,
+    onError = CloudFieldOnErrorDark,
+    errorContainer = CloudFieldErrorContainerDark,
+    onErrorContainer = CloudFieldOnErrorContainerDark,
+    background = CloudFieldBackgroundDark,
+    onBackground = CloudFieldOnBackgroundDark,
+    surface = CloudFieldSurfaceDark,
+    onSurface = CloudFieldOnSurfaceDark,
+    surfaceVariant = CloudFieldSurfaceVariantDark,
+    onSurfaceVariant = CloudFieldOnSurfaceVariantDark,
+    outline = CloudFieldOutlineDark,
+    outlineVariant = CloudFieldOutlineVariantDark,
+    inverseSurface = Color(0xFFE0E4DA),
+    inverseOnSurface = Color(0xFF2D322B),
+    inversePrimary = Color(0xFF3C6839),
+    surfaceDim = Color(0xFF10140F),
+    surfaceBright = Color(0xFF363A34),
+    surfaceContainerLowest = Color(0xFF0B0F0A),
+    surfaceContainerLow = Color(0xFF191D17),
+    surfaceContainer = Color(0xFF1D211B),
+    surfaceContainerHigh = Color(0xFF272B25),
+    surfaceContainerHighest = Color(0xFF323630)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -74,23 +152,28 @@ fun shouldUseDarkTheme(themeMode: ThemeMode): Boolean {
 @Composable
 fun SelvesTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    colorScheme: ColorScheme = ColorScheme.APP_DEFAULT,
     content: @Composable () -> Unit
 ) {
     val darkTheme = shouldUseDarkTheme(themeMode)
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+    val materialColorScheme = when {
+        colorScheme == ColorScheme.WALLPAPER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
+        colorScheme == ColorScheme.CLOUD_FIELD -> {
+            if (darkTheme) CloudFieldDarkColorScheme else CloudFieldLightColorScheme
+        }
         darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        else -> when (colorScheme) {
+            ColorScheme.APP_DEFAULT -> LightColorScheme
+            ColorScheme.WALLPAPER -> LightColorScheme
+            ColorScheme.CLOUD_FIELD -> CloudFieldLightColorScheme
+        }
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = materialColorScheme,
         typography = Typography,
         content = content
     )

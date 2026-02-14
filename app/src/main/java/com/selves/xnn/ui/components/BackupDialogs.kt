@@ -36,7 +36,10 @@ fun BackupProgressDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             ) {
                 Column(
                     modifier = Modifier

@@ -9,6 +9,9 @@ import coil.memory.MemoryCache
 import coil.request.CachePolicy
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @HiltAndroidApp
 class ChatApplication : Application() {
@@ -16,8 +19,10 @@ class ChatApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        // 配置Coil图片加载器
-        setupCoilImageLoader()
+        // 延迟配置Coil图片加载器到后台线程，避免阻塞启动
+        GlobalScope.launch(Dispatchers.IO) {
+            setupCoilImageLoader()
+        }
     }
     
     private fun setupCoilImageLoader() {

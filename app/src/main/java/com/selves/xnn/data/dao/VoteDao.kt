@@ -23,10 +23,10 @@ interface VoteDao {
     @Query("SELECT * FROM votes WHERE status = :status ORDER BY createdAt DESC")
     fun getVotesByStatus(status: VoteStatus): Flow<List<VoteEntity>>
     
-    @Query("SELECT * FROM votes WHERE endTime > :currentTime OR endTime IS NULL ORDER BY createdAt DESC")
+    @Query("SELECT * FROM votes WHERE status = 'ACTIVE' AND (endTime > :currentTime OR endTime IS NULL) ORDER BY createdAt DESC")
     fun getActiveVotes(currentTime: Long): Flow<List<VoteEntity>>
     
-    @Query("SELECT * FROM votes WHERE endTime <= :currentTime AND endTime IS NOT NULL ORDER BY createdAt DESC")
+    @Query("SELECT * FROM votes WHERE status = 'ENDED' OR (endTime <= :currentTime AND endTime IS NOT NULL) ORDER BY createdAt DESC")
     fun getEndedVotes(currentTime: Long): Flow<List<VoteEntity>>
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)

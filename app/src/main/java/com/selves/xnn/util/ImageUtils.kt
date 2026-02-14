@@ -9,6 +9,8 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -69,7 +71,6 @@ object ImageUtils {
             avatarFileCache.put(filePath, destinationFile)
             avatarExistsCache.put(filePath, true)
             
-            Log.d(TAG, "头像已保存到: $filePath")
             return filePath
         } catch (e: Exception) {
             Log.e(TAG, "保存头像失败: ${e.message}", e)
@@ -136,44 +137,39 @@ object ImageUtils {
      * @param avatarPaths 需要预加载的头像路径列表
      * @param coroutineScope 协程作用域
      */
-    fun preloadAvatarsToMemory(
+    suspend fun preloadAvatarsToMemory(
         context: Context, 
         avatarPaths: List<String>, 
         coroutineScope: CoroutineScope
-    ) {
-        coroutineScope.launch(Dispatchers.IO) {
-            val imageLoader = coil.Coil.imageLoader(context)
-            
-            avatarPaths.forEach { path ->
-                if (!path.isNullOrEmpty() && !preloadedAvatars.contains(path)) {
+    ) = withContext(Dispatchers.IO) {
+        val imageLoader = coil.Coil.imageLoader(context)
+        
+        // 并行预加载所有头像，充分利用多核CPU
+        avatarPaths.filter { !it.isNullOrEmpty() && !preloadedAvatars.contains(it) }
+            .map { path ->
+                async {
                     try {
-                        // 缓存文件是否存在信息
                         val file = File(path)
                         val exists = file.exists()
                         avatarExistsCache.put(path, exists)
                         
                         if (exists) {
-                            // 缓存File对象
                             avatarFileCache.put(path, file)
                             
-                            // 预加载到Coil的内存缓存中
                             val request = ImageRequest.Builder(context)
                                 .data(file)
                                 .memoryCachePolicy(CachePolicy.ENABLED)
                                 .diskCachePolicy(CachePolicy.ENABLED)
                                 .build()
                             
-                            // 执行预加载
                             imageLoader.execute(request)
                             preloadedAvatars.add(path)
-                            Log.d(TAG, "预加载头像: $path")
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "预加载头像失败: $path, ${e.message}")
                     }
                 }
-            }
-        }
+            }.awaitAll()
     }
     
     /**
@@ -231,7 +227,6 @@ object ImageUtils {
             messageImageFileCache.put(filePath, destinationFile)
             messageImageExistsCache.put(filePath, true)
             
-            Log.d(TAG, "消息图片已保存到: $filePath")
             return@withContext filePath
         } catch (e: Exception) {
             Log.e(TAG, "保存消息图片失败: ${e.message}", e)
@@ -298,44 +293,39 @@ object ImageUtils {
      * @param imagePaths 需要预加载的图片路径列表
      * @param coroutineScope 协程作用域
      */
-    fun preloadMessageImages(
+    suspend fun preloadMessageImages(
         context: Context, 
         imagePaths: List<String>, 
         coroutineScope: CoroutineScope
-    ) {
-        coroutineScope.launch(Dispatchers.IO) {
-            val imageLoader = coil.Coil.imageLoader(context)
-            
-            imagePaths.forEach { path ->
-                if (path.isNotEmpty() && !preloadedMessageImages.contains(path)) {
+    ) = withContext(Dispatchers.IO) {
+        val imageLoader = coil.Coil.imageLoader(context)
+        
+        // 并行预加载所有消息图片，充分利用多核CPU
+        imagePaths.filter { it.isNotEmpty() && !preloadedMessageImages.contains(it) }
+            .map { path ->
+                async {
                     try {
-                        // 缓存文件是否存在信息
                         val file = File(path)
                         val exists = file.exists()
                         messageImageExistsCache.put(path, exists)
                         
                         if (exists) {
-                            // 缓存File对象
                             messageImageFileCache.put(path, file)
                             
-                            // 预加载到Coil的内存缓存中
                             val request = ImageRequest.Builder(context)
                                 .data(file)
                                 .memoryCachePolicy(CachePolicy.ENABLED)
                                 .diskCachePolicy(CachePolicy.ENABLED)
                                 .build()
                             
-                            // 执行预加载
                             imageLoader.execute(request)
                             preloadedMessageImages.add(path)
-                            Log.d(TAG, "预加载消息图片: $path")
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "预加载消息图片失败: $path, ${e.message}")
                     }
                 }
-            }
-        }
+            }.awaitAll()
     }
     
     /**

@@ -31,82 +31,87 @@ fun LocationTimelineItem(
     isFirst: Boolean = false,
     isLast: Boolean = false,
     onNavigate: (MapApp) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showTimeline: Boolean = true
 ) {
     var showMapSelection by remember { mutableStateOf(false) }
+    val timelineColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+    val dotColor = MaterialTheme.colorScheme.primary
     
     Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        // 时间线左侧
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // 上方连接线
-            if (!isFirst) {
-                Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(16.dp)
-                        .background(MaterialTheme.colorScheme.outline)
-                )
-            }
-            
-            // 时间点圆圈
+        Text(
+            text = locationRecord.timestamp.format(DateTimeFormatter.ofPattern("HH:mm")),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .width(44.dp)
+                .padding(top = 10.dp)
+        )
+
+        if (showTimeline) {
             Box(
                 modifier = Modifier
-                    .size(12.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-            )
-            
-            // 下方连接线
-            if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(16.dp)
-                        .background(MaterialTheme.colorScheme.outline)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.width(12.dp))
-
-        // 中间内容与右侧导航按钮
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // 时间与地址
-            Column(
-                modifier = Modifier.weight(1f)
+                    .width(24.dp)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.TopCenter
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = locationRecord.timestamp.format(DateTimeFormatter.ofPattern("HH:mm")),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = when {
-                            !locationRecord.address.isNullOrEmpty() -> locationRecord.address!!
-                            else -> "${String.format("%.6f", locationRecord.latitude)}, ${String.format("%.6f", locationRecord.longitude)}"
-                        },
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
+                if (!isLast) {
+                    Box(
+                        modifier = Modifier
+                            .width(2.dp)
+                            .fillMaxHeight()
+                            .padding(top = 20.dp)
+                            .background(timelineColor)
                     )
                 }
+
+                Box(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .size(10.dp)
+                        .clip(CircleShape)
+                        .background(dotColor)
+                )
+            }
+        } else {
+            Spacer(modifier = Modifier.width(12.dp))
+        }
+    
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = when {
+                        !locationRecord.address.isNullOrEmpty() -> locationRecord.address!!
+                        else -> "${String.format("%.6f", locationRecord.latitude)}, ${String.format("%.6f", locationRecord.longitude)}"
+                    },
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    lineHeight = 18.sp
+                )
             }
 
-            IconButton(onClick = { showMapSelection = true }) {
+            IconButton(
+                onClick = { showMapSelection = true },
+                modifier = Modifier.size(32.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Navigation,
                     contentDescription = "导航",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }

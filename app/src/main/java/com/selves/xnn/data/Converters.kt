@@ -42,9 +42,7 @@ class Converters {
     fun toLocalDateTime(value: Long?): LocalDateTime? {
         return try {
             value?.let { 
-                val result = LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC)
-                android.util.Log.v("Converters", "LocalDateTime转换: $value -> $result")
-                result
+                LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC)
             }
         } catch (e: Exception) {
             android.util.Log.e("Converters", "LocalDateTime反序列化失败: $value", e)

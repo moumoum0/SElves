@@ -31,10 +31,8 @@ class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<Loc
     private val formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
     override fun serialize(src: LocalDateTime?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-        Log.d("LocalDateTimeAdapter", "开始序列化LocalDateTime: $src (类型: ${src?.javaClass?.name})")
         return try {
             if (src == null) {
-                Log.d("LocalDateTimeAdapter", "LocalDateTime为null，返回JsonNull")
                 JsonNull.INSTANCE
             } else {
                 // 检查LocalDateTime对象的完整性
@@ -42,14 +40,12 @@ class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<Loc
                     val year = src.year
                     val month = src.monthValue
                     val day = src.dayOfMonth
-                    Log.v("LocalDateTimeAdapter", "LocalDateTime组件: $year-$month-$day")
                 } catch (e: Exception) {
                     Log.e("LocalDateTimeAdapter", "LocalDateTime对象内部状态异常", e)
                     return JsonNull.INSTANCE
                 }
                 
                 val formattedDate = src.format(formatter)
-                Log.d("LocalDateTimeAdapter", "序列化LocalDateTime成功: $src -> $formattedDate")
                 JsonPrimitive(formattedDate)
             }
         } catch (e: Exception) {

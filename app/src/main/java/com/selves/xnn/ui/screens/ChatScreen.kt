@@ -159,8 +159,7 @@ fun ChatScreen(
 
         // 输入框和发送按钮
         Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier

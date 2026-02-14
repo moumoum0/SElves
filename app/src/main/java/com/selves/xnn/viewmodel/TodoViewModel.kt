@@ -122,7 +122,6 @@ class TodoViewModel @Inject constructor(
                 )
                 
                 todoRepository.saveTodo(todo)
-                Log.d(TAG, "创建待办事项成功: $title")
             } catch (e: Exception) {
                 Log.e(TAG, "创建待办事项失败: ${e.message}", e)
                 _error.value = "创建待办事项失败: ${e.message}"
@@ -137,7 +136,6 @@ class TodoViewModel @Inject constructor(
         viewModelScope.launch(exceptionHandler) {
             try {
                 todoRepository.updateTodoStatus(todoId, isCompleted)
-                Log.d(TAG, "更新待办事项状态成功: $todoId -> $isCompleted")
             } catch (e: Exception) {
                 Log.e(TAG, "更新待办事项状态失败: ${e.message}", e)
                 _error.value = "更新待办事项状态失败: ${e.message}"
@@ -152,7 +150,6 @@ class TodoViewModel @Inject constructor(
         viewModelScope.launch(exceptionHandler) {
             try {
                 todoRepository.updateTodo(todo)
-                Log.d(TAG, "更新待办事项成功: ${todo.title}")
             } catch (e: Exception) {
                 Log.e(TAG, "更新待办事项失败: ${e.message}", e)
                 _error.value = "更新待办事项失败: ${e.message}"
@@ -167,7 +164,6 @@ class TodoViewModel @Inject constructor(
         viewModelScope.launch(exceptionHandler) {
             try {
                 todoRepository.deleteTodoById(todoId)
-                Log.d(TAG, "删除待办事项成功: $todoId")
             } catch (e: Exception) {
                 Log.e(TAG, "删除待办事项失败: ${e.message}", e)
                 _error.value = "删除待办事项失败: ${e.message}"

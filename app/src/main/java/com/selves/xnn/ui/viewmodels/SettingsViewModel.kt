@@ -7,6 +7,7 @@ import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.BackupResult
 import com.selves.xnn.model.ThemeMode
+import com.selves.xnn.model.ColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,12 @@ class SettingsViewModel @Inject constructor(
     
     private val _dynamicColorEnabled = MutableStateFlow(false)
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
+    
+    private val _colorScheme = MutableStateFlow(ColorScheme.APP_DEFAULT)
+    val colorScheme: StateFlow<ColorScheme> = _colorScheme.asStateFlow()
+    
+    private val _showColorSchemeDialog = MutableStateFlow(false)
+    val showColorSchemeDialog: StateFlow<Boolean> = _showColorSchemeDialog.asStateFlow()
     
     private val _isBackupInProgress = MutableStateFlow(false)
     val isBackupInProgress: StateFlow<Boolean> = _isBackupInProgress.asStateFlow()
@@ -71,6 +78,12 @@ class SettingsViewModel @Inject constructor(
                 _dynamicColorEnabled.value = enabled
             }
         }
+        
+        viewModelScope.launch {
+            memberPreferences.colorScheme.collect { scheme ->
+                _colorScheme.value = scheme
+            }
+        }
     }
     
     fun setThemeMode(themeMode: ThemeMode) {
@@ -97,6 +110,20 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             memberPreferences.saveDynamicColorEnabled(enabled)
         }
+    }
+    
+    fun setColorScheme(colorScheme: ColorScheme) {
+        viewModelScope.launch {
+            memberPreferences.saveColorScheme(colorScheme)
+        }
+    }
+    
+    fun showColorSchemeDialog() {
+        _showColorSchemeDialog.value = true
+    }
+    
+    fun hideColorSchemeDialog() {
+        _showColorSchemeDialog.value = false
     }
     
     /**

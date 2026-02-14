@@ -1,6 +1,9 @@
 package com.selves.xnn.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.selves.xnn.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,7 +30,14 @@ fun AboutScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
-    
+    val versionName = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "未知"
+        } catch (e: Exception) {
+            "未知"
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,7 +70,9 @@ fun AboutScreen(
             item {
                 // 同时显示背景层和前景层，重现完整应用图标
                 Box(
-                    modifier = Modifier.size(120.dp),
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     // 背景层
@@ -94,7 +107,7 @@ fun AboutScreen(
             // 版本信息
             item {
                 Text(
-                    text = "版本 0.1.0",
+                    text = "版本 $versionName",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -111,26 +124,74 @@ fun AboutScreen(
                     ),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(20.dp)
                     ) {
-                        Text(
-                            text = "开发者",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        
-                        Text(
-                            text = "moumoum",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "开发者",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "moumoum",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://b23.tv/59njutf")))
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            AsyncImage(
+                                model = com.selves.xnn.R.drawable.bilibili,
+                                contentDescription = "Bilibili",
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "Bilibili",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/moumoum0/SElves")))
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            AsyncImage(
+                                model = com.selves.xnn.R.drawable.ic_github,
+                                contentDescription = "GitHub",
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "GitHub",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
                 
@@ -224,53 +285,98 @@ private fun getThirdPartyLibraries(): List<ThirdPartyLibrary> {
     return listOf(
         ThirdPartyLibrary(
             name = "Jetpack Compose",
-            version = "2023.08.00",
+            version = BuildConfig.COMPOSE_BOM_VERSION,
             description = "现代Android UI工具包，用于构建原生用户界面"
         ),
         ThirdPartyLibrary(
+            name = "Material3",
+            version = BuildConfig.COMPOSE_BOM_VERSION,
+            description = "Material Design 3组件库"
+        ),
+        ThirdPartyLibrary(
+            name = "Material Icons Extended",
+            version = BuildConfig.COMPOSE_BOM_VERSION,
+            description = "Material Design扩展图标库"
+        ),
+        ThirdPartyLibrary(
+            name = "Navigation Compose",
+            version = BuildConfig.NAVIGATION_COMPOSE_VERSION,
+            description = "Jetpack导航组件的Compose版本"
+        ),
+        ThirdPartyLibrary(
             name = "Room",
-            version = "2.6.1",
+            version = BuildConfig.ROOM_VERSION,
             description = "SQLite对象映射库，用于本地数据存储"
         ),
         ThirdPartyLibrary(
             name = "Dagger Hilt",
-            version = "2.48",
+            version = BuildConfig.HILT_VERSION,
             description = "依赖注入框架，简化Android开发中的依赖管理"
         ),
         ThirdPartyLibrary(
-            name = "Navigation Compose",
-            version = "2.7.6",
-            description = "Jetpack导航组件的Compose版本"
+            name = "Hilt Navigation Compose",
+            version = BuildConfig.HILT_NAVIGATION_COMPOSE_VERSION,
+            description = "Hilt与Navigation Compose的集成库"
         ),
         ThirdPartyLibrary(
             name = "Coil",
-            version = "2.5.0",
+            version = BuildConfig.COIL_VERSION,
             description = "基于Kotlin协程的Android图片加载库"
         ),
         ThirdPartyLibrary(
             name = "DataStore",
-            version = "1.0.0",
+            version = BuildConfig.DATASTORE_VERSION,
             description = "数据存储解决方案，替代SharedPreferences"
         ),
         ThirdPartyLibrary(
             name = "Android Image Cropper",
-            version = "4.3.2",
+            version = BuildConfig.IMAGE_CROPPER_VERSION,
             description = "功能强大的Android图片裁剪库"
         ),
         ThirdPartyLibrary(
             name = "Accompanist System UI Controller",
-            version = "0.32.0",
+            version = BuildConfig.ACCOMPANIST_VERSION,
             description = "用于控制系统UI的实用工具库"
         ),
         ThirdPartyLibrary(
-            name = "Material Icons Extended",
-            version = "",
-            description = "Material Design扩展图标库"
+            name = "Gson",
+            version = BuildConfig.GSON_VERSION,
+            description = "Google JSON序列化/反序列化库"
         ),
         ThirdPartyLibrary(
-            name = "Kotlin Coroutines",
-            version = "",
-            description = "Kotlin异步编程库，用于处理并发操作"
+            name = "TinyPinyin",
+            version = BuildConfig.TINYPINYIN_VERSION,
+            description = "中文转拼音工具库"
+        ),
+        ThirdPartyLibrary(
+            name = "Core KTX",
+            version = BuildConfig.CORE_KTX_VERSION,
+            description = "Android核心Kotlin扩展库"
+        ),
+        ThirdPartyLibrary(
+            name = "Lifecycle Runtime KTX",
+            version = BuildConfig.LIFECYCLE_VERSION,
+            description = "生命周期感知组件的Kotlin扩展"
+        ),
+        ThirdPartyLibrary(
+            name = "Activity Compose",
+            version = BuildConfig.ACTIVITY_COMPOSE_VERSION,
+            description = "Activity与Jetpack Compose的集成库"
+        ),
+        ThirdPartyLibrary(
+            name = "AppCompat",
+            version = BuildConfig.APPCOMPAT_VERSION,
+            description = "Android向后兼容支持库"
+        ),
+        ThirdPartyLibrary(
+            name = "Splash Screen",
+            version = BuildConfig.SPLASH_SCREEN_VERSION,
+            description = "Android 12+启动画面API兼容库"
+        ),
+        ThirdPartyLibrary(
+            name = "Kotlin",
+            version = BuildConfig.KOTLIN_BOM_VERSION,
+            description = "Kotlin语言及协程支持"
         )
     )
 } 

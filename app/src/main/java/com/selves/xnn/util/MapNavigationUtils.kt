@@ -163,14 +163,11 @@ object MapNavigationUtils {
                     "com.android.permission.GET_INSTALLED_APPS"
                 ) == PackageManager.PERMISSION_GRANTED
                 
-                Log.d(TAG, "支持动态申请获取应用列表权限，当前状态: ${if (hasPermission) "已授权" else "未授权"}")
                 return hasPermission
             } else {
-                Log.d(TAG, "当前系统不需要动态申请获取应用列表权限")
                 return true
             }
         } catch (e: PackageManager.NameNotFoundException) {
-            Log.d(TAG, "系统不支持GET_INSTALLED_APPS权限，使用默认检测方式")
             true
         } catch (e: Exception) {
             Log.w(TAG, "检查获取应用列表权限时出错: ${e.message}")
@@ -194,10 +191,8 @@ object MapNavigationUtils {
         return try {
             // 方法1：尝试使用PackageManager获取包信息
             context.packageManager.getPackageInfo(packageName, 0)
-            Log.d(TAG, "App $packageName detected via PackageManager")
             true
         } catch (e: PackageManager.NameNotFoundException) {
-            Log.d(TAG, "App $packageName not found via PackageManager: ${e.message}")
             // 方法2：尝试检查是否能解析启动意图（备选方案）
             isAppAvailableViaIntent(context, packageName)
         } catch (e: Exception) {
@@ -213,9 +208,7 @@ object MapNavigationUtils {
     private fun isAppAvailableViaIntent(context: Context, packageName: String): Boolean {
         return try {
             val intent = context.packageManager.getLaunchIntentForPackage(packageName)
-            val isAvailable = intent != null
-            Log.d(TAG, "App $packageName availability via intent: $isAvailable")
-            isAvailable
+            intent != null
         } catch (e: Exception) {
             Log.w(TAG, "Error checking app $packageName via intent: ${e.message}")
             false
@@ -242,19 +235,12 @@ object MapNavigationUtils {
      * 增强版检测，包含详细日志记录
      */
     fun getAvailableMapApps(context: Context): List<MapApp> {
-        Log.d(TAG, "开始检测已安装的地图应用（遵循工信部YD/T 2407-2021标准）...")
-        
         // 检查获取应用列表权限状态
         val hasPermission = checkGetInstalledAppsPermission(context)
-        Log.d(TAG, "获取应用列表权限状态: ${if (hasPermission) "已授权" else "未授权（将使用备选检测方案）"}")
         
         val availableApps = MapApp.values().filter { mapApp ->
-            val isAvailable = isAppInstalled(context, mapApp.packageName)
-            Log.d(TAG, "${mapApp.displayName} (${mapApp.packageName}): ${if (isAvailable) "已安装" else "未安装"}")
-            isAvailable
+            isAppInstalled(context, mapApp.packageName)
         }
-        
-        Log.d(TAG, "检测完成，找到 ${availableApps.size} 个可用地图应用: ${availableApps.map { it.displayName }}")
         
         // 如果没有检测到任何地图应用，提供详细的诊断信息
         if (availableApps.isEmpty()) {
