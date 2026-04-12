@@ -605,7 +605,7 @@ fun ChatTopBar(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${group.members.size} 人",
+                    text = stringResource(R.string.chat_group_members_count, group.members.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

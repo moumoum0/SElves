@@ -13,6 +13,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
 import com.selves.xnn.model.Member
@@ -42,14 +44,14 @@ fun QuickMemberSwitch(
         // 成员头像
         AvatarImage(
             avatarUrl = currentMember?.avatarUrl,
-            contentDescription = "成员头像",
+            contentDescription = stringResource(R.string.cd_member_avatar),
             size = size.width
         )
         
         // 交换图标在右下角，不要圆形背景
         Icon(
             imageVector = Icons.Default.SwapHoriz,
-            contentDescription = "切换成员",
+            contentDescription = stringResource(R.string.member_switch),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .size(size.width * 0.3f, size.height * 0.3f)

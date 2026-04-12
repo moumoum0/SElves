@@ -11,8 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import android.app.Activity
 import androidx.compose.ui.text.font.FontWeight
+import com.selves.xnn.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -113,7 +115,7 @@ fun LocationTrackingScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "轨迹记录",
+                        text = stringResource(R.string.location_title),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -123,7 +125,7 @@ fun LocationTrackingScreen(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 Icons.Default.ArrowBack,
-                                contentDescription = "返回"
+                                contentDescription = stringResource(R.string.cd_back)
                             )
                         }
                     }
@@ -134,7 +136,7 @@ fun LocationTrackingScreen(
                     ) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "设置",
+                            contentDescription = stringResource(R.string.cd_settings_action),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -207,13 +209,13 @@ private fun SimpleTrackingControl(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isTracking) "正在记录" else "未开始记录",
+                    text = if (isTracking) stringResource(R.string.location_status_recording) else stringResource(R.string.location_status_not_started),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
                 if (isTracking) {
                     Text(
-                        text = "每${recordingInterval}秒记录一次",
+                        text = stringResource(R.string.location_interval_hint, recordingInterval),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp)
@@ -234,7 +236,7 @@ private fun SimpleTrackingControl(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("停止")
+                    Text(stringResource(R.string.btn_stop))
                 }
             } else {
                 Button(onClick = onStartTracking) {
@@ -244,7 +246,7 @@ private fun SimpleTrackingControl(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("开始")
+                    Text(stringResource(R.string.btn_start))
                 }
             }
         }
@@ -272,7 +274,7 @@ private fun TodayLocationList(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "今日记录",
+                    text = stringResource(R.string.location_today_records),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -283,7 +285,7 @@ private fun TodayLocationList(
                 ) {
                     Icon(
                         Icons.Default.History,
-                        contentDescription = "查看历史",
+                        contentDescription = stringResource(R.string.cd_view_history),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -305,13 +307,13 @@ private fun TodayLocationList(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "暂无记录",
+                        text = stringResource(R.string.location_no_records),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 16.sp
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "点击上方卡片开始记录轨迹",
+                        text = stringResource(R.string.location_tap_to_start),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontSize = 14.sp
                     )
@@ -355,7 +357,7 @@ private fun TodayLocationList(
                                     .padding(vertical = 8.dp)
                             ) {
                                 Text(
-                                    text = "查看更多",
+                                    text = stringResource(R.string.home_module_location_more),
                                     fontSize = 14.sp,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -415,7 +417,7 @@ private fun LocationHistoryScreen(
         TopAppBar(
             title = {
                 Text(
-                    text = "历史记录",
+                    text = stringResource(R.string.location_history),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -424,7 +426,7 @@ private fun LocationHistoryScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         Icons.Default.ArrowBack,
-                        contentDescription = "返回"
+                        contentDescription = stringResource(R.string.cd_back)
                     )
                 }
             }
@@ -476,13 +478,13 @@ private fun LocationHistoryScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = if (selectedDate.isEqual(LocalDate.now())) "暂无记录" else "该日期无记录",
+                            text = if (selectedDate.isEqual(LocalDate.now())) stringResource(R.string.location_no_records_today) else stringResource(R.string.location_no_records_on_date),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 16.sp
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "点击上方卡片开始记录轨迹",
+                            text = stringResource(R.string.location_tap_to_start),
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                             fontSize = 14.sp
                         )

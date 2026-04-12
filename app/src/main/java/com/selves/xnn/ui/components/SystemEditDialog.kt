@@ -79,7 +79,7 @@ fun SystemEditDialog(
             when {
                 systemName.isBlank() -> {
                     showError = true
-                    errorMessage = "系统名称不能为空"
+                    errorMessage = context.getString(R.string.error_empty_field)
                 }
                 else -> {
                     isSubmitting = true
@@ -120,7 +120,7 @@ fun SystemEditDialog(
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "编辑系统",
+                        text = stringResource(R.string.system_edit),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -132,14 +132,14 @@ fun SystemEditDialog(
                             .padding(bottom = 16.dp)
                             .clickable { 
                                 // 启动图片裁剪器，可以选择从图库或相机
-                                cropImageLauncher.launch(ImageUtils.createAvatarCropOptions())
+                                cropImageLauncher.launch(ImageUtils.createAvatarCropOptions(context))
                             }
                     ) {
                         if (avatarUri != null) {
                             // 显示新选择的头像
                             AsyncImage(
                                 model = avatarUri,
-                                contentDescription = "系统头像",
+                                contentDescription = stringResource(R.string.cd_system_avatar),
                                 modifier = Modifier
                                     .size(80.dp)
                                     .clip(CircleShape),
@@ -149,7 +149,7 @@ fun SystemEditDialog(
                             // 显示当前头像
                             AsyncImage(
                                 model = currentAvatarUrl,
-                                contentDescription = "系统头像",
+                                contentDescription = stringResource(R.string.cd_system_avatar),
                                 modifier = Modifier
                                     .size(80.dp)
                                     .clip(CircleShape),
@@ -166,7 +166,7 @@ fun SystemEditDialog(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Person,
-                                    contentDescription = "选择头像",
+                                    contentDescription = stringResource(R.string.cd_select_avatar_action),
                                     modifier = Modifier.padding(16.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

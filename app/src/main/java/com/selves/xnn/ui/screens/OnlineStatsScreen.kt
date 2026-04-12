@@ -13,10 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
+import android.content.Context
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.LoginLog
 import com.selves.xnn.model.LoginLogSummary
@@ -56,7 +59,7 @@ fun OnlineStatsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -122,6 +125,7 @@ fun OnlineStatItem(
     memberStat: MemberOnlineStat,
     isCurrentMember: Boolean
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -131,7 +135,7 @@ fun OnlineStatItem(
         // 头像
         AvatarImage(
             avatarUrl = memberStat.member.avatarUrl,
-            contentDescription = "成员头像",
+            contentDescription = stringResource(R.string.cd_member_avatar),
             size = 40.dp
         )
         
@@ -160,16 +164,16 @@ fun OnlineStatItem(
             }
             
             Text(
-                text = stringResource(R.string.online_stats_today, formatOnlineTime(memberStat.todayOnlineMinutes)),
+                text = stringResource(R.string.online_stats_today, formatOnlineTime(memberStat.todayOnlineMinutes, context)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
             Text(
                 text = if (memberStat.isOnline) {
-                    "在线中"
+                    stringResource(R.string.online_status_online)
                 } else {
-                    "最后活跃: ${formatLastActiveTime(memberStat.lastActiveTime)}"
+                    stringResource(R.string.online_status_last_active, formatLastActiveTime(memberStat.lastActiveTime))
                 },
                 style = MaterialTheme.typography.bodySmall,
                 color = if (memberStat.isOnline) {
@@ -204,26 +208,26 @@ data class MemberOnlineStat(
 
 
 
-private fun formatOnlineTime(minutes: Int): String {
+private fun formatOnlineTime(minutes: Int, context: Context): String {
     return when {
-        minutes == 0 -> "未在线"
-        minutes < 60 -> "${minutes}分钟"
+        minutes == 0 -> context.getString(R.string.online_stats_never_online)
+        minutes < 60 -> context.getString(R.string.online_time_minutes, minutes)
         minutes < 1440 -> {
             val hours = minutes / 60
             val remainingMinutes = minutes % 60
             if (remainingMinutes == 0) {
-                "${hours}小时"
+                context.getString(R.string.online_time_hours, hours)
             } else {
-                "${hours}小时${remainingMinutes}分钟"
+                context.getString(R.string.online_time_hours_minutes, hours, remainingMinutes)
             }
         }
         else -> {
             val days = minutes / 1440
             val remainingHours = (minutes % 1440) / 60
             if (remainingHours == 0) {
-                "${days}天"
+                context.getString(R.string.online_time_days, days)
             } else {
-                "${days}天${remainingHours}小时"
+                context.getString(R.string.online_time_days_hours, days, remainingHours)
             }
         }
     }
@@ -260,19 +264,19 @@ fun LoginLogSummaryCard(summary: LoginLogSummary) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 SummaryItem(
-                    title = "总登录次数",
+                    title = stringResource(R.string.login_stats_total),
                     value = summary.totalLogins.toString(),
                     color = MaterialTheme.colorScheme.primary
                 )
                 
                 SummaryItem(
-                    title = "今日登录",
+                    title = stringResource(R.string.login_stats_today),
                     value = summary.todayLogins.toString(),
                     color = MaterialTheme.colorScheme.secondary
                 )
                 
                 SummaryItem(
-                    title = "当前在线",
+                    title = stringResource(R.string.login_stats_current_online),
                     value = summary.currentOnlineCount.toString(),
                     color = MaterialTheme.colorScheme.tertiary
                 )
@@ -281,7 +285,7 @@ fun LoginLogSummaryCard(summary: LoginLogSummary) {
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = stringResource(R.string.online_stats_avg_today, formatDuration(summary.averageOnlineTime)),
+                text = stringResource(R.string.online_stats_avg_today, formatDuration(summary.averageOnlineTime, LocalContext.current)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -324,7 +328,7 @@ fun FilterChips(
     ) {
         FilterChip(
             onClick = { onFilterChanged(LoginLogFilter.ALL) },
-            label = { Text("全部") },
+            label = { Text(stringResource(R.string.filter_all)) },
             selected = selectedFilter == LoginLogFilter.ALL,
             leadingIcon = if (selectedFilter == LoginLogFilter.ALL) {
                 { Icon(Icons.Default.FilterList, contentDescription = null) }
@@ -333,7 +337,7 @@ fun FilterChips(
         
         FilterChip(
             onClick = { onFilterChanged(LoginLogFilter.TODAY) },
-            label = { Text("今日") },
+            label = { Text(stringResource(R.string.filter_today)) },
             selected = selectedFilter == LoginLogFilter.TODAY,
             leadingIcon = if (selectedFilter == LoginLogFilter.TODAY) {
                 { Icon(Icons.Default.FilterList, contentDescription = null) }
@@ -409,7 +413,7 @@ fun LoginLogItem(loginLog: LoginLog) {
                 } else {
                     loginLog.logoutTime?.let { logoutTime ->
                         Text(
-                            text = stringResource(R.string.online_stats_logout, com.selves.xnn.util.TimeFormatter.formatDetailDateTime(logoutTime), formatDuration(loginLog.duration)),
+                            text = stringResource(R.string.online_stats_logout, com.selves.xnn.util.TimeFormatter.formatDetailDateTime(logoutTime), formatDuration(loginLog.duration, LocalContext.current)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -420,15 +424,15 @@ fun LoginLogItem(loginLog: LoginLog) {
     }
 }
 
-private fun formatDuration(durationMs: Long): String {
+private fun formatDuration(durationMs: Long, context: Context): String {
     val minutes = durationMs / (60 * 1000)
     val hours = minutes / 60
     val remainingMinutes = minutes % 60
     
     return when {
-        hours > 0 -> "${hours}小时${remainingMinutes}分钟"
-        minutes > 0 -> "${minutes}分钟"
-        else -> "不到1分钟"
+        hours > 0 -> context.getString(R.string.online_time_hours_minutes, hours.toInt(), remainingMinutes.toInt())
+        minutes > 0 -> context.getString(R.string.online_time_minutes, minutes.toInt())
+        else -> context.getString(R.string.online_time_less_than_minute)
     }
 }
 
@@ -568,6 +572,7 @@ fun OnlineTimeStatItem(
     memberStat: MemberOnlineStat,
     isCurrentMember: Boolean
 ) {
+    val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -584,7 +589,7 @@ fun OnlineTimeStatItem(
             // 头像
             AvatarImage(
                 avatarUrl = memberStat.member.avatarUrl,
-                contentDescription = "成员头像",
+                contentDescription = stringResource(R.string.cd_member_avatar),
                 size = 40.dp
             )
             
@@ -621,11 +626,11 @@ fun OnlineTimeStatItem(
             
             // 在线时长显示
             Text(
-                text = formatOnlineTime(memberStat.todayOnlineMinutes),
+                text = formatOnlineTime(memberStat.todayOnlineMinutes, context),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
     }
-} 
+}

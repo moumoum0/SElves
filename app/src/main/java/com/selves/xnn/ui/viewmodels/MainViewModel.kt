@@ -109,7 +109,7 @@ class MainViewModel @Inject constructor(
     private var pendingImportUri: Uri? = null
     
     // 首页布局配置
-    private val _homeLayoutConfig = MutableStateFlow(HomeLayoutConfig())
+    private val _homeLayoutConfig = MutableStateFlow(HomeLayoutConfig(functionModules = FunctionModuleConfig.defaultList()))
     val homeLayoutConfig: StateFlow<HomeLayoutConfig> = _homeLayoutConfig.asStateFlow()
     
     // 首页编辑模式

@@ -49,7 +49,7 @@ fun GroupChatScreen(
     val defaultIcon = @Composable {
         Icon(
             imageVector = Icons.Default.Person,
-            contentDescription = "成员头像默认图标",
+            contentDescription = stringResource(R.string.cd_member_default_avatar),
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
@@ -207,7 +207,7 @@ fun GroupItem(
             if (group.avatarUrl != null) {
                 AvatarImage(
                     avatarUrl = group.avatarUrl,
-                    contentDescription = "群聊头像",
+                    contentDescription = stringResource(R.string.cd_group_avatar),
                     size = 52.dp
                 )
             } else {
@@ -242,15 +242,16 @@ fun GroupItem(
             
             // 最新消息
             if (latestMessage != null) {
+                val context = LocalContext.current
                 val messageContent = when (latestMessage.type) {
-                    MessageType.IMAGE -> "[图片]"
+                    MessageType.IMAGE -> "[${context.getString(R.string.chat_image)}]"
                     MessageType.TEXT -> latestMessage.content
                 }
                 
                 val messageText = if (sender?.id == currentMember.id) {
-                    "你: $messageContent"
+                    context.getString(R.string.chat_you_prefix, messageContent)
                 } else {
-                    "${sender?.name ?: "未知用户"}: $messageContent"
+                    "${sender?.name ?: context.getString(R.string.unknown_member)}: $messageContent"
                 }
                 
                 Text(

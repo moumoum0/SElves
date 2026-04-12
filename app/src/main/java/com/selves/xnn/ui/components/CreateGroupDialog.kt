@@ -16,10 +16,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.canhub.cropper.CropImageContract
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
 
@@ -76,7 +78,7 @@ fun CreateGroupDialog(
                         .fillMaxWidth()
                 ) {
                     Text(
-                        text = "创建新群聊",
+                        text = stringResource(R.string.chat_group_create),
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -98,7 +100,7 @@ fun CreateGroupDialog(
                                     }
                                 )
                                 .clickable {
-                                    val cropOptions = ImageUtils.createAvatarCropOptions()
+                                    val cropOptions = ImageUtils.createAvatarCropOptions(context)
                                     avatarCropLauncher.launch(cropOptions)
                                 },
                             contentAlignment = Alignment.Center
@@ -106,13 +108,13 @@ fun CreateGroupDialog(
                             if (groupAvatarUrl != null) {
                                 AvatarImage(
                                     avatarUrl = groupAvatarUrl,
-                                    contentDescription = "群聊头像",
+                                    contentDescription = stringResource(R.string.cd_group_avatar),
                                     size = 80.dp
                                 )
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.CameraAlt,
-                                    contentDescription = "选择头像",
+                                    contentDescription = stringResource(R.string.cd_select_avatar_icon),
                                     modifier = Modifier.size(32.dp)
                                 )
                             }
@@ -121,7 +123,7 @@ fun CreateGroupDialog(
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
-                            text = "点击选择群聊头像（可选）",
+                            text = stringResource(R.string.create_group_select_avatar),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -135,10 +137,10 @@ fun CreateGroupDialog(
                             groupName = it
                             showError = false
                         },
-                        label = { Text("群聊名称") },
+                        label = { Text(stringResource(R.string.label_group_name)) },
                         isError = showError,
                         supportingText = if (showError) {
-                            { Text("群聊名称不能为空") }
+                            { Text(stringResource(R.string.error_group_name_empty)) }
                         } else null,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -150,7 +152,7 @@ fun CreateGroupDialog(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = onDismiss) {
-                            Text("取消")
+                            Text(stringResource(R.string.btn_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -162,7 +164,7 @@ fun CreateGroupDialog(
                                 }
                             }
                         ) {
-                            Text("下一步")
+                            Text(stringResource(R.string.btn_next_step))
                         }
                     }
                 }

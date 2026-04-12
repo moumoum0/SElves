@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.selves.xnn.R
 import com.selves.xnn.util.ImageUtils
 
 @Composable
@@ -73,7 +75,7 @@ fun CreateSystemForm(
                 if (selectedImageUri != null || avatarUrl.isNotEmpty()) {
                     AsyncImage(
                         model = selectedImageUri ?: avatarUrl,
-                        contentDescription = "系统头像",
+                        contentDescription = stringResource(R.string.cd_system_avatar_image),
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(CircleShape),
@@ -85,13 +87,13 @@ fun CreateSystemForm(
                     ) {
                         Icon(
                             Icons.Default.Person,
-                            contentDescription = "选择头像",
+                            contentDescription = stringResource(R.string.placeholder_select_avatar),
                             modifier = Modifier.size(48.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "点击选择头像",
+                            text = stringResource(R.string.placeholder_select_avatar),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -112,7 +114,7 @@ fun CreateSystemForm(
             ) {
                 Icon(
                     Icons.Default.PhotoCamera,
-                    contentDescription = "选择照片",
+                    contentDescription = stringResource(R.string.cd_select_photo),
                     tint = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.size(18.dp)
                 )
@@ -125,8 +127,8 @@ fun CreateSystemForm(
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = { Text("系统名称") },
-            placeholder = { Text("请输入系统名称") },
+            label = { Text(stringResource(R.string.label_system_name)) },
+            placeholder = { Text(stringResource(R.string.placeholder_system_name)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(

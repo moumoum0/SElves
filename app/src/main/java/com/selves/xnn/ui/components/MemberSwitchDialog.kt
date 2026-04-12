@@ -158,7 +158,7 @@ fun MemberSwitchDialog(
                                 // 成员头像
                                 AvatarImage(
                                     avatarUrl = member.avatarUrl,
-                                    contentDescription = "成员头像",
+                                    contentDescription = stringResource(R.string.cd_member_avatar),
                                     size = 40.dp
                                 )
 
@@ -177,7 +177,7 @@ fun MemberSwitchDialog(
                                 if (member.id == currentMemberId) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
-                                        contentDescription = "当前成员",
+                                        contentDescription = stringResource(R.string.member_current),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -219,7 +219,7 @@ fun MemberSwitchDialog(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "创建新成员",
+                                contentDescription = stringResource(R.string.cd_add_member),
                                 modifier = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
@@ -227,7 +227,7 @@ fun MemberSwitchDialog(
                                     .padding(8.dp)
                             )
                             Text(
-                                text = "创建新成员",
+                                text = stringResource(R.string.member_create),
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.padding(start = 16.dp),
                                 maxLines = 1,
@@ -258,10 +258,10 @@ fun MemberSwitchDialog(
                 isCountdownRunning = false
             },
             title = { 
-                Text(text = "删除成员")
+                Text(text = stringResource(R.string.member_delete))
             },
             text = { 
-                Text(text = "确定要删除成员 ${showDeleteConfirmation!!.name} 吗？此操作不可撤销。")
+                Text(text = stringResource(R.string.dialog_delete_member_confirm, showDeleteConfirmation!!.name))
             },
             confirmButton = {
                 TextButton(
@@ -274,9 +274,9 @@ fun MemberSwitchDialog(
                     enabled = deleteCountdown <= 0
                 ) {
                     if (deleteCountdown > 0) {
-                        Text(text = "删除 (${deleteCountdown})")
+                        Text(text = stringResource(R.string.btn_delete_countdown, deleteCountdown))
                     } else {
-                        Text(text = "删除")
+                        Text(text = stringResource(R.string.btn_delete))
                     }
                 }
             },
@@ -285,7 +285,7 @@ fun MemberSwitchDialog(
                     showDeleteConfirmation = null
                     isCountdownRunning = false
                 }) {
-                    Text(text = "取消")
+                    Text(text = stringResource(R.string.btn_cancel))
                 }
             }
         )

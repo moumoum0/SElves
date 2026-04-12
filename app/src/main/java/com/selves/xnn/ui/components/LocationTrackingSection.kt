@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import android.app.Activity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -79,7 +81,7 @@ fun LocationTrackingSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "轨迹记录",
+                    text = stringResource(R.string.location_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -92,7 +94,7 @@ fun LocationTrackingSection(
                     ) {
                         Icon(
                             Icons.Default.Settings,
-                            contentDescription = "设置",
+                            contentDescription = stringResource(R.string.cd_settings),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -113,7 +115,7 @@ fun LocationTrackingSection(
                             ) {
                                 Icon(
                                     Icons.Default.PlayArrow,
-                                    contentDescription = "开始记录",
+                                    contentDescription = stringResource(R.string.cd_start_recording),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -124,7 +126,7 @@ fun LocationTrackingSection(
                             ) {
                                 Icon(
                                     Icons.Default.Stop,
-                                    contentDescription = "停止记录",
+                                    contentDescription = stringResource(R.string.cd_stop_recording),
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -238,8 +240,8 @@ private fun StatusIndicator(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = when (status) {
-                    TrackingStatus.RECORDING -> "记录中"
-                    TrackingStatus.STOPPED -> "未记录"
+                    TrackingStatus.RECORDING -> stringResource(R.string.location_section_recording)
+                    TrackingStatus.STOPPED -> stringResource(R.string.location_section_not_recording)
                 },
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
@@ -248,7 +250,7 @@ private fun StatusIndicator(
             
             if (status == TrackingStatus.RECORDING) {
                 Text(
-                    text = "每${config.recordingInterval}秒记录一次",
+                    text = stringResource(R.string.location_interval_hint, config.recordingInterval),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -258,12 +260,12 @@ private fun StatusIndicator(
         // 统计信息
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = "今日: ${stats.todayRecords}",
+                text = stringResource(R.string.location_section_today_count, stats.todayRecords),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = "总计: ${stats.totalRecords}",
+                text = stringResource(R.string.location_section_total_count, stats.totalRecords),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -283,7 +285,7 @@ private fun DateSelector(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "查看日期",
+            text = stringResource(R.string.location_section_view_date),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -296,7 +298,7 @@ private fun DateSelector(
             ) {
                 Icon(
                     Icons.Default.ChevronLeft,
-                    contentDescription = "前一天",
+                    contentDescription = stringResource(R.string.cd_previous_day),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -325,7 +327,7 @@ private fun DateSelector(
             ) {
                 Icon(
                     Icons.Default.ChevronRight,
-                    contentDescription = "后一天",
+                    contentDescription = stringResource(R.string.cd_next_day),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -352,9 +354,9 @@ private fun EmptyLocationRecords(selectedDate: LocalDate) {
         
         Text(
             text = if (selectedDate.isEqual(LocalDate.now())) {
-                "今日暂无轨迹记录"
+                stringResource(R.string.location_no_records_today)
             } else {
-                "该日期无轨迹记录"
+                stringResource(R.string.location_no_records_date)
             },
             fontSize = 16.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -364,9 +366,9 @@ private fun EmptyLocationRecords(selectedDate: LocalDate) {
         
         Text(
             text = if (selectedDate.isEqual(LocalDate.now())) {
-                "开启记录功能开始记录轨迹"
+                stringResource(R.string.location_start_to_record)
             } else {
-                "选择其他日期查看轨迹"
+                stringResource(R.string.location_select_other_date)
             },
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)

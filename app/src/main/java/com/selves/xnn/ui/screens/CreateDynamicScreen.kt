@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -103,10 +105,10 @@ fun CreateDynamicScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("编辑动态") },
+                title = { Text(stringResource(R.string.dialog_edit_dynamic)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -127,7 +129,7 @@ fun CreateDynamicScreen(
                         },
                         enabled = content.isNotBlank() || savedImagePaths.isNotEmpty()
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "发布")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.btn_publish))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -146,7 +148,7 @@ fun CreateDynamicScreen(
             OutlinedTextField(
                 value = content,
                 onValueChange = { content = it },
-                placeholder = { Text("分享你的想法...") },
+                placeholder = { Text(stringResource(R.string.placeholder_share_thoughts)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp),
@@ -192,7 +194,7 @@ fun CreateDynamicScreen(
                                     .clickable { imagePickerLauncher.launch("image/*") },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = "添加图片", modifier = Modifier.size(32.dp))
+                                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add), modifier = Modifier.size(32.dp))
                             }
                         } else {
                             Box(modifier = Modifier.weight(1f).aspectRatio(1f)) {
@@ -206,7 +208,7 @@ fun CreateDynamicScreen(
                                     if (request != null) {
                                         AsyncImage(
                                             model = request,
-                                            contentDescription = "预览图片",
+                                            contentDescription = stringResource(R.string.cd_image),
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
                                         )
@@ -215,7 +217,7 @@ fun CreateDynamicScreen(
                                             modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant),
                                             contentAlignment = Alignment.Center
                                         ) {
-                                            Text("图片加载失败", fontSize = 12.sp)
+                                            Text(stringResource(R.string.chat_image_load_failed), fontSize = 12.sp)
                                         }
                                     }
                                 }
@@ -231,7 +233,7 @@ fun CreateDynamicScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "删除图片",
+                                            contentDescription = stringResource(R.string.cd_delete),
                                             tint = MaterialTheme.colorScheme.onError,
                                             modifier = Modifier.padding(2.dp).size(16.dp)
                                         )

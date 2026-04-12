@@ -27,7 +27,7 @@ import com.selves.xnn.util.ImageUtils
 @Composable
 fun SystemAvatarImage(
     avatarUrl: String?,
-    contentDescription: String = "系统头像",
+    contentDescription: String? = null,
     size: Dp = 60.dp,
     modifier: Modifier = Modifier
 ) {

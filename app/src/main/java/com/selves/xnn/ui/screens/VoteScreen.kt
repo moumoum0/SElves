@@ -83,7 +83,7 @@ fun VoteScreen(
             FloatingActionButton(
                 onClick = onNavigateToCreateVote
             ) {
-                Icon(Icons.Default.Add, contentDescription = "创建投票")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_create_vote))
             }
         }
     ) { paddingValues ->
@@ -305,6 +305,7 @@ fun VoteCard(
     onEndClick: () -> Unit,
     onCardClick: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -330,7 +331,7 @@ fun VoteCard(
                     // 作者头像
                     AvatarImage(
                         avatarUrl = vote.authorAvatar,
-                        contentDescription = "作者头像",
+                        contentDescription = stringResource(R.string.cd_author_avatar),
                         size = 44.dp
                     )
                     
@@ -358,7 +359,7 @@ fun VoteCard(
                             IconButton(onClick = onEndClick) {
                                 Icon(
                                     Icons.Default.Stop,
-                                    contentDescription = "结束投票",
+                                    contentDescription = stringResource(R.string.cd_end_vote_action),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -367,7 +368,7 @@ fun VoteCard(
                         IconButton(onClick = onDeleteClick) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "删除",
+                                contentDescription = stringResource(R.string.cd_delete),
                                 tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                             )
                         }
@@ -437,7 +438,7 @@ fun VoteCard(
                 // 投票状态
                 VoteStatusChip(
                     isActive = vote.isActive,
-                    remainingTime = vote.endTime?.let { getRemainingTime(it) }
+                    remainingTime = vote.endTime?.let { getRemainingTime(it, context) }
                 )
                 
                 // 投票统计
@@ -468,13 +469,13 @@ fun VoteCard(
                     if (vote.allowMultipleChoice) {
                         VoteTag(
                             icon = Icons.Default.List,
-                            text = "多选"
+                            text = stringResource(R.string.vote_multiple_choice)
                         )
                     }
                     if (vote.isAnonymous) {
                         VoteTag(
                             icon = Icons.Default.VisibilityOff,
-                            text = "匿名"
+                            text = stringResource(R.string.vote_anonymous)
                         )
                     }
                 }
@@ -692,14 +693,14 @@ private fun VoteTag(
     }
 }
 
-private fun getRemainingTime(endTime: LocalDateTime): String {
+private fun getRemainingTime(endTime: LocalDateTime, context: android.content.Context): String {
     val now = LocalDateTime.now()
     val duration = Duration.between(now, endTime)
     
     return when {
-        duration.toDays() > 0 -> "${duration.toDays()}天"
-        duration.toHours() > 0 -> "${duration.toHours()}小时"
-        duration.toMinutes() > 0 -> "${duration.toMinutes()}分钟"
-        else -> "即将结束"
+        duration.toDays() > 0 -> context.getString(R.string.vote_end_time_days, duration.toDays().toInt())
+        duration.toHours() > 0 -> context.getString(R.string.vote_end_time_hours, duration.toHours().toInt())
+        duration.toMinutes() > 0 -> context.getString(R.string.vote_end_time_minutes, duration.toMinutes().toInt())
+        else -> context.getString(R.string.vote_end_time_soon)
     }
 }

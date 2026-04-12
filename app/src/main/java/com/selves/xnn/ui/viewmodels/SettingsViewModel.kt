@@ -1,6 +1,7 @@
 package com.selves.xnn.ui.viewmodels
 
 import android.net.Uri
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.selves.xnn.data.MemberPreferences
@@ -9,6 +10,7 @@ import com.selves.xnn.data.BackupResult
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val memberPreferences: MemberPreferences,
-    private val backupService: BackupService
+    private val backupService: BackupService,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     
     private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
@@ -39,6 +42,12 @@ class SettingsViewModel @Inject constructor(
     private val _showColorSchemeDialog = MutableStateFlow(false)
     val showColorSchemeDialog: StateFlow<Boolean> = _showColorSchemeDialog.asStateFlow()
     
+    private val _language = MutableStateFlow("system")
+    val language: StateFlow<String> = _language.asStateFlow()
+    
+    private val _showLanguageDialog = MutableStateFlow(false)
+    val showLanguageDialog: StateFlow<Boolean> = _showLanguageDialog.asStateFlow()
+    
     private val _isBackupInProgress = MutableStateFlow(false)
     val isBackupInProgress: StateFlow<Boolean> = _isBackupInProgress.asStateFlow()
     
@@ -54,7 +63,7 @@ class SettingsViewModel @Inject constructor(
     private val _backupProgress = MutableStateFlow<Float?>(null)
     val backupProgress: StateFlow<Float?> = _backupProgress.asStateFlow()
     
-    private val _backupProgressMessage = MutableStateFlow("正在打包数据，请稍候...")
+    private val _backupProgressMessage = MutableStateFlow("")
     val backupProgressMessage: StateFlow<String> = _backupProgressMessage.asStateFlow()
     
     // 存储待导入的URI，等用户确认后使用
@@ -82,6 +91,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             memberPreferences.colorScheme.collect { scheme ->
                 _colorScheme.value = scheme
+            }
+        }
+        
+        viewModelScope.launch {
+            memberPreferences.language.collect { lang ->
+                _language.value = lang
             }
         }
     }
@@ -126,6 +141,30 @@ class SettingsViewModel @Inject constructor(
         _showColorSchemeDialog.value = false
     }
     
+    fun setLanguage(language: String) {
+        viewModelScope.launch {
+            memberPreferences.saveLanguage(language)
+            restartActivity()
+        }
+    }
+    
+    private fun restartActivity() {
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+        intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        
+        android.os.Process.killProcess(android.os.Process.myPid())
+    }
+    
+    fun showLanguageDialog() {
+        _showLanguageDialog.value = true
+    }
+    
+    fun hideLanguageDialog() {
+        _showLanguageDialog.value = false
+    }
+    
     /**
      * 导出备份
      */
@@ -135,32 +174,32 @@ class SettingsViewModel @Inject constructor(
             _showBackupProgressDialog.value = true
             _backupMessage.value = null
             _backupProgress.value = null
-            _backupProgressMessage.value = "正在收集数据..."
+            _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_collecting)
             
             try {
                 // 模拟进度更新
                 _backupProgress.value = 0.2f
-                _backupProgressMessage.value = "正在收集数据..."
+                _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_collecting)
                 
                 _backupProgress.value = 0.5f
-                _backupProgressMessage.value = "正在打包图片..."
+                _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_packing_images)
                 
                 _backupProgress.value = 0.8f
-                _backupProgressMessage.value = "正在生成备份文件..."
+                _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_generating)
                 
                 when (val result = backupService.exportBackup(outputUri)) {
                     is BackupResult.Success -> {
                         _backupProgress.value = 1.0f
-                        _backupProgressMessage.value = "备份完成！"
+                        _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_done)
                         kotlinx.coroutines.delay(500) // 让用户看到完成状态
-                        _backupMessage.value = "备份导出成功"
+                        _backupMessage.value = context.getString(com.selves.xnn.R.string.settings_backup_success)
                     }
                     is BackupResult.Error -> {
-                        _backupMessage.value = "导出失败: ${result.message}"
+                        _backupMessage.value = context.getString(com.selves.xnn.R.string.settings_backup_failed, result.message)
                     }
                 }
             } catch (e: Exception) {
-                _backupMessage.value = "导出失败: ${e.message}"
+                _backupMessage.value = context.getString(com.selves.xnn.R.string.settings_backup_failed, e.message ?: "")
             } finally {
                 _isBackupInProgress.value = false
                 _showBackupProgressDialog.value = false
@@ -205,31 +244,31 @@ class SettingsViewModel @Inject constructor(
             _showBackupProgressDialog.value = true
             _backupMessage.value = null
             _backupProgress.value = null
-            _backupProgressMessage.value = "正在清除现有数据..."
+            _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_clearing)
             
             try {
                 _backupProgress.value = 0.3f
-                _backupProgressMessage.value = "正在解析备份文件..."
+                _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_parsing)
                 
                 _backupProgress.value = 0.6f
-                _backupProgressMessage.value = "正在恢复数据..."
+                _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_restoring)
                 
                 _backupProgress.value = 0.9f
-                _backupProgressMessage.value = "正在恢复图片..."
+                _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_restoring_images)
                 
                 when (val result = backupService.importBackup(inputUri)) {
                     is BackupResult.Success -> {
                         _backupProgress.value = 1.0f
-                        _backupProgressMessage.value = "导入完成！"
+                        _backupProgressMessage.value = context.getString(com.selves.xnn.R.string.backup_progress_import_done)
                         kotlinx.coroutines.delay(500) // 让用户看到完成状态
-                        _backupMessage.value = "备份导入成功"
+                        _backupMessage.value = context.getString(com.selves.xnn.R.string.settings_import_success)
                     }
                     is BackupResult.Error -> {
-                        _backupMessage.value = "导入失败: ${result.message}"
+                        _backupMessage.value = context.getString(com.selves.xnn.R.string.settings_import_failed, result.message)
                     }
                 }
             } catch (e: Exception) {
-                _backupMessage.value = "导入失败: ${e.message}"
+                _backupMessage.value = context.getString(com.selves.xnn.R.string.settings_import_failed, e.message ?: "")
             } finally {
                 _isBackupInProgress.value = false
                 _showBackupProgressDialog.value = false

@@ -12,9 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.selves.xnn.R
 import androidx.compose.runtime.collectAsState
 import com.selves.xnn.model.*
 import com.selves.xnn.viewmodel.LocationTrackingViewModel
@@ -55,7 +57,7 @@ fun LocationTrackingPreview(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "轨迹记录",
+                    text = stringResource(R.string.location_preview_title),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -79,8 +81,8 @@ fun LocationTrackingPreview(
                     
                     Text(
                         text = when (uiState.trackingStatus) {
-                            TrackingStatus.RECORDING -> "记录中"
-                            TrackingStatus.STOPPED -> "未记录"
+                            TrackingStatus.RECORDING -> stringResource(R.string.location_preview_status_recording)
+                            TrackingStatus.STOPPED -> stringResource(R.string.location_preview_status_stopped)
                         },
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -90,7 +92,7 @@ fun LocationTrackingPreview(
                     
                     Icon(
                         Icons.Default.ChevronRight,
-                        contentDescription = "查看详情",
+                        contentDescription = stringResource(R.string.cd_view_history),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
@@ -105,19 +107,19 @@ fun LocationTrackingPreview(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatPreviewItem(
-                    label = "今日记录",
+                    label = stringResource(R.string.location_preview_today_records),
                     value = trackingStats.todayRecords.toString(),
                     icon = Icons.Default.Today
                 )
                 
                 StatPreviewItem(
-                    label = "总记录数",
+                    label = stringResource(R.string.location_preview_total_records),
                     value = trackingStats.totalRecords.toString(),
                     icon = Icons.Default.Timeline
                 )
                 
                 StatPreviewItem(
-                    label = "最后记录",
+                    label = stringResource(R.string.location_preview_last_record),
                     value = trackingStats.lastRecordTime?.format(DateTimeFormatter.ofPattern("HH:mm")) ?: "--:--",
                     icon = Icons.Default.Schedule
                 )

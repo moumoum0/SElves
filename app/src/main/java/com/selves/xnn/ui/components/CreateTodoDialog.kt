@@ -9,7 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
+import com.selves.xnn.R
 import com.selves.xnn.model.TodoPriority
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +40,7 @@ fun CreateTodoDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "新建待办事项",
+                    text = stringResource(R.string.todo_create_dialog_title),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -50,10 +52,10 @@ fun CreateTodoDialog(
                         title = it
                         showTitleError = false
                     },
-                    label = { Text("标题") },
+                    label = { Text(stringResource(R.string.label_title)) },
                     isError = showTitleError,
                     supportingText = if (showTitleError) {
-                        { Text("标题不能为空") }
+                        { Text(stringResource(R.string.error_title_empty)) }
                     } else null,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -64,7 +66,7 @@ fun CreateTodoDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("描述（可选）") },
+                    label = { Text(stringResource(R.string.label_description_optional)) },
                     minLines = 3,
                     maxLines = 5,
                     modifier = Modifier
@@ -81,11 +83,11 @@ fun CreateTodoDialog(
                         value = getPriorityText(priority),
                         onValueChange = { },
                         readOnly = true,
-                        label = { Text("优先级") },
+                        label = { Text(stringResource(R.string.label_priority)) },
                         trailingIcon = {
                             Icon(
                                 imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = "选择优先级"
+                                contentDescription = stringResource(R.string.todo_priority_select)
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
@@ -125,7 +127,7 @@ fun CreateTodoDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.todo_cancel_action))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -137,7 +139,7 @@ fun CreateTodoDialog(
                             }
                         }
                     ) {
-                        Text("创建")
+                        Text(stringResource(R.string.todo_create_action))
                     }
                 }
             }
@@ -148,9 +150,9 @@ fun CreateTodoDialog(
 @Composable
 private fun getPriorityText(priority: TodoPriority): String {
     return when (priority) {
-        TodoPriority.LOW -> "低优先级"
-        TodoPriority.NORMAL -> "普通优先级"
-        TodoPriority.HIGH -> "高优先级"
+        TodoPriority.LOW -> stringResource(R.string.todo_priority_low_full)
+        TodoPriority.NORMAL -> stringResource(R.string.todo_priority_normal_full)
+        TodoPriority.HIGH -> stringResource(R.string.todo_priority_high_full)
     }
 }
 

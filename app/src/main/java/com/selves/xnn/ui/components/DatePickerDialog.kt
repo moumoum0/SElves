@@ -3,6 +3,8 @@ package com.selves.xnn.ui.components
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.*
@@ -35,12 +37,12 @@ fun DatePickerDialog(
                     }
                 }
             ) {
-                Text("确认")
+                Text(stringResource(R.string.btn_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     ) {
@@ -48,7 +50,7 @@ fun DatePickerDialog(
             state = datePickerState,
             title = {
                 Text(
-                    text = "选择日期",
+                    text = stringResource(R.string.placeholder_select_date),
                     style = MaterialTheme.typography.headlineSmall
                 )
             }

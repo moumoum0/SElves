@@ -1,6 +1,7 @@
 package com.selves.xnn.ui.screens
 
 import android.content.Intent
+import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -17,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.selves.xnn.BuildConfig
+import com.selves.xnn.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,11 +33,12 @@ fun AboutScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val unknownVersion = stringResource(R.string.about_unknown_version)
     val versionName = remember {
         try {
-            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "未知"
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: unknownVersion
         } catch (e: Exception) {
-            "未知"
+            unknownVersion
         }
     }
 
@@ -43,7 +47,7 @@ fun AboutScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "关于",
+                        text = stringResource(R.string.about_title),
                         fontWeight = FontWeight.Normal
                     )
                 },
@@ -51,7 +55,7 @@ fun AboutScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = stringResource(R.string.about_back)
                         )
                     }
                 }
@@ -66,7 +70,7 @@ fun AboutScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(vertical = 24.dp)
         ) {
-                        // 应用图标
+            // 应用图标
             item {
                 // 同时显示背景层和前景层，重现完整应用图标
                 Box(
@@ -84,7 +88,7 @@ fun AboutScreen(
                     // 前景层
                     AsyncImage(
                         model = com.selves.xnn.R.mipmap.ic_launcher_foreground,
-                        contentDescription = "应用图标",
+                        contentDescription = stringResource(R.string.about_app_icon),
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -107,7 +111,7 @@ fun AboutScreen(
             // 版本信息
             item {
                 Text(
-                    text = "版本 $versionName",
+                    text = stringResource(R.string.about_version, versionName),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -135,7 +139,7 @@ fun AboutScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "开发者",
+                                text = stringResource(R.string.about_developer),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface
@@ -201,7 +205,7 @@ fun AboutScreen(
             // 第三方库标题
             item {
                 Text(
-                    text = "使用的第三方库",
+                    text = stringResource(R.string.about_third_party_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -210,7 +214,7 @@ fun AboutScreen(
             }
             
             // 第三方库列表
-            items(getThirdPartyLibraries()) { library ->
+            items(getThirdPartyLibraries(context)) { library ->
                 LibraryItem(library = library)
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -220,7 +224,7 @@ fun AboutScreen(
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Text(
-                    text = "感谢所有开源项目的贡献者",
+                    text = stringResource(R.string.about_thanks),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -254,7 +258,7 @@ private fun LibraryItem(library: ThirdPartyLibrary) {
             // 版本信息（如果有）
             if (library.version.isNotEmpty()) {
                 Text(
-                    text = "版本 ${library.version}",
+                    text = stringResource(R.string.about_library_version, library.version),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = 4.dp)
@@ -281,102 +285,102 @@ data class ThirdPartyLibrary(
     val description: String
 )
 
-private fun getThirdPartyLibraries(): List<ThirdPartyLibrary> {
+private fun getThirdPartyLibraries(context: Context): List<ThirdPartyLibrary> {
     return listOf(
         ThirdPartyLibrary(
             name = "Jetpack Compose",
             version = BuildConfig.COMPOSE_BOM_VERSION,
-            description = "现代Android UI工具包，用于构建原生用户界面"
+            description = context.getString(R.string.about_third_party_description)
         ),
         ThirdPartyLibrary(
             name = "Material3",
             version = BuildConfig.COMPOSE_BOM_VERSION,
-            description = "Material Design 3组件库"
+            description = context.getString(R.string.about_material3_description)
         ),
         ThirdPartyLibrary(
             name = "Material Icons Extended",
             version = BuildConfig.COMPOSE_BOM_VERSION,
-            description = "Material Design扩展图标库"
+            description = context.getString(R.string.about_material_icons_description)
         ),
         ThirdPartyLibrary(
             name = "Navigation Compose",
             version = BuildConfig.NAVIGATION_COMPOSE_VERSION,
-            description = "Jetpack导航组件的Compose版本"
+            description = context.getString(R.string.about_navigation_description)
         ),
         ThirdPartyLibrary(
             name = "Room",
             version = BuildConfig.ROOM_VERSION,
-            description = "SQLite对象映射库，用于本地数据存储"
+            description = context.getString(R.string.about_room_description)
         ),
         ThirdPartyLibrary(
             name = "Dagger Hilt",
             version = BuildConfig.HILT_VERSION,
-            description = "依赖注入框架，简化Android开发中的依赖管理"
+            description = context.getString(R.string.about_hilt_description)
         ),
         ThirdPartyLibrary(
             name = "Hilt Navigation Compose",
             version = BuildConfig.HILT_NAVIGATION_COMPOSE_VERSION,
-            description = "Hilt与Navigation Compose的集成库"
+            description = context.getString(R.string.about_hilt_navigation_description)
         ),
         ThirdPartyLibrary(
             name = "Coil",
             version = BuildConfig.COIL_VERSION,
-            description = "基于Kotlin协程的Android图片加载库"
+            description = context.getString(R.string.about_coil_description)
         ),
         ThirdPartyLibrary(
             name = "DataStore",
             version = BuildConfig.DATASTORE_VERSION,
-            description = "数据存储解决方案，替代SharedPreferences"
+            description = context.getString(R.string.about_datastore_description)
         ),
         ThirdPartyLibrary(
             name = "Android Image Cropper",
             version = BuildConfig.IMAGE_CROPPER_VERSION,
-            description = "功能强大的Android图片裁剪库"
+            description = context.getString(R.string.about_image_cropper_description)
         ),
         ThirdPartyLibrary(
             name = "Accompanist System UI Controller",
             version = BuildConfig.ACCOMPANIST_VERSION,
-            description = "用于控制系统UI的实用工具库"
+            description = context.getString(R.string.about_accompanist_description)
         ),
         ThirdPartyLibrary(
             name = "Gson",
             version = BuildConfig.GSON_VERSION,
-            description = "Google JSON序列化/反序列化库"
+            description = context.getString(R.string.about_gson_description)
         ),
         ThirdPartyLibrary(
             name = "TinyPinyin",
             version = BuildConfig.TINYPINYIN_VERSION,
-            description = "中文转拼音工具库"
+            description = context.getString(R.string.about_tinypinyin_description)
         ),
         ThirdPartyLibrary(
             name = "Core KTX",
             version = BuildConfig.CORE_KTX_VERSION,
-            description = "Android核心Kotlin扩展库"
+            description = context.getString(R.string.about_core_ktx_description)
         ),
         ThirdPartyLibrary(
             name = "Lifecycle Runtime KTX",
             version = BuildConfig.LIFECYCLE_VERSION,
-            description = "生命周期感知组件的Kotlin扩展"
+            description = context.getString(R.string.about_lifecycle_description)
         ),
         ThirdPartyLibrary(
             name = "Activity Compose",
             version = BuildConfig.ACTIVITY_COMPOSE_VERSION,
-            description = "Activity与Jetpack Compose的集成库"
+            description = context.getString(R.string.about_activity_compose_description)
         ),
         ThirdPartyLibrary(
             name = "AppCompat",
             version = BuildConfig.APPCOMPAT_VERSION,
-            description = "Android向后兼容支持库"
+            description = context.getString(R.string.about_appcompat_description)
         ),
         ThirdPartyLibrary(
             name = "Splash Screen",
             version = BuildConfig.SPLASH_SCREEN_VERSION,
-            description = "Android 12+启动画面API兼容库"
+            description = context.getString(R.string.about_splash_screen_description)
         ),
         ThirdPartyLibrary(
             name = "Kotlin",
             version = BuildConfig.KOTLIN_BOM_VERSION,
-            description = "Kotlin语言及协程支持"
+            description = context.getString(R.string.about_kotlin_description)
         )
     )
 } 

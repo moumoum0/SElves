@@ -25,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
@@ -112,7 +113,7 @@ fun MemberManagementScreen(
             FloatingActionButton(
                 onClick = { showCreateMemberDialog = true }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "添加成员")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_member))
             }
         }
     ) { paddingValues ->
@@ -215,10 +216,10 @@ fun MemberManagementScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = null },
             title = {
-                Text("删除成员")
+                Text(stringResource(R.string.dialog_delete_member))
             },
             text = {
-                Text("确定要删除成员「${showDeleteConfirmation!!.name}」吗？此操作不可撤销。")
+                Text(stringResource(R.string.error_delete_member_confirm, showDeleteConfirmation!!.name))
             },
             confirmButton = {
                 Button(
@@ -230,14 +231,14 @@ fun MemberManagementScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.btn_delete))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showDeleteConfirmation = null }
                 ) {
-                    Text("取消")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -318,13 +319,13 @@ fun MemberManagementTopBar(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = onSearchChange,
-                        placeholder = { Text("搜索成员...") },
+                        placeholder = { Text(stringResource(R.string.placeholder_search_members)) },
                         leadingIcon = {
-                            Icon(Icons.Default.Search, contentDescription = "搜索")
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search_action))
                         },
                         trailingIcon = {
                             IconButton(onClick = onSearchClose) {
-                                Icon(Icons.Default.Close, contentDescription = "关闭搜索")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cd_close_search))
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -341,7 +342,7 @@ fun MemberManagementTopBar(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "返回"
+                    contentDescription = stringResource(R.string.cd_back)
                 )
             }
         },
@@ -353,7 +354,7 @@ fun MemberManagementTopBar(
                 exit = fadeOut(animationSpec = tween(300))
             ) {
                 IconButton(onClick = onSearchClick) {
-                    Icon(Icons.Default.Search, contentDescription = "搜索")
+                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
                 }
             }
         }
@@ -379,7 +380,7 @@ fun MemberItem(
         // 头像
         AvatarImage(
             avatarUrl = member.avatarUrl,
-            contentDescription = "成员头像",
+            contentDescription = stringResource(R.string.cd_member_avatar),
             size = 40.dp
         )
         
@@ -427,7 +428,7 @@ fun MemberItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "更多操作",
+                    contentDescription = stringResource(R.string.cd_more_actions),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -438,7 +439,7 @@ fun MemberItem(
             ) {
                 // 编辑选项 - 所有成员都可以编辑
                 DropdownMenuItem(
-                    text = { Text("编辑") },
+                    text = { Text(stringResource(R.string.menu_edit)) },
                     leadingIcon = {
                         Icon(Icons.Default.Edit, contentDescription = null)
                     },
@@ -451,7 +452,7 @@ fun MemberItem(
                 // 删除选项 - 只有非当前成员才能删除
                 if (!isCurrentMember) {
                     DropdownMenuItem(
-                        text = { Text("删除") },
+                        text = { Text(stringResource(R.string.menu_delete)) },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Delete,

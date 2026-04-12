@@ -46,8 +46,8 @@ fun LocationTrackingConfigDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "轨迹记录设置",
-                        fontSize = 20.sp,
+                        text = stringResource(R.string.location_config_title),
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -55,7 +55,7 @@ fun LocationTrackingConfigDialog(
                     IconButton(onClick = onDismiss) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "关闭",
+                            contentDescription = stringResource(R.string.cd_close),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -65,8 +65,8 @@ fun LocationTrackingConfigDialog(
                 
                 // 记录间隔设置
                 Text(
-                    text = "记录频率",
-                    fontSize = 16.sp,
+                    text = stringResource(R.string.location_config_frequency),
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -75,11 +75,11 @@ fun LocationTrackingConfigDialog(
                 
                 Column(Modifier.selectableGroup()) {
                     val intervals = listOf(
-                        30 to "30秒",
-                        60 to "1分钟",
-                        300 to "5分钟",
-                        600 to "10分钟",
-                        1800 to "30分钟"
+                        30 to stringResource(R.string.location_config_interval_30s),
+                        60 to stringResource(R.string.location_config_interval_1m),
+                        300 to stringResource(R.string.location_config_interval_5m),
+                        600 to stringResource(R.string.location_config_interval_10m),
+                        1800 to stringResource(R.string.location_config_interval_30m)
                     )
                     
                     intervals.forEach { (seconds, label) ->
@@ -125,8 +125,8 @@ fun LocationTrackingConfigDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "启用自动开启记录",
-                        fontSize = 16.sp,
+                        text = stringResource(R.string.location_config_auto_start),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -135,8 +135,8 @@ fun LocationTrackingConfigDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     Text(
-                        text = "自动开启延迟",
-                        fontSize = 14.sp,
+                        text = stringResource(R.string.location_config_auto_start_delay),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
@@ -144,11 +144,11 @@ fun LocationTrackingConfigDialog(
                     
                     Column(Modifier.selectableGroup()) {
                         val delays = listOf(
-                            60 to "1分钟",
-                            300 to "5分钟",
-                            600 to "10分钟",
-                            1800 to "30分钟",
-                            3600 to "1小时"
+                            60 to stringResource(R.string.location_config_interval_1m),
+                            300 to stringResource(R.string.location_config_interval_5m),
+                            600 to stringResource(R.string.location_config_interval_10m),
+                            1800 to stringResource(R.string.location_config_interval_30m),
+                            3600 to stringResource(R.string.location_config_interval_1h)
                         )
                         
                         delays.forEach { (seconds, label) ->

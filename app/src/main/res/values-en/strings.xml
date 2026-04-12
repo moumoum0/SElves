@@ -28,21 +28,21 @@
     <string name="guide_welcome_description">A communication tool designed for plural systems</string>
     <string name="guide_choose_title">Choose Your Path</string>
     <string name="guide_option_new_title">Start Fresh</string>
-    <string name="guide_option_new_subtitle">Create your system and first headmate</string>
+    <string name="guide_option_new_subtitle">Create your system and first member</string>
     <string name="guide_option_import_title">Import Backup</string>
     <string name="guide_option_import_subtitle">Restore all data from backup file</string>
     <string name="guide_create_system_title">Create Your System</string>
     <string name="guide_create_system_subtitle">Give your system a name</string>
-    <string name="guide_create_member_title">Add Your First Headmate</string>
-    <string name="guide_create_member_subtitle">You can add more headmates later</string>
+    <string name="guide_create_member_title">Add Your First Member</string>
+    <string name="guide_create_member_subtitle">You can add more members later</string>
     <string name="guide_complete_title">All Set</string>
     <string name="guide_complete_subtitle">All information is stored locally</string>
-    <string name="guide_feature_add_members">Add more headmates</string>
+    <string name="guide_feature_add_members">Add more members</string>
     <string name="guide_feature_edit_system">Modify system information</string>
     <string name="guide_feature_backup">Backup and restore data</string>
     <string name="guide_feature_customize">Customize appearance and features</string>
     <string name="guide_note_can_modify">You can modify these later</string>
-    <string name="guide_note_add_more_later">You can add more headmates in settings later</string>
+    <string name="guide_note_add_more_later">You can add more members in settings later</string>
     <string name="guide_note_you_can_always">You can always</string>
     <string name="guide_btn_enter_app">Enter App</string>
     <string name="guide_importing_backup">Importing Backup</string>
@@ -61,22 +61,22 @@
     <string name="system_created_at">Created At</string>
     
     <!-- Member Management -->
-    <string name="member_title">Headmates</string>
+    <string name="member_title">Members</string>
     <string name="member_name">Name</string>
     <string name="member_pronouns">Pronouns</string>
     <string name="member_role">Role</string>
     <string name="member_description">Description</string>
     <string name="member_avatar">Avatar</string>
     <string name="member_color">Color</string>
-    <string name="member_create">Create Headmate</string>
-    <string name="member_edit">Edit Headmate</string>
-    <string name="member_delete">Delete Headmate</string>
-    <string name="member_select">Select Headmate</string>
-    <string name="member_switch">Switch</string>
-    <string name="member_current">Current Fronter</string>
-    <string name="member_management">Headmate Management</string>
+    <string name="member_create">Create Member</string>
+    <string name="member_edit">Edit Member</string>
+    <string name="member_delete">Delete Member</string>
+    <string name="member_select">Select Member</string>
+    <string name="member_switch">Switch Member</string>
+    <string name="member_current">Current Member</string>
+    <string name="member_management">Member Management</string>
     <string name="member_quick_switch">Quick Switch</string>
-    <string name="member_quick_switch_desc">Show quick headmate switch in polls and chat</string>
+    <string name="member_quick_switch_desc">Show quick member switch in polls and chat</string>
     
     <!-- Chat -->
     <string name="chat_title">Chat</string>
@@ -109,7 +109,7 @@
     <string name="vote_settings">Poll Settings</string>
     <string name="vote_settings_subtitle">Configure additional poll options</string>
     <string name="vote_allow_multiple">Allow Multiple Choice</string>
-    <string name="vote_allow_multiple_desc">Allow selecting multiple options</string>
+    <string name="vote_allow_multiple_desc">Allow members to select multiple options</string>
     <string name="vote_anonymous">Anonymous Poll</string>
     <string name="vote_anonymous_desc">Don\'t show voters in results</string>
     <string name="vote_end_time">Poll End Time</string>
@@ -161,6 +161,9 @@
     
     <!-- Online Stats -->
     <string name="online_stats_title">Online Stats</string>
+    <string name="online_stats_tabs_1">Online Status</string>
+    <string name="online_stats_tabs_2">Online Time</string>
+    <string name="online_stats_tabs_3">Login Logs</string>
     <string name="online_stats_today">Today</string>
     <string name="online_stats_week">This Week</string>
     <string name="online_stats_month">This Month</string>
@@ -205,11 +208,33 @@
     
     <!-- About -->
     <string name="about_title">About</string>
-    <string name="about_version">Version</string>
     <string name="about_description">A local communication tool designed for plural systems</string>
     <string name="about_features">Features</string>
     <string name="about_privacy">Privacy</string>
     <string name="about_privacy_desc">All data is stored locally and never uploaded to any server</string>
+    <string name="about_app_icon">App Icon</string>
+    <string name="about_unknown_version">Unknown</string>
+    <string name="about_back">Back</string>
+    <string name="about_third_party_title">Third-party Libraries</string>
+    <string name="about_third_party_description">Modern Android UI toolkit for building native user interfaces</string>
+    <string name="about_material3_description">Material Design 3 component library</string>
+    <string name="about_material_icons_description">Material Design extended icon library</string>
+    <string name="about_navigation_description">Compose version of Jetpack Navigation component</string>
+    <string name="about_room_description">SQLite object mapping library for local data storage</string>
+    <string name="about_hilt_description">Dependency injection framework that simplifies dependency management in Android development</string>
+    <string name="about_hilt_navigation_description">Integration library for Hilt and Navigation Compose</string>
+    <string name="about_coil_description">Kotlin coroutine-based Android image loading library</string>
+    <string name="about_datastore_description">Data storage solution that replaces SharedPreferences</string>
+    <string name="about_image_cropper_description">Powerful Android image cropping library</string>
+    <string name="about_accompanist_description">Utility library for controlling system UI</string>
+    <string name="about_gson_description">Google JSON serialization/deserialization library</string>
+    <string name="about_tinypinyin_description">Chinese to Pinyin conversion utility library</string>
+    <string name="about_core_ktx_description">Android core Kotlin extension library</string>
+    <string name="about_lifecycle_description">Kotlin extensions for lifecycle-aware components</string>
+    <string name="about_activity_compose_description">Integration library for Activity and Jetpack Compose</string>
+    <string name="about_appcompat_description">Android backward compatibility support library</string>
+    <string name="about_splash_screen_description">Android 12+ splash screen API compatibility library</string>
+    <string name="about_kotlin_description">Kotlin language and coroutine support</string>
     
     <!-- Home Modules -->
     <string name="home_title">Home</string>
@@ -275,6 +300,13 @@
     <string name="dynamic_title_empty">No title</string>
     <string name="dynamic_author">Author: %1$s</string>
     <string name="todo_priority_normal">Normal</string>
+    <string name="todo_create_dialog_title">Create To-Do Item</string>
+    <string name="todo_priority_select">Select Priority</string>
+    <string name="todo_priority_low_full">Low Priority</string>
+    <string name="todo_priority_normal_full">Normal Priority</string>
+    <string name="todo_priority_high_full">High Priority</string>
+    <string name="todo_create_action">Create</string>
+    <string name="todo_cancel_action">Cancel</string>
     <string name="location_tracking_status_recording">Recording</string>
     <string name="location_tracking_status_stopped">Stopped</string>
     <string name="location_tracking_status_unknown">Unknown</string>
@@ -289,7 +321,7 @@
     
     <!-- Poll Error Messages -->
     <string name="error_vote_load_failed">Failed to load polls</string>
-    <string name="error_vote_please_select_user">Please select a user first</string>
+    <string name="error_vote_please_select_user">Please select a member first</string>
     <string name="error_vote_create_failed">Failed to create poll</string>
     <string name="error_vote_failed">Voting failed</string>
     <string name="error_vote_delete_failed">Failed to delete poll</string>
@@ -373,7 +405,6 @@
     <string name="system_other">Other</string>
     
     <!-- Common Content Descriptions -->
-    <string name="cd_delete">Delete</string>
     <string name="cd_author_avatar">Author avatar</string>
     <string name="cd_end_vote">End poll</string>
     <string name="cd_voter_avatar">Voter avatar</string>
@@ -384,7 +415,6 @@
     <string name="vote_action">Vote</string>
     <string name="vote_not_found">Poll not found or deleted</string>
     <string name="vote_multiple_choice">Multiple choice</string>
-    <string name="vote_anonymous">Anonymous</string>
     <string name="vote_option_votes">%1$d votes</string>
     
     <!-- To-Do Stats -->
@@ -400,48 +430,42 @@
     <string name="todo_action_mark_complete">Mark as complete</string>
     <string name="todo_action_mark_pending">Mark as pending</string>
     
-    <!-- To-Do Priority -->
-    <string name="todo_priority_high">Urgent</string>
-    <string name="todo_priority_low">Low</string>
-    <string name="todo_priority_normal">Normal</string>
-    
     <!-- To-Do Time -->
     <string name="todo_time_completed">Completed %1$s</string>
     <string name="todo_time_created">Created %1$s</string>
-    
-    <!-- To-Do Status -->
-    <string name="todo_status_completed">Completed</string>
-    <string name="todo_status_pending">Pending</string>
     
     <!-- To-Do Details Other -->
     <string name="todo_close">Close</string>
     <string name="cd_creator_avatar">Creator avatar</string>
     
     <!-- System Management -->
-    <string name="system_edit">System Edit</string>
     <string name="system_edit_subtitle">Edit system name and avatar</string>
     <string name="system_member_management">Member Management</string>
     <string name="system_member_management_subtitle">Manage system members</string>
     <string name="system_online_stats">Online Stats</string>
     <string name="system_online_stats_subtitle">View member activity and online time</string>
-    <string name="system_settings">Settings</string>
     <string name="system_settings_subtitle">App settings and preferences</string>
     <string name="cd_system_avatar">System avatar</string>
     
     <!-- Member Management -->
     <string name="member_management_title">Member Management</string>
-    <string name="member_current">Current</string>
     
     <!-- Chat -->
     <string name="chat_image_load_failed">Image load failed</string>
     <string name="chat_image_unavailable">Image unavailable</string>
     <string name="chat_send_image">Send image</string>
+    <string name="send_image">Send image</string>
     <string name="chat_input_message">Enter message</string>
-    <string name="chat_send">Send</string>
+    <string name="input_message">Enter message</string>
+    <string name="send">Send</string>
     <string name="chat_unknown_member">Unknown member</string>
+    <string name="unknown_member">Unknown member</string>
     <string name="chat_sender_avatar">Sender avatar</string>
+    <string name="sender_avatar">Sender avatar</string>
     <string name="chat_current_member_avatar">Current member avatar</string>
+    <string name="current_member_avatar">Current member avatar</string>
     <string name="chat_message_image">Message image</string>
+    <string name="message_image">Message image</string>
     <string name="chat_copy">Copy</string>
     <string name="chat_delete">Delete</string>
     <string name="chat_more_options">More options</string>
@@ -449,8 +473,6 @@
     <!-- Dynamic -->
     <string name="dynamic_empty">No dynamics</string>
     <string name="dynamic_create_first">Tap the button below to post your first dynamic</string>
-    <string name="dynamic_title">Dynamic</string>
-    <string name="dynamic_create">Create dynamic</string>
     <string name="dynamic_search">Search dynamics...</string>
     <string name="dynamic_search_action">Search</string>
     <string name="dynamic_filter">Filter</string>
@@ -460,18 +482,14 @@
     <string name="dynamic_comment">Comment</string>
     
     <!-- Online Stats -->
-    <string name="online_stats_title">Online Stats</string>
-    <string name="online_stats_today">Today online: %1$s</string>
     <string name="online_stats_login_title">Login Statistics</string>
     <string name="online_stats_avg_today">Today avg online time: %1$s</string>
     <string name="online_stats_login">Login: %1$s</string>
-    <string name="online_stats_online">Online</string>
     <string name="online_stats_logout">Logout: %1$s • Duration: %2$s</string>
     <string name="online_stats_no_logs">No login logs</string>
     <string name="online_stats_today_duration">Today online duration</string>
     
     <!-- About -->
-    <string name="about_title">About</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_developer">Developer</string>
     <string name="about_third_party">Third-party Libraries</string>
@@ -479,12 +497,13 @@
     <string name="about_library_version">Version %1$s</string>
     
     <!-- Dialog Common -->
-    <string name="dialog_delete_member">Delete Headmate</string>
-    <string name="dialog_delete_member_confirm">Are you sure you want to delete headmate "%1$s"? This action cannot be undone.</string>
+    <string name="dialog_delete_member">Delete Member</string>
+    <string name="dialog_delete_member_confirm">Are you sure you want to delete member "%1$s"? This action cannot be undone.</string>
     <string name="dialog_group_name">Group Name</string>
     <string name="dialog_group_name_empty">Group name cannot be empty</string>
     <string name="dialog_select_map">Select Map App</string>
     <string name="dialog_no_map_app">No map apps detected</string>
+    <string name="dialog_no_map_installed">No map apps detected</string>
     <string name="dialog_remove">Remove</string>
     
     <!-- Group Management -->
@@ -521,4 +540,219 @@
     <string name="member_select_title">Select Group Members</string>
     <string name="member_select_creator_note">Creator will automatically become group owner</string>
     <string name="member_group_owner">Owner</string>
+    
+    <!-- Filters -->
+    <string name="filter_all">All</string>
+    <string name="filter_today">Today</string>
+    
+    <!-- Form Labels -->
+    <string name="label_member_name">Name</string>
+    <string name="label_system_name">System Name</string>
+    <string name="label_group_name">Group Name</string>
+    <string name="label_title">Title</string>
+    <string name="label_description_optional">Description (Optional)</string>
+    <string name="label_priority">Priority</string>
+    
+    <!-- Placeholders -->
+    <string name="placeholder_member_name">Enter name</string>
+    <string name="placeholder_system_name">Enter system name</string>
+    <string name="placeholder_share_thoughts">Share your thoughts...</string>
+    <string name="placeholder_search_members">Search members...</string>
+    <string name="placeholder_select_avatar">Tap to select avatar</string>
+    <string name="placeholder_select_date">Select Date</string>
+    
+    <!-- Error Messages -->
+    <string name="error_member_name_empty">Name cannot be empty</string>
+    <string name="error_member_name_exists">Name already exists</string>
+    <string name="error_group_name_empty">Group name cannot be empty</string>
+    <string name="error_title_empty">Title cannot be empty</string>
+    <string name="error_delete_member_confirm">Are you sure you want to delete member \"%1$s\"? This action cannot be undone.</string>
+    
+    <!-- Dialogs -->
+    <string name="dialog_edit_member">Edit Member</string>
+    <string name="dialog_edit_dynamic">Edit Post</string>
+    <string name="dialog_confirm_import">Confirm Import</string>
+    <string name="dialog_member_management">Member Management</string>
+    
+    <!-- Buttons -->
+    <string name="btn_next_step">Next</string>
+    <string name="btn_create">Create</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_delete_countdown">Delete (%1$d)</string>
+    
+    <!-- Menu Items -->
+    <string name="menu_edit">Edit</string>
+    <string name="menu_delete">Delete</string>
+    
+    <!-- Others -->
+    <string name="dynamic_not_found">Post not found or deleted</string>
+    <string name="cd_navigation">Navigation</string>
+    
+    <!-- Content Descriptions - New -->
+    <string name="cd_create_vote">Create poll</string>
+    <string name="cd_end_vote_action">End poll</string>
+    <string name="cd_delete_vote">Delete poll</string>
+    <string name="cd_member_avatar">Member avatar</string>
+    <string name="cd_add_member">Add member</string>
+    <string name="cd_search_action">Search</string>
+    <string name="cd_close_search">Close search</string>
+    <string name="cd_more_actions">More actions</string>
+    <string name="cd_settings_action">Settings</string>
+    <string name="cd_view_history">View history</string>
+    <string name="cd_member_default_avatar">Member default avatar icon</string>
+    <string name="cd_group_avatar">Group avatar</string>
+    <string name="cd_like_action">Like</string>
+    <string name="cd_delete_comment">Delete comment</string>
+    <string name="cd_comment_author_avatar">Comment author avatar</string>
+    <string name="cd_select_avatar_action">Select avatar</string>
+    
+    <!-- Online Status Related -->
+    <string name="online_status_online">Online</string>
+    <string name="online_status_last_active">Last active: %1$s</string>
+    <string name="online_time_never">Never online</string>
+    <string name="online_time_minutes">%1$d minutes</string>
+    <string name="online_time_hours">%1$d hours</string>
+    <string name="online_time_hours_minutes">%1$d hours %2$d minutes</string>
+    <string name="online_time_days">%1$d days</string>
+    <string name="online_time_days_hours">%1$d days %2$d hours</string>
+    <string name="online_time_less_than_minute">Less than 1 minute</string>
+    
+    <!-- Login Statistics -->
+    <string name="login_stats_total">Total Logins</string>
+    <string name="login_stats_today">Today\'s Logins</string>
+    <string name="login_stats_current_online">Currently Online</string>
+    
+    <!-- Content Descriptions - Additional -->
+    <string name="cd_publish">Publish</string>
+    <string name="cd_add_image">Add image</string>
+    <string name="cd_preview_image">Preview image</string>
+    <string name="cd_delete_image">Delete image</string>
+    <string name="cd_dynamic_image">Post image</string>
+    <string name="cd_start_recording">Start recording</string>
+    <string name="cd_stop_recording">Stop recording</string>
+    <string name="cd_previous_day">Previous day</string>
+    <string name="cd_next_day">Next day</string>
+    <string name="cd_system_avatar_image">System avatar</string>
+    <string name="cd_select_photo">Select photo</string>
+    <string name="cd_member_avatar_image">Member avatar</string>
+    <string name="cd_select_avatar_icon">Select avatar</string>
+    <string name="cd_previous_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+
+    <!-- Location Tracking Preview -->
+    <string name="location_preview_title">Location Tracking</string>
+    <string name="location_preview_status_recording">Recording</string>
+    <string name="location_preview_status_stopped">Not recording</string>
+    <string name="location_preview_today_records">Today</string>
+    <string name="location_preview_total_records">Total</string>
+    <string name="location_preview_last_record">Last</string>
+
+    <!-- Image Crop -->
+    <string name="image_crop_title">Crop Avatar</string>
+
+    <!-- Backup Progress Messages -->
+    <string name="backup_progress_title">Backing Up</string>
+    <string name="backup_progress_default">Packaging data, please wait...</string>
+    <string name="backup_progress_collecting">Collecting data...</string>
+    <string name="backup_progress_packing_images">Packaging images...</string>
+    <string name="backup_progress_generating">Generating backup file...</string>
+    <string name="backup_progress_done">Backup complete!</string>
+    <string name="backup_progress_clearing">Clearing existing data...</string>
+    <string name="backup_progress_parsing">Parsing backup file...</string>
+    <string name="backup_progress_restoring">Restoring data...</string>
+    <string name="backup_progress_restoring_images">Restoring images...</string>
+    <string name="backup_progress_import_done">Import complete!</string>
+
+    <!-- Import Backup Warning Dialog -->
+    <string name="backup_import_warning_title">Import Backup Warning</string>
+    <string name="backup_import_warning_intro">Importing backup will:</string>
+    <string name="backup_import_warning_clear_data">• Clear all existing data</string>
+    <string name="backup_import_warning_clear_chat">• Delete all chat history</string>
+    <string name="backup_import_warning_clear_todo">• Delete all to-do items</string>
+    <string name="backup_import_warning_clear_dynamic">• Delete all posts and polls</string>
+    <string name="backup_import_warning_irreversible">This action is irreversible! It is recommended to back up your current data first.</string>
+    <string name="backup_import_warning_confirm">Are you sure you want to continue?</string>
+
+    <!-- Group Chat Member Count -->
+    <string name="chat_group_members_count">%1$d members</string>
+    <string name="chat_you_prefix">You: %1$s</string>
+
+    <!-- Dynamic Detail -->
+    <string name="dynamic_detail_title">Post Details</string>
+    <string name="dynamic_detail_comments">Comments (%1$d)</string>
+    <string name="dynamic_detail_no_comments">No comments yet. Be the first!</string>
+    <string name="dynamic_detail_likes">%1$d likes</string>
+    <string name="dynamic_detail_reply">Reply</string>
+    <string name="dynamic_detail_reply_to">Reply to %1$s:</string>
+
+    <!-- Location Tracking Screen -->
+    <string name="location_status_recording">Recording</string>
+    <string name="location_status_not_started">Not recording</string>
+    <string name="location_interval_hint">Recording every %1$d seconds</string>
+    <string name="location_today_records">Today\'s Records</string>
+    <string name="location_tap_to_start">Tap the card above to start recording</string>
+    <string name="location_no_records_today">No records today</string>
+    <string name="location_no_records_date">No records for this date</string>
+    <string name="location_start_to_record">Enable recording to start tracking</string>
+    <string name="location_select_other_date">Select another date to view records</string>
+    <string name="location_no_records_on_date">No records for this date</string>
+
+    <!-- Location Tracking Section -->
+    <string name="location_section_recording">Recording</string>
+    <string name="location_section_not_recording">Not recording</string>
+    <string name="location_section_today_count">Today: %1$d</string>
+    <string name="location_section_total_count">Total: %1$d</string>
+    <string name="location_section_view_date">View Date</string>
+
+    <!-- Location Tracking Config -->
+    <string name="location_config_title">Tracking Settings</string>
+    <string name="location_config_frequency">Recording Frequency</string>
+    <string name="location_config_auto_start">Enable Auto-Start Recording</string>
+    <string name="location_config_auto_delay">Auto-Start Delay</string>
+
+    <!-- Create Group -->
+    <string name="create_group_select_avatar">Tap to select group avatar (optional)</string>
+
+    <!-- Month Calendar -->
+    <string name="calendar_month_format">MMMM yyyy</string>
+    <string name="calendar_weekdays">Sun,Mon,Tue,Wed,Thu,Fri,Sat</string>
+
+    <!-- Notifications -->
+    <string name="notification_location_channel_name">Location Tracking</string>
+    <string name="notification_location_channel_desc">Location tracking service notifications</string>
+    <string name="notification_location_title">Location Tracking</string>
+    <string name="notification_location_content">Recording location...</string>
+    <string name="notification_location_start_note">Start recording</string>
+
+    <!-- Time Formats -->
+    <string name="time_just_now">Just now</string>
+    <string name="time_minutes_ago">%1$d minutes ago</string>
+    <string name="time_format_month_day">MMM d, HH:mm</string>
+    <string name="time_format_year_month_day">MMM d, yyyy HH:mm</string>
+
+    <!-- Function Module Titles -->
+    <string name="module_title_todo">To-Do</string>
+    <string name="module_title_dynamic">Activity</string>
+    <string name="module_title_vote">Polls</string>
+    <string name="module_title_location">Tracking</string>
+
+    <!-- Location Config Interval Options -->
+    <string name="location_config_interval_30s">30 sec</string>
+    <string name="location_config_interval_1m">1 min</string>
+    <string name="location_config_interval_5m">5 min</string>
+    <string name="location_config_interval_10m">10 min</string>
+    <string name="location_config_interval_30m">30 min</string>
+    <string name="location_config_interval_1h">1 hour</string>
+    <string name="location_config_auto_start_delay">Start delay</string>
+
+    <!-- Map Apps -->
+    <string name="map_app_amap">Amap</string>
+    <string name="map_app_baidu">Baidu Maps</string>
+    <string name="map_app_tencent">Tencent Maps</string>
+    <string name="map_app_google">Google Maps</string>
+
+    <!-- Language Settings -->
+    <string name="language_chinese_simplified">Simplified Chinese</string>
+    <string name="language_follow_system">Follow System</string>
+
 </resources>

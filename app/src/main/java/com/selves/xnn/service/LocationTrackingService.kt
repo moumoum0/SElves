@@ -213,7 +213,7 @@ class LocationTrackingService : Service(), LocationListener {
                 recordLastKnownLocation()
             }
             
-            startForeground(NOTIFICATION_ID, createNotification("位置记录中..."))
+            startForeground(NOTIFICATION_ID, createNotification(getString(R.string.notification_location_content)))
             
             // 广播状态变化
             broadcastTrackingStatusChanged(true)
@@ -286,7 +286,7 @@ class LocationTrackingService : Service(), LocationListener {
                             accuracy = if (location.hasAccuracy()) location.accuracy else null,
                             address = address,
                             memberId = currentMemberId,
-                            note = "开始记录"
+                            note = getString(R.string.notification_location_start_note)
                         )
                         // 记录最近一次保存时间，避免紧接着的 provider 回调再次保存
                         lastSavedAtMs = System.currentTimeMillis()
@@ -358,10 +358,10 @@ class LocationTrackingService : Service(), LocationListener {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "位置跟踪",
+                getString(R.string.notification_location_channel_name),
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "轨迹记录服务通知"
+                description = getString(R.string.notification_location_channel_desc)
                 setShowBadge(false)
             }
             
@@ -371,7 +371,7 @@ class LocationTrackingService : Service(), LocationListener {
     }
     
     private fun createNotification(contentText: String) = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setContentTitle("轨迹记录")
+        .setContentTitle(getString(R.string.notification_location_title))
         .setContentText(contentText)
         .setSmallIcon(R.drawable.ic_launcher_foreground)
         .setContentIntent(createPendingIntent())

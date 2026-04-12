@@ -27,7 +27,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.selves.xnn.R
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
@@ -69,11 +71,11 @@ fun EditMemberDialog(
             when {
                 memberName.isBlank() -> {
                     showError = true
-                    errorMessage = "成员名不能为空"
+                    errorMessage = context.getString(R.string.error_member_name_empty)
                 }
                 memberName in existingMemberNames && memberName != member.name -> {
                     showError = true
-                    errorMessage = "成员名已存在"
+                    errorMessage = context.getString(R.string.error_member_name_exists)
                 }
                 else -> {
                     isSubmitting = true
@@ -106,7 +108,7 @@ fun EditMemberDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "编辑成员",
+                    text = stringResource(R.string.dialog_edit_member),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -118,14 +120,14 @@ fun EditMemberDialog(
                         .padding(bottom = 16.dp)
                         .clickable { 
                             // 启动图片裁剪器，可以选择从图库或相机
-                            cropImageLauncher.launch(ImageUtils.createAvatarCropOptions())
+                            cropImageLauncher.launch(ImageUtils.createAvatarCropOptions(context))
                         }
                 ) {
                     if (avatarUri != null) {
                         // 显示新选择的头像
                         AsyncImage(
                             model = avatarUri,
-                            contentDescription = "成员头像",
+                            contentDescription = stringResource(R.string.cd_member_avatar_image),
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
@@ -134,14 +136,14 @@ fun EditMemberDialog(
                         // 显示当前头像
                         AvatarImage(
                             avatarUrl = currentAvatarUrl,
-                            contentDescription = "成员头像",
+                            contentDescription = stringResource(R.string.cd_member_avatar_image),
                             size = 80.dp
                         )
                     } else {
                         // 显示默认头像图标
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "选择头像",
+                            contentDescription = stringResource(R.string.cd_select_avatar_icon),
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
@@ -159,7 +161,7 @@ fun EditMemberDialog(
                         memberName = newValue.replace("\n", "")
                         showError = false 
                     },
-                    label = { Text("成员名") },
+                    label = { Text(stringResource(R.string.label_member_name)) },
                     isError = showError,
                     supportingText = if (showError) {
                         { Text(errorMessage) }
@@ -195,11 +197,11 @@ fun EditMemberDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = editMember) {
-                        Text("确定")
+                        Text(stringResource(R.string.btn_confirm))
                     }
                 }
             }

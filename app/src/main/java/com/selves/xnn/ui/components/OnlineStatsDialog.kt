@@ -299,15 +299,6 @@ private fun calculateOnlineStats(members: List<Member>, currentMember: Member): 
     )
 }
 
-private fun formatOnlineTime(minutes: Int): String {
-    return when {
-        minutes == 0 -> "未在线"
-        minutes < 60 -> "${minutes}分钟"
-        minutes < 1440 -> "${minutes / 60}小时${minutes % 60}分钟"
-        else -> "${minutes / 1440}天${(minutes % 1440) / 60}小时"
-    }
-}
-
 private fun formatLastActiveTime(timestamp: Long): String {
     return com.selves.xnn.util.TimeFormatter.formatTimestamp(timestamp)
-} 
+}

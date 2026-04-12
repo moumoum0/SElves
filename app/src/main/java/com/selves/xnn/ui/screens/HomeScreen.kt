@@ -475,7 +475,7 @@ fun FunctionModulesSection(
                         else -> Icons.Default.Assignment
                     }
                     FunctionModuleItem(
-                        title = module.title,
+                        title = stringResource(module.titleResId),
                         icon = icon,
                         onClick = {
                             when (module.id) {
@@ -727,13 +727,12 @@ fun LocationTrackingSection(
         TrackingStatus.STOPPED -> MaterialTheme.colorScheme.outline
         else -> MaterialTheme.colorScheme.outline
     }
-    val statusText = remember(trackingUiState.trackingStatus) {
-        when (trackingUiState.trackingStatus) {
-            TrackingStatus.RECORDING -> stringResource(R.string.location_tracking_status_recording)
-            TrackingStatus.STOPPED -> stringResource(R.string.location_tracking_status_stopped)
-            else -> stringResource(R.string.location_tracking_status_unknown)
-        }
+    val statusTextResId = when (trackingUiState.trackingStatus) {
+        TrackingStatus.RECORDING -> R.string.location_tracking_status_recording
+        TrackingStatus.STOPPED -> R.string.location_tracking_status_stopped
+        else -> R.string.location_tracking_status_unknown
     }
+    val statusText = stringResource(statusTextResId)
 
     // 缓存最后记录时间格式化
     val lastRecordTimeText = remember(trackingStats.lastRecordTime) {
@@ -1135,17 +1134,18 @@ fun VoteItem(
     vote: com.selves.xnn.model.Vote,
     now: java.time.LocalDateTime = remember { java.time.LocalDateTime.now() }
 ) {
-    // 使用 remember 缓存时间计算结果
-    val endTimeText = remember(vote.endTime, now) {
-        vote.endTime?.let { endTime ->
-            val duration = java.time.Duration.between(now, endTime)
-            when {
-                duration.toDays() > 0 -> stringResource(R.string.vote_end_time_days, duration.toDays())
-                duration.toHours() > 0 -> stringResource(R.string.vote_end_time_hours, duration.toHours())
-                duration.toMinutes() > 0 -> stringResource(R.string.vote_end_time_minutes, duration.toMinutes())
-                else -> stringResource(R.string.vote_end_time_soon)
-            }
-        } ?: stringResource(R.string.vote_end_time_unknown)
+    // 计算时间差
+    val duration = vote.endTime?.let { endTime ->
+        java.time.Duration.between(now, endTime)
+    }
+    
+    // 根据时间差获取对应的文本
+    val endTimeText = when {
+        duration == null -> stringResource(R.string.vote_end_time_unknown)
+        duration.toDays() > 0 -> stringResource(R.string.vote_end_time_days, duration.toDays())
+        duration.toHours() > 0 -> stringResource(R.string.vote_end_time_hours, duration.toHours())
+        duration.toMinutes() > 0 -> stringResource(R.string.vote_end_time_minutes, duration.toMinutes())
+        else -> stringResource(R.string.vote_end_time_soon)
     }
     Column(
         modifier = Modifier
@@ -1299,7 +1299,7 @@ fun FunctionModuleEditDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = module.title)
+                        Text(text = stringResource(module.titleResId))
                         Switch(
                             checked = module.enabled,
                             onCheckedChange = { checked ->

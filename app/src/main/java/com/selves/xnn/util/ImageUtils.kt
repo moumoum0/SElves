@@ -338,9 +338,10 @@ object ImageUtils {
     
     /**
      * 创建头像裁剪选项
+     * @param context 上下文，用于获取本地化字符串
      * @return 头像裁剪的配置选项
      */
-    fun createAvatarCropOptions(): CropImageContractOptions {
+    fun createAvatarCropOptions(context: Context): CropImageContractOptions {
         return CropImageContractOptions(
             uri = null,
             cropImageOptions = CropImageOptions().apply {
@@ -351,7 +352,7 @@ object ImageUtils {
                 aspectRatioY = 1
                 fixAspectRatio = true
                 cropShape = com.canhub.cropper.CropImageView.CropShape.OVAL
-                activityTitle = "裁剪头像"
+                activityTitle = context.getString(com.selves.xnn.R.string.image_crop_title)
                 activityMenuIconColor = android.graphics.Color.WHITE
                 activityBackgroundColor = android.graphics.Color.BLACK
                 toolbarColor = android.graphics.Color.BLACK
@@ -391,10 +392,11 @@ object ImageUtils {
     
     /**
      * 创建从 Uri 开始的头像裁剪选项
+     * @param context 上下文，用于获取本地化字符串
      * @param uri 要裁剪的图片 Uri
      * @return 头像裁剪的配置选项
      */
-    fun createAvatarCropOptionsFromUri(uri: Uri): CropImageContractOptions {
+    fun createAvatarCropOptionsFromUri(context: Context, uri: Uri): CropImageContractOptions {
         return CropImageContractOptions(
             uri = uri,
             cropImageOptions = CropImageOptions().apply {
@@ -405,7 +407,7 @@ object ImageUtils {
                 aspectRatioY = 1
                 fixAspectRatio = true
                 cropShape = com.canhub.cropper.CropImageView.CropShape.OVAL
-                activityTitle = "裁剪头像"
+                activityTitle = context.getString(com.selves.xnn.R.string.image_crop_title)
                 activityMenuIconColor = android.graphics.Color.WHITE
                 activityBackgroundColor = android.graphics.Color.BLACK
                 toolbarColor = android.graphics.Color.BLACK

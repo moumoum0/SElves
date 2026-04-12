@@ -18,6 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -206,13 +208,13 @@ private fun ImageViewerContent(
             if (imageRequest != null) {
                 AsyncImage(
                     model = imageRequest,
-                    contentDescription = "预览图片",
+                    contentDescription = stringResource(R.string.cd_preview_image),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 )
             } else {
                 Text(
-                    text = "图片加载失败",
+                    text = stringResource(R.string.chat_image_load_failed),
                     color = Color.White,
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -232,7 +234,7 @@ private fun ImageViewerContent(
         ) {
             Icon(
                 imageVector = Icons.Default.ArrowBack,
-                contentDescription = "返回",
+                contentDescription = stringResource(R.string.cd_back),
                 tint = Color.White.copy(alpha = animatedContentAlpha),
                 modifier = Modifier.size(24.dp)
             )

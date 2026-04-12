@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.compose.ui.unit.dp
 import com.selves.xnn.model.Member
 
@@ -38,7 +40,7 @@ fun UserInfoHeader(
         ) {
             AvatarImage(
                 avatarUrl = currentMember.avatarUrl,
-                contentDescription = "成员头像",
+                contentDescription = stringResource(R.string.cd_member_avatar),
                 size = 40.dp
             )
             Text(
@@ -52,7 +54,7 @@ fun UserInfoHeader(
             IconButton(onClick = onMemberSwitch) {
                 Icon(
                     imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = "切换成员",
+                    contentDescription = stringResource(R.string.member_switch),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }

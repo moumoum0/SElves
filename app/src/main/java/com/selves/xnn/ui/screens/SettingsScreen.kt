@@ -28,6 +28,7 @@ import com.selves.xnn.ui.components.ThemeModeDialog
 import com.selves.xnn.ui.components.ColorSchemeDialog
 import com.selves.xnn.ui.components.BackupProgressDialog
 import com.selves.xnn.ui.components.ImportBackupWarningDialog
+import com.selves.xnn.ui.components.LanguageDialog
 import com.selves.xnn.model.getDisplayName
 import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
@@ -49,6 +50,8 @@ fun SettingsScreen(
     val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
     val colorScheme by viewModel.colorScheme.collectAsState()
     val showColorSchemeDialog by viewModel.showColorSchemeDialog.collectAsState()
+    val language by viewModel.language.collectAsState()
+    val showLanguageDialog by viewModel.showLanguageDialog.collectAsState()
     val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
     val backupMessage by viewModel.backupMessage.collectAsState()
     val showBackupProgressDialog by viewModel.showBackupProgressDialog.collectAsState()
@@ -121,8 +124,12 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Default.Language,
                     title = stringResource(R.string.settings_language),
-                    subtitle = stringResource(R.string.settings_language_zh),
-                    onClick = { /* TODO: 实现语言设置 */ }
+                    subtitle = when (language) {
+                        "zh" -> stringResource(R.string.settings_language_zh)
+                        "en" -> stringResource(R.string.settings_language_en)
+                        else -> stringResource(R.string.settings_theme_system)
+                    },
+                    onClick = { viewModel.showLanguageDialog() }
                 )
             }
             
@@ -232,6 +239,16 @@ fun SettingsScreen(
                 viewModel.setColorScheme(selectedScheme)
             },
             onDismiss = { viewModel.hideColorSchemeDialog() }
+        )
+        
+        // 语言选择对话框
+        LanguageDialog(
+            isOpen = showLanguageDialog,
+            selectedLanguage = language,
+            onLanguageSelected = { selectedLanguage ->
+                viewModel.setLanguage(selectedLanguage)
+            },
+            onDismiss = { viewModel.hideLanguageDialog() }
         )
         
         // 备份进度对话框

@@ -9,9 +9,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.selves.xnn.R
 
 /**
  * 备份进度对话框
@@ -19,11 +21,13 @@ import androidx.compose.ui.window.DialogProperties
 @Composable
 fun BackupProgressDialog(
     isVisible: Boolean,
-    title: String = "正在备份",
-    message: String = "正在打包数据，请稍候...",
+    title: String = "",
+    message: String = "",
     progress: Float? = null, // null表示不确定进度
     onDismiss: () -> Unit = {}
 ) {
+    val displayTitle = title.ifEmpty { stringResource(R.string.backup_progress_title) }
+    val displayMessage = message.ifEmpty { stringResource(R.string.backup_progress_default) }
     if (isVisible) {
         Dialog(
             onDismissRequest = { /* 不允许取消 */ },
@@ -48,7 +52,7 @@ fun BackupProgressDialog(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = title,
+                        text = displayTitle,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -82,7 +86,7 @@ fun BackupProgressDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = message,
+                        text = displayMessage,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -108,14 +112,14 @@ fun ImportBackupWarningDialog(
             icon = {
                 Icon(
                     imageVector = Icons.Default.Warning,
-                    contentDescription = "警告",
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier.size(32.dp)
                 )
             },
             title = {
                 Text(
-                    text = "导入备份警告",
+                    text = stringResource(R.string.backup_import_warning_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Medium
                 )
@@ -123,7 +127,7 @@ fun ImportBackupWarningDialog(
             text = {
                 Column {
                     Text(
-                        text = "导入备份将会：",
+                        text = stringResource(R.string.backup_import_warning_intro),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -132,22 +136,22 @@ fun ImportBackupWarningDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "• 清除所有现有数据",
+                        text = stringResource(R.string.backup_import_warning_clear_data),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = "• 删除所有聊天记录",
+                        text = stringResource(R.string.backup_import_warning_clear_chat),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = "• 删除所有待办事项",
+                        text = stringResource(R.string.backup_import_warning_clear_todo),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = "• 删除所有动态和投票",
+                        text = stringResource(R.string.backup_import_warning_clear_dynamic),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )
@@ -155,7 +159,7 @@ fun ImportBackupWarningDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     
                     Text(
-                        text = "此操作不可逆转！建议先备份当前数据。",
+                        text = stringResource(R.string.backup_import_warning_irreversible),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.error
@@ -164,7 +168,7 @@ fun ImportBackupWarningDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "确定要继续吗？",
+                        text = stringResource(R.string.backup_import_warning_confirm),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -179,14 +183,14 @@ fun ImportBackupWarningDialog(
                     )
                 ) {
                     Text(
-                        text = "确定导入",
+                        text = stringResource(R.string.dialog_confirm_import),
                         fontWeight = FontWeight.Medium
                     )
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )

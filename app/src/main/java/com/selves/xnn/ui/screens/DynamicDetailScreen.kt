@@ -16,12 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.selves.xnn.R
 import com.selves.xnn.model.Dynamic
 import com.selves.xnn.model.DynamicComment
 import com.selves.xnn.model.Member
@@ -64,13 +66,13 @@ fun DynamicDetailScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "动态详情",
+                        text = stringResource(R.string.dynamic_detail_title),
                         fontWeight = FontWeight.Normal
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -90,7 +92,7 @@ fun DynamicDetailScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator()
                 } else {
-                    Text("动态不存在或已被删除")
+                    Text(stringResource(R.string.dynamic_not_found))
                 }
             }
         } else {
@@ -136,7 +138,7 @@ fun DynamicDetailScreen(
                     // 评论标题
                     item {
                         Text(
-                            text = "评论 (${comments.size})",
+                            text = stringResource(R.string.dynamic_detail_comments, comments.size),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
@@ -165,7 +167,7 @@ fun DynamicDetailScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "暂无评论，快来抢沙发吧！",
+                                    text = stringResource(R.string.dynamic_detail_no_comments),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 14.sp
                                 )
@@ -250,7 +252,7 @@ fun DynamicDetailCard(
                 ) {
                     AvatarImage(
                         avatarUrl = dynamic.authorAvatar,
-                        contentDescription = "作者头像",
+                        contentDescription = stringResource(R.string.cd_author_avatar),
                         size = 48.dp
                     )
                     
@@ -275,7 +277,7 @@ fun DynamicDetailCard(
                     IconButton(onClick = onDeleteClick) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "删除",
+                            contentDescription = stringResource(R.string.cd_delete),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -337,13 +339,13 @@ fun DynamicDetailCard(
             ) {
                 Icon(
                     imageVector = if (dynamic.isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "点赞",
+                    contentDescription = stringResource(R.string.cd_like_action),
                     tint = if (dynamic.isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${dynamic.likeCount} 个赞",
+                    text = stringResource(R.string.dynamic_detail_likes, dynamic.likeCount),
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -377,7 +379,7 @@ fun CommentItem(
                 ) {
                     AvatarImage(
                         avatarUrl = comment.authorAvatar,
-                        contentDescription = "评论者头像",
+                        contentDescription = stringResource(R.string.cd_comment_author_avatar),
                         size = 32.dp
                     )
                     
@@ -404,7 +406,7 @@ fun CommentItem(
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = "回复",
+                            text = stringResource(R.string.dynamic_detail_reply),
                             fontSize = 12.sp
                         )
                     }
@@ -417,7 +419,7 @@ fun CommentItem(
                         ) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "删除评论",
+                                contentDescription = stringResource(R.string.cd_delete_comment),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -471,7 +473,7 @@ fun CommentInputSection(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "回复 ${replyToComment.authorName}:",
+                            text = stringResource(R.string.dynamic_detail_reply_to, replyToComment.authorName),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             fontWeight = FontWeight.Medium
@@ -491,7 +493,7 @@ fun CommentInputSection(
                     ) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "取消回复",
+                            contentDescription = stringResource(R.string.cd_close),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(16.dp)
                         )
@@ -538,7 +540,7 @@ fun CommentInputSection(
                 ) {
                     Icon(
                         Icons.Default.Send,
-                        contentDescription = "发送",
+                        contentDescription = stringResource(R.string.cd_send),
                         tint = if (commentText.isNotBlank()) MaterialTheme.colorScheme.onPrimary 
                                else MaterialTheme.colorScheme.onSurfaceVariant
                     )

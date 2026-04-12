@@ -1,20 +1,23 @@
 package com.selves.xnn.model
 
+import androidx.annotation.StringRes
+import com.selves.xnn.R
+
 /**
  * 功能模块配置
  */
 data class FunctionModuleConfig(
     val id: String,
-    val title: String,
+    @StringRes val titleResId: Int,
     val iconName: String,
     val enabled: Boolean = true
 ) {
     companion object {
         fun defaultList(): List<FunctionModuleConfig> = listOf(
-            FunctionModuleConfig("todo", "待办", "Assignment", true),
-            FunctionModuleConfig("dynamic", "动态", "Timeline", true),
-            FunctionModuleConfig("vote", "投票", "Poll", true),
-            FunctionModuleConfig("location", "轨迹", "LocationOn", true)
+            FunctionModuleConfig("todo", R.string.home_module_todo, "Assignment", true),
+            FunctionModuleConfig("dynamic", R.string.home_module_dynamic, "Timeline", true),
+            FunctionModuleConfig("vote", R.string.home_module_vote, "Poll", true),
+            FunctionModuleConfig("location", R.string.home_module_location, "LocationOn", true)
         )
     }
 }
@@ -37,5 +40,5 @@ data class HomeLayoutConfig(
         HomeModuleType.DYNAMIC to true,
         HomeModuleType.VOTE to true
     ),
-    val functionModules: List<FunctionModuleConfig> = FunctionModuleConfig.defaultList()
+    val functionModules: List<FunctionModuleConfig> = emptyList()
 )

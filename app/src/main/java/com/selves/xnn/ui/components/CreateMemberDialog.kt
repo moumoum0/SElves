@@ -27,8 +27,10 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.selves.xnn.R
 import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
@@ -64,11 +66,11 @@ fun CreateMemberDialog(
             when {
                 memberName.isBlank() -> {
                     showError = true
-                    errorMessage = "成员名不能为空"
+                    errorMessage = context.getString(R.string.error_member_name_empty)
                 }
                 memberName in existingMemberNames -> {
                     showError = true
-                    errorMessage = "成员名已存在"
+                    errorMessage = context.getString(R.string.error_member_name_exists)
                 }
                 else -> {
                     isSubmitting = true
@@ -97,7 +99,7 @@ fun CreateMemberDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "创建新成员",
+                    text = stringResource(R.string.member_create),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -109,13 +111,13 @@ fun CreateMemberDialog(
                         .padding(bottom = 16.dp)
                         .clickable { 
                             // 启动图片裁剪器，可以选择从图库或相机
-                            cropImageLauncher.launch(ImageUtils.createAvatarCropOptions())
+                            cropImageLauncher.launch(ImageUtils.createAvatarCropOptions(context))
                         }
                 ) {
                     if (avatarUri != null) {
                         AsyncImage(
                             model = avatarUri,
-                            contentDescription = "成员头像",
+                            contentDescription = stringResource(R.string.cd_member_avatar_image),
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
@@ -123,7 +125,7 @@ fun CreateMemberDialog(
                     } else {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "选择头像",
+                            contentDescription = stringResource(R.string.cd_select_avatar_icon),
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
@@ -141,7 +143,7 @@ fun CreateMemberDialog(
                         memberName = newValue.replace("\n", "")
                         showError = false 
                     },
-                    label = { Text("成员名") },
+                    label = { Text(stringResource(R.string.label_member_name)) },
                     isError = showError,
                     supportingText = if (showError) {
                         { Text(errorMessage) }
@@ -177,11 +179,11 @@ fun CreateMemberDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(onClick = createMember) {
-                        Text("确定")
+                        Text(stringResource(R.string.btn_confirm))
                     }
                 }
             }

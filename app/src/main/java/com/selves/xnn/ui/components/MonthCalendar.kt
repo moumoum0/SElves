@@ -15,6 +15,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 import java.time.YearMonth
@@ -47,11 +49,11 @@ fun MonthCalendar(
                     onClick = { currentMonth = currentMonth.minusMonths(1) },
                     modifier = Modifier.size(36.dp)
                 ) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = "上个月")
+                    Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.cd_previous_month))
                 }
                 
                 Text(
-                    text = currentMonth.format(DateTimeFormatter.ofPattern("yyyy年MM月")),
+                    text = currentMonth.format(DateTimeFormatter.ofPattern(stringResource(R.string.calendar_month_format))),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -65,7 +67,7 @@ fun MonthCalendar(
                     enabled = currentMonth.isBefore(YearMonth.now()),
                     modifier = Modifier.size(36.dp)
                 ) {
-                    Icon(Icons.Default.ChevronRight, contentDescription = "下个月")
+                    Icon(Icons.Default.ChevronRight, contentDescription = stringResource(R.string.cd_next_month))
                 }
             }
             
@@ -75,7 +77,7 @@ fun MonthCalendar(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                listOf("日", "一", "二", "三", "四", "五", "六").forEach { day ->
+                stringResource(R.string.calendar_weekdays).split(",").forEach { day ->
                     Text(
                         text = day,
                         fontSize = 13.sp,

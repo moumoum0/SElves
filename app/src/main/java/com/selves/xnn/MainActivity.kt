@@ -27,9 +27,13 @@ import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
+import com.selves.xnn.utils.LanguageManager
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import android.content.Context
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -37,6 +41,21 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var memberPreferences: MemberPreferences
+    
+    override fun attachBaseContext(newBase: Context?) {
+        if (newBase != null) {
+            // 在Activity创建前应用语言设置
+            // 由于依赖注入还未完成，直接使用MemberPreferences实例
+            val memberPrefs = MemberPreferences(newBase)
+            val languageCode = runBlocking {
+                memberPrefs.language.first()
+            }
+            val context = LanguageManager.applyLanguage(newBase, languageCode)
+            super.attachBaseContext(context)
+        } else {
+            super.attachBaseContext(newBase)
+        }
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

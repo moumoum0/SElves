@@ -67,7 +67,7 @@ fun MemberManagementDialog(
                         Spacer(modifier = Modifier.width(12.dp))
                         
                         Text(
-                            text = "成员管理",
+                            text = stringResource(R.string.dialog_member_management),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -82,7 +82,7 @@ fun MemberManagementDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "添加成员"
+                            contentDescription = stringResource(R.string.cd_add_member)
                         )
                     }
                 }
@@ -185,7 +185,7 @@ fun MemberItem(
         // 头像
         AvatarImage(
             avatarUrl = member.avatarUrl,
-            contentDescription = "成员头像",
+            contentDescription = stringResource(R.string.cd_member_avatar),
             size =40.dp
         )
         
@@ -210,7 +210,7 @@ fun MemberItem(
                         color = MaterialTheme.colorScheme.primary
                     ) {
                         Text(
-                            text = "当前",
+                            text = stringResource(R.string.member_current),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -233,7 +233,7 @@ fun MemberItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "更多操作",
+                    contentDescription = stringResource(R.string.cd_more_actions),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -257,7 +257,7 @@ fun MemberItem(
                 // 删除选项 - 只有非当前成员才能删除
                 if (!isCurrentMember) {
                     DropdownMenuItem(
-                        text = { Text("删除") },
+                        text = { Text(stringResource(R.string.menu_delete)) },
                         leadingIcon = {
                             Icon(
                                 Icons.Default.Delete,

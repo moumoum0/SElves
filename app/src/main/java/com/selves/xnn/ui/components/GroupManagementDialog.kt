@@ -532,7 +532,7 @@ fun EditGroupInfoDialog(
                                 }
                             )
                             .clickable {
-                                val cropOptions = ImageUtils.createAvatarCropOptions()
+                                val cropOptions = ImageUtils.createAvatarCropOptions(context)
                                 avatarCropLauncher.launch(cropOptions)
                             },
                         contentAlignment = Alignment.Center

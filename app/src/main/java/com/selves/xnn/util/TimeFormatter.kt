@@ -1,10 +1,12 @@
 package com.selves.xnn.util
 
+import android.content.Context
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
+import com.selves.xnn.R
 
 /**
  * 统一的时间格式化工具类
@@ -14,20 +16,21 @@ object TimeFormatter {
     /**
      * 格式化时间戳
      * @param timestamp 时间戳（毫秒）
+     * @param context Context对象
      * @return 格式化后的时间字符串
      * 规则：
      * - 1小时内：显示"几分钟前"（刚刚）
      * - 当天内：显示时间（如"14:30"）
      * - 其他：显示日期+时间（如"12月25日 14:30"）
      */
-    fun formatTimestamp(timestamp: Long): String {
+    fun formatTimestamp(timestamp: Long, context: Context? = null): String {
         val now = System.currentTimeMillis()
         val diff = now - timestamp
         
         return when {
             // 1小时内显示相对时间
-            diff < 60 * 1000 -> "刚刚"
-            diff < 60 * 60 * 1000 -> "${diff / (60 * 1000)}分钟前"
+            diff < 60 * 1000 -> context?.getString(R.string.time_just_now) ?: "刚刚"
+            diff < 60 * 60 * 1000 -> context?.getString(R.string.time_minutes_ago, (diff / (60 * 1000)).toInt()) ?: "${diff / (60 * 1000)}分钟前"
             
             // 当天内显示时间
             isToday(timestamp) -> {
@@ -39,9 +42,11 @@ object TimeFormatter {
             else -> {
                 val date = Date(timestamp)
                 if (isThisYear(timestamp)) {
-                    SimpleDateFormat("M月d日 HH:mm", Locale.getDefault()).format(date)
+                    val pattern = context?.getString(R.string.time_format_month_day) ?: "M月d日 HH:mm"
+                    SimpleDateFormat(pattern, Locale.getDefault()).format(date)
                 } else {
-                    SimpleDateFormat("yyyy年M月d日 HH:mm", Locale.getDefault()).format(date)
+                    val pattern = context?.getString(R.string.time_format_year_month_day) ?: "yyyy年M月d日 HH:mm"
+                    SimpleDateFormat(pattern, Locale.getDefault()).format(date)
                 }
             }
         }

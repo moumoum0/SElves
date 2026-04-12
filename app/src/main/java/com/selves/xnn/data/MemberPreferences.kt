@@ -27,6 +27,7 @@ class MemberPreferences(private val context: Context) {
         private val QUICK_MEMBER_SWITCH_ENABLED = booleanPreferencesKey("quick_member_switch_enabled")
         private val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
         private val COLOR_SCHEME = stringPreferencesKey("color_scheme")
+        private val LANGUAGE = stringPreferencesKey("language")
         
         // 轨迹记录配置
         private val TRACKING_RECORDING_INTERVAL = intPreferencesKey("tracking_recording_interval")
@@ -165,4 +166,21 @@ class MemberPreferences(private val context: Context) {
             preferences[COLOR_SCHEME] = colorScheme.name
         }
     }
-} 
+    
+    /**
+     * 获取语言设置
+     */
+    val language: Flow<String> = context.dataStore.data
+        .map { preferences ->
+            preferences[LANGUAGE] ?: "system" // 默认跟随系统
+        }
+    
+    /**
+     * 保存语言设置
+     */
+    suspend fun saveLanguage(language: String) {
+        context.dataStore.edit { preferences ->
+            preferences[LANGUAGE] = language
+        }
+    }
+}

@@ -18,8 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.selves.xnn.R
 import com.selves.xnn.model.LocationRecord
 import com.selves.xnn.model.MapApp
 import com.selves.xnn.util.MapNavigationUtils
@@ -109,7 +111,7 @@ fun LocationTimelineItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.Navigation,
-                    contentDescription = "导航",
+                    contentDescription = stringResource(R.string.cd_navigation),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
@@ -139,12 +141,12 @@ fun MapSelectionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("选择地图应用")
+            Text(stringResource(R.string.dialog_select_map))
         },
         text = {
             Column {
                 if (availableApps.isEmpty()) {
-                    Text("未检测到已安装的地图应用")
+                    Text(stringResource(R.string.dialog_no_map_installed))
                 } else {
                     availableApps.forEach { mapApp ->
                         TextButton(
@@ -162,7 +164,7 @@ fun MapSelectionDialog(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = mapApp.displayName,
+                                    text = mapApp.getDisplayName(LocalContext.current),
                                     fontSize = 16.sp
                                 )
                             }
@@ -173,7 +175,7 @@ fun MapSelectionDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )

@@ -30,10 +30,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
-
+import com.selves.xnn.R
 import com.selves.xnn.util.ImageUtils
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -97,10 +98,10 @@ fun EditDynamicDialog(
         ) {
             // 顶部导航栏
             TopAppBar(
-                title = { Text("编辑动态") },
+                title = { Text(stringResource(R.string.dialog_edit_dynamic)) },
                 navigationIcon = {
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -112,7 +113,7 @@ fun EditDynamicDialog(
                         },
                         enabled = content.isNotBlank() || savedImagePaths.isNotEmpty()
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "发布")
+                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.cd_publish))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -130,7 +131,7 @@ fun EditDynamicDialog(
                 OutlinedTextField(
                     value = content,
                     onValueChange = { content = it },
-                    placeholder = { Text("分享你的想法...") },
+                    placeholder = { Text(stringResource(R.string.placeholder_share_thoughts)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
@@ -241,7 +242,7 @@ fun AddImageButton(
     ) {
         Icon(
             imageVector = Icons.Default.Add,
-            contentDescription = "添加图片",
+            contentDescription = stringResource(R.string.cd_add_image),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(32.dp)
         )
@@ -276,7 +277,7 @@ fun ImageItem(
             if (imageRequest != null) {
                 AsyncImage(
                     model = imageRequest,
-                    contentDescription = "预览图片",
+                    contentDescription = stringResource(R.string.cd_preview_image),
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(8.dp)),
@@ -291,7 +292,7 @@ fun ImageItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "图片加载失败",
+                        text = stringResource(R.string.chat_image_load_failed),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -313,7 +314,7 @@ fun ImageItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "删除图片",
+                    contentDescription = stringResource(R.string.cd_delete_image),
                     tint = MaterialTheme.colorScheme.onError,
                     modifier = Modifier
                         .padding(2.dp)
@@ -517,7 +518,7 @@ private fun SingleImageItem(
         if (imageRequest != null) {
             AsyncImage(
                 model = imageRequest,
-                contentDescription = "动态图片",
+                contentDescription = stringResource(R.string.cd_dynamic_image),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -529,7 +530,7 @@ private fun SingleImageItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "图片加载失败",
+                    text = stringResource(R.string.chat_image_load_failed),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
@@ -578,7 +579,7 @@ private fun GridImageItem(
         if (imageRequest != null) {
             AsyncImage(
                 model = imageRequest,
-                contentDescription = "动态图片",
+                contentDescription = stringResource(R.string.cd_dynamic_image),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
@@ -590,7 +591,7 @@ private fun GridImageItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "图片\n加载失败",
+                    text = stringResource(R.string.chat_image_load_failed),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 10.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center

@@ -15,8 +15,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.selves.xnn.R
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import com.selves.xnn.util.ImageUtils
@@ -27,7 +29,7 @@ import com.selves.xnn.util.ImageUtils
 @Composable
 fun AvatarImage(
     avatarUrl: String?,
-    contentDescription: String = "头像",
+    contentDescription: String? = null,
     size: Dp = 40.dp,
     modifier: Modifier = Modifier
 ) {
@@ -79,7 +81,7 @@ fun AvatarImage(
 @Composable
 fun MessageAvatarImage(
     avatarUrl: String?,
-    contentDescription: String = "头像",
+    contentDescription: String? = null,
     size: Dp = 40.dp,
     modifier: Modifier = Modifier
 ) {
@@ -97,7 +99,7 @@ fun MessageAvatarImage(
 @Composable
 fun ProfileAvatarImage(
     avatarUrl: String?,
-    contentDescription: String = "头像",
+    contentDescription: String? = null,
     size: Dp = 80.dp,
     modifier: Modifier = Modifier
 ) {

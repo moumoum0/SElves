@@ -1,5 +1,7 @@
 package com.selves.xnn.model
 
+import android.content.Context
+import com.selves.xnn.R
 import java.time.LocalDateTime
 
 /**
@@ -48,10 +50,17 @@ data class TrackingStats(
 /**
  * 地图导航类型
  */
-enum class MapApp(val packageName: String, val displayName: String) {
-    GAODE("com.autonavi.minimap", "高德地图"),
-    BAIDU("com.baidu.BaiduMap", "百度地图"),
-    TENCENT("com.tencent.map", "腾讯地图"),
-    GOOGLE("com.google.android.apps.maps", "Google地图")
+enum class MapApp(val packageName: String) {
+    GAODE("com.autonavi.minimap"),
+    BAIDU("com.baidu.BaiduMap"),
+    TENCENT("com.tencent.map"),
+    GOOGLE("com.google.android.apps.maps");
+
+    fun getDisplayName(context: Context): String = when (this) {
+        GAODE -> context.getString(R.string.map_app_amap)
+        BAIDU -> context.getString(R.string.map_app_baidu)
+        TENCENT -> context.getString(R.string.map_app_tencent)
+        GOOGLE -> context.getString(R.string.map_app_google)
+    }
 }
 
