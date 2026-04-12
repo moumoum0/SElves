@@ -20,7 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.Vote
 import com.selves.xnn.model.VoteOption
@@ -71,13 +73,13 @@ fun VoteDetailScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "投票详情",
+                        text = stringResource(R.string.vote_detail_title),
                         fontWeight = FontWeight.Normal
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -112,7 +114,7 @@ fun VoteDetailScreen(
                                         strokeWidth = 2.dp
                                     )
                                 } else {
-                                    Text("投票")
+                                    Text(stringResource(R.string.vote_action))
                                 }
                             }
                         }
@@ -135,7 +137,7 @@ fun VoteDetailScreen(
                 if (uiState.isLoading) {
                     CircularProgressIndicator()
                 } else {
-                    Text("投票不存在或已被删除")
+                    Text(stringResource(R.string.vote_not_found))
                 }
             }
         } else {
@@ -236,7 +238,7 @@ fun VoteDetailCard(
                 ) {
                     AvatarImage(
                         avatarUrl = vote.authorAvatar,
-                        contentDescription = "作者头像",
+                        contentDescription = stringResource(R.string.cd_author_avatar),
                         size = 48.dp
                     )
                     
@@ -263,7 +265,7 @@ fun VoteDetailCard(
                             IconButton(onClick = onEndClick) {
                                 Icon(
                                     Icons.Default.Stop,
-                                    contentDescription = "结束投票",
+                                    contentDescription = stringResource(R.string.cd_end_vote),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -272,7 +274,7 @@ fun VoteDetailCard(
                         IconButton(onClick = onDeleteClick) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "删除",
+                                contentDescription = stringResource(R.string.cd_delete),
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -322,7 +324,7 @@ fun VoteDetailCard(
                         )
                     ) {
                         Text(
-                            text = if (vote.isActive) "进行中" else "已结束",
+                            text = if (vote.isActive) stringResource(R.string.vote_status_active_text) else stringResource(R.string.vote_status_ended_text),
                             fontSize = 12.sp,
                             color = if (vote.isActive) {
                                 MaterialTheme.colorScheme.onPrimaryContainer
@@ -337,7 +339,7 @@ fun VoteDetailCard(
                     
                     // 投票统计
                     Text(
-                        text = "${vote.totalVotes} 票",
+                        text = stringResource(R.string.vote_detail_total_votes, vote.totalVotes),
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -346,7 +348,7 @@ fun VoteDetailCard(
                 // 结束时间
                 vote.endTime?.let { endTime ->
                     Text(
-                        text = "截止 ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(endTime)}",
+                        text = stringResource(R.string.vote_detail_deadline, com.selves.xnn.util.TimeFormatter.formatDetailDateTime(endTime)),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -362,13 +364,13 @@ fun VoteDetailCard(
                     if (vote.allowMultipleChoice) {
                         AssistChip(
                             onClick = { },
-                            label = { Text("多选", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.vote_multiple_choice), fontSize = 12.sp) }
                         )
                     }
                     if (vote.isAnonymous) {
                         AssistChip(
                             onClick = { },
-                            label = { Text("匿名", fontSize = 12.sp) }
+                            label = { Text(stringResource(R.string.vote_anonymous), fontSize = 12.sp) }
                         )
                     }
                 }
@@ -391,7 +393,7 @@ fun VoteOptionsSection(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "投票选项",
+                text = stringResource(R.string.vote_detail_options_title),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
@@ -488,7 +490,7 @@ fun VoteOptionItem(
                         horizontalAlignment = Alignment.End
                     ) {
                         Text(
-                            text = "${option.voteCount} 票",
+                            text = stringResource(R.string.vote_option_votes, option.voteCount),
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -540,7 +542,7 @@ fun VoteRecordsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "投票记录 (${voteRecords.size})",
+                    text = stringResource(R.string.vote_detail_records_title, voteRecords.size),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface
@@ -548,7 +550,7 @@ fun VoteRecordsSection(
                 
                 Icon(
                     imageVector = if (showRecords) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (showRecords) "收起" else "展开",
+                    contentDescription = if (showRecords) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -558,7 +560,7 @@ fun VoteRecordsSection(
                 
                 if (voteRecords.isEmpty()) {
                     Text(
-                        text = "暂无投票记录",
+                        text = stringResource(R.string.vote_detail_no_records),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -585,7 +587,7 @@ fun VoteRecordItem(
     ) {
         AvatarImage(
             avatarUrl = record.userAvatar,
-            contentDescription = "投票者头像",
+            contentDescription = stringResource(R.string.cd_voter_avatar),
             size = 32.dp
         )
         

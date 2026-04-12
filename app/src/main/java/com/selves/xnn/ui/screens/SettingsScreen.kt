@@ -29,6 +29,8 @@ import com.selves.xnn.ui.components.ColorSchemeDialog
 import com.selves.xnn.ui.components.BackupProgressDialog
 import com.selves.xnn.ui.components.ImportBackupWarningDialog
 import com.selves.xnn.model.getDisplayName
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -87,7 +89,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "设置",
+                        text = stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Normal
                     )
                 },
@@ -95,7 +97,7 @@ fun SettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -112,14 +114,14 @@ fun SettingsScreen(
         ) {
             // 通用设置分组
             item {
-                SettingsGroupTitle(title = "通用")
+                SettingsGroupTitle(title = stringResource(R.string.settings_general))
             }
             
             item {
                 SettingsItem(
                     icon = Icons.Default.Language,
-                    title = "语言",
-                    subtitle = "简体中文",
+                    title = stringResource(R.string.settings_language),
+                    subtitle = stringResource(R.string.settings_language_zh),
                     onClick = { /* TODO: 实现语言设置 */ }
                 )
             }
@@ -127,8 +129,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.DarkMode,
-                    title = "深色模式",
-                    subtitle = themeMode.getDisplayName(),
+                    title = stringResource(R.string.settings_theme),
+                    subtitle = themeMode.getDisplayName(context),
                     onClick = { viewModel.showThemeModeDialog() }
                 )
             }
@@ -136,8 +138,8 @@ fun SettingsScreen(
             item {
                 SettingsItem(
                     icon = Icons.Default.Palette,
-                    title = "颜色与个性化",
-                    subtitle = colorScheme.getDisplayName(),
+                    title = stringResource(R.string.settings_color),
+                    subtitle = colorScheme.getDisplayName(context),
                     onClick = { viewModel.showColorSchemeDialog() }
                 )
             }
@@ -145,8 +147,8 @@ fun SettingsScreen(
             item {
                 SettingsSwitchItem(
                     icon = Icons.Default.SwapHoriz,
-                    title = "快捷切换成员",
-                    subtitle = "在投票和聊天界面显示快捷成员切换",
+                    title = stringResource(R.string.member_quick_switch),
+                    subtitle = stringResource(R.string.member_quick_switch_desc),
                     checked = quickMemberSwitchEnabled,
                     onCheckedChange = { enabled ->
                         viewModel.setQuickMemberSwitchEnabled(enabled)
@@ -157,14 +159,14 @@ fun SettingsScreen(
             // 数据与备份分组
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                SettingsGroupTitle(title = "数据与备份")
+                SettingsGroupTitle(title = stringResource(R.string.settings_data_backup))
             }
             
             item {
                 SettingsItem(
                     icon = Icons.Default.Schedule,
-                    title = "定时备份",
-                    subtitle = "设置自动备份频率和时间",
+                    title = stringResource(R.string.settings_backup_auto),
+                    subtitle = stringResource(R.string.settings_backup_auto_desc),
                     onClick = { /* TODO: 实现定时备份设置 */ }
                 )
             }
@@ -172,8 +174,8 @@ fun SettingsScreen(
             item {
                 SettingsItemWithProgress(
                     icon = Icons.Default.FileUpload,
-                    title = "导出备份",
-                    subtitle = "备份应用数据到文件",
+                    title = stringResource(R.string.settings_backup_export),
+                    subtitle = stringResource(R.string.settings_backup_export_desc),
                     isLoading = isBackupInProgress,
                     onClick = {
                         val dateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
@@ -187,8 +189,8 @@ fun SettingsScreen(
             item {
                 SettingsItemWithProgress(
                     icon = Icons.Default.FileDownload,
-                    title = "导入备份",
-                    subtitle = "从文件恢复应用数据",
+                    title = stringResource(R.string.settings_backup_import),
+                    subtitle = stringResource(R.string.settings_backup_import_desc),
                     isLoading = isBackupInProgress,
                     onClick = {
                         importBackupLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
@@ -199,14 +201,14 @@ fun SettingsScreen(
             // 其他分组
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                SettingsGroupTitle(title = "其他")
+                SettingsGroupTitle(title = stringResource(R.string.settings_other))
             }
             
             item {
                 SettingsItem(
                     icon = Icons.Default.Info,
-                    title = "关于",
-                    subtitle = "应用信息和版本",
+                    title = stringResource(R.string.settings_about),
+                    subtitle = stringResource(R.string.settings_about_desc),
                     onClick = onNavigateToAbout
                 )
             }
@@ -235,7 +237,7 @@ fun SettingsScreen(
         // 备份进度对话框
         BackupProgressDialog(
             isVisible = showBackupProgressDialog,
-            title = if (backupProgress != null && backupProgress!! >= 1.0f) "备份完成" else "正在备份",
+            title = if (backupProgress != null && backupProgress!! >= 1.0f) stringResource(R.string.settings_backup_complete) else stringResource(R.string.settings_backup_progress),
             message = backupProgressMessage,
             progress = backupProgress
         )

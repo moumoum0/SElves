@@ -52,9 +52,9 @@ fun BottomNavBar(
 
             NavigationBarItem(
 
-                icon = { Icon(item.icon, contentDescription = item.title) },
+                icon = { Icon(item.icon, contentDescription = androidx.compose.ui.res.stringResource(item.titleResId)) },
 
-                label = { Text(text = item.title) },
+                label = { Text(text = androidx.compose.ui.res.stringResource(item.titleResId)) },
 
                 selected = currentRoute == item.route,
 

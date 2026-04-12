@@ -1,19 +1,24 @@
 package com.selves.xnn.viewmodel
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.selves.xnn.R
 import com.selves.xnn.data.repository.DynamicRepository
 import com.selves.xnn.model.Dynamic
 import com.selves.xnn.model.DynamicComment
 import com.selves.xnn.model.DynamicType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class DynamicViewModel @Inject constructor(
-    private val dynamicRepository: DynamicRepository
+    private val dynamicRepository: DynamicRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     
     // UI状态
@@ -81,7 +86,7 @@ class DynamicViewModel @Inject constructor(
                 _uiState.update { 
                     it.copy(
                         isLoading = false, 
-                        error = "加载动态失败: ${e.message}"
+                        error = "${context.getString(R.string.error_dynamic_load_failed)}: ${e.message}"
                     ) 
                 }
             }
@@ -117,7 +122,7 @@ class DynamicViewModel @Inject constructor(
                 clearError()
             } catch (e: Exception) {
                 _uiState.update { 
-                    it.copy(error = "创建动态失败: ${e.message}") 
+                    it.copy(error = "${context.getString(R.string.error_dynamic_create_failed)}: ${e.message}") 
                 }
             }
         }
@@ -131,7 +136,7 @@ class DynamicViewModel @Inject constructor(
                 clearError()
             } catch (e: Exception) {
                 _uiState.update { 
-                    it.copy(error = "删除动态失败: ${e.message}") 
+                    it.copy(error = "${context.getString(R.string.error_dynamic_delete_failed)}: ${e.message}") 
                 }
             }
         }
@@ -147,7 +152,7 @@ class DynamicViewModel @Inject constructor(
                 clearError()
             } catch (e: Exception) {
                 _uiState.update { 
-                    it.copy(error = "操作失败: ${e.message}") 
+                    it.copy(error = "${context.getString(R.string.error_dynamic_operation_failed)}: ${e.message}") 
                 }
             }
         }
@@ -177,7 +182,7 @@ class DynamicViewModel @Inject constructor(
                 clearError()
             } catch (e: Exception) {
                 _uiState.update { 
-                    it.copy(error = "添加评论失败: ${e.message}") 
+                    it.copy(error = "${context.getString(R.string.error_dynamic_add_comment_failed)}: ${e.message}") 
                 }
             }
         }
@@ -196,7 +201,7 @@ class DynamicViewModel @Inject constructor(
                 clearError()
             } catch (e: Exception) {
                 _uiState.update { 
-                    it.copy(error = "删除评论失败: ${e.message}") 
+                    it.copy(error = "${context.getString(R.string.error_dynamic_delete_comment_failed)}: ${e.message}") 
                 }
             }
         }

@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import coil.compose.AsyncImage
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
@@ -189,11 +191,11 @@ fun MemberSwitchDialog(
                             ) {
                                 if (member.id != currentMemberId) {
                                     DropdownMenuItem(
-                                        text = { Text("删除成员") },
+                                        text = { Text(stringResource(R.string.dialog_delete_member)) },
                                         leadingIcon = {
                                             Icon(
                                                 Icons.Default.Delete,
-                                                contentDescription = "删除成员"
+                                                contentDescription = stringResource(R.string.dialog_delete_member)
                                             )
                                         },
                                         onClick = {

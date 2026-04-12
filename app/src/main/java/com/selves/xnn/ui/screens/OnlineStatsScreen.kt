@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.LoginLog
 import com.selves.xnn.model.LoginLogSummary
@@ -39,14 +41,14 @@ fun OnlineStatsScreen(
     onLoadLoginLogSummary: () -> Unit = {}
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("在线状况", "在线时间统计", "登录日志")
+    val tabs = listOf(stringResource(R.string.online_stats_tabs_1), stringResource(R.string.online_stats_tabs_2), stringResource(R.string.online_stats_tabs_3))
     
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
-                        text = "在线统计",
+                        text = stringResource(R.string.online_stats_title),
                         fontWeight = FontWeight.Normal
                     )
                 },
@@ -158,7 +160,7 @@ fun OnlineStatItem(
             }
             
             Text(
-                text = "今日在线: ${formatOnlineTime(memberStat.todayOnlineMinutes)}",
+                text = stringResource(R.string.online_stats_today, formatOnlineTime(memberStat.todayOnlineMinutes)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -246,7 +248,7 @@ fun LoginLogSummaryCard(summary: LoginLogSummary) {
                 .padding(16.dp)
         ) {
             Text(
-                text = "登录统计",
+                text = stringResource(R.string.online_stats_login_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -279,7 +281,7 @@ fun LoginLogSummaryCard(summary: LoginLogSummary) {
             Spacer(modifier = Modifier.height(8.dp))
             
             Text(
-                text = "今日平均在线时长: ${formatDuration(summary.averageOnlineTime)}",
+                text = stringResource(R.string.online_stats_avg_today, formatDuration(summary.averageOnlineTime)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -392,7 +394,7 @@ fun LoginLogItem(loginLog: LoginLog) {
                 
                 // 登录时间
                 Text(
-                    text = "登录: ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(loginLog.loginTime)}",
+                    text = stringResource(R.string.online_stats_login, com.selves.xnn.util.TimeFormatter.formatDetailDateTime(loginLog.loginTime)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -400,14 +402,14 @@ fun LoginLogItem(loginLog: LoginLog) {
                 // 登出时间或在线时长
                 if (loginLog.isOnline) {
                     Text(
-                        text = "在线中",
+                        text = stringResource(R.string.online_stats_online),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
                 } else {
                     loginLog.logoutTime?.let { logoutTime ->
                         Text(
-                            text = "登出: ${com.selves.xnn.util.TimeFormatter.formatDetailDateTime(logoutTime)} • 时长: ${formatDuration(loginLog.duration)}",
+                            text = stringResource(R.string.online_stats_logout, com.selves.xnn.util.TimeFormatter.formatDetailDateTime(logoutTime), formatDuration(loginLog.duration)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -549,7 +551,7 @@ fun LoginLogTab(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "暂无登录日志",
+                                text = stringResource(R.string.online_stats_no_logs),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -611,7 +613,7 @@ fun OnlineTimeStatItem(
                 }
                 
                 Text(
-                    text = "今日在线时长",
+                    text = stringResource(R.string.online_stats_today_duration),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

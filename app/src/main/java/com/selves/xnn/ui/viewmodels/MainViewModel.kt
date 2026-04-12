@@ -96,6 +96,9 @@ class MainViewModel @Inject constructor(
     private val _backupProgressMessage = MutableStateFlow("")
     val backupProgressMessage: StateFlow<String> = _backupProgressMessage.asStateFlow()
     
+    private val _backupErrorMessage = MutableStateFlow<String?>(null)
+    val backupErrorMessage: StateFlow<String?> = _backupErrorMessage.asStateFlow()
+    
     private val _showImportWarningDialog = MutableStateFlow(false)
     val showImportWarningDialog: StateFlow<Boolean> = _showImportWarningDialog.asStateFlow()
     
@@ -1049,6 +1052,13 @@ class MainViewModel @Inject constructor(
     }
     
     /**
+     * 清除备份错误消息
+     */
+    fun clearBackupError() {
+        _backupErrorMessage.value = null
+    }
+    
+    /**
      * 导入备份（内部方法）
      */
     private fun importBackup(inputUri: Uri) {
@@ -1056,6 +1066,7 @@ class MainViewModel @Inject constructor(
             _isBackupInProgress.value = true
             _backupProgress.value = null
             _backupProgressMessage.value = "正在清除现有数据..."
+            _backupErrorMessage.value = null
             _backupImportSuccess.value = false
             
             try {
@@ -1076,6 +1087,7 @@ class MainViewModel @Inject constructor(
                         
                         // 导入成功后设置状态
                         _backupImportSuccess.value = true
+                        _backupErrorMessage.value = null
                         _hasSystem.value = true
                         _needsGuide.value = false
                         
@@ -1105,10 +1117,12 @@ class MainViewModel @Inject constructor(
                         Log.d(TAG, "备份导入成功，重新加载数据")
                     }
                     is BackupResult.Error -> {
-                        Log.e(TAG, "导入失败: ${result.message}")
+                        _backupErrorMessage.value = "导入失败: ${result.message}"
+                        Log.e(TAG, "导入失败: ${result.message}", result.exception)
                     }
                 }
             } catch (e: Exception) {
+                _backupErrorMessage.value = "导入失败: ${e.message}"
                 Log.e(TAG, "导入失败: ${e.message}", e)
             } finally {
                 _isBackupInProgress.value = false

@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 
 @Composable
 fun SystemSettingsDialog(
@@ -34,7 +36,7 @@ fun SystemSettingsDialog(
             ) {
                 // 标题
                 Text(
-                    text = "设置",
+                    text = stringResource(R.string.settings_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 20.dp)
@@ -47,8 +49,8 @@ fun SystemSettingsDialog(
                     item {
                         SettingsItem(
                             icon = Icons.Default.Info,
-                            title = "关于",
-                            subtitle = "应用信息和版本",
+                            title = stringResource(R.string.about_title),
+                            subtitle = stringResource(R.string.settings_about_desc),
                             onClick = { /* TODO: 显示关于信息 */ }
                         )
                     }
@@ -62,7 +64,7 @@ fun SystemSettingsDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("关闭")
+                        Text(stringResource(R.string.btn_close))
                     }
                 }
             }

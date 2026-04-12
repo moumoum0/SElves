@@ -114,6 +114,7 @@ fun AppNavigationScreen(
         val backupProgressMessage by viewModel.backupProgressMessage.collectAsState()
         val showImportWarningDialog by viewModel.showImportWarningDialog.collectAsState()
         val backupImportSuccess by viewModel.backupImportSuccess.collectAsState()
+        val backupErrorMessage by viewModel.backupErrorMessage.collectAsState()
         
         WelcomeGuideScreen(
             onCreateSystem = { name, avatarUrl ->
@@ -138,7 +139,11 @@ fun AppNavigationScreen(
             onCancelImport = {
                 viewModel.cancelImportBackup()
             },
-            backupImportSuccess = backupImportSuccess
+            backupImportSuccess = backupImportSuccess,
+            backupErrorMessage = backupErrorMessage,
+            onDismissError = {
+                viewModel.clearBackupError()
+            }
         )
     } else {
         // 主导航结构 - 仅在主导航区域收集这些状态，避免引导页面阶段的无效重组

@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import com.selves.xnn.R
 import com.selves.xnn.model.MapApp
 
 /**
@@ -71,7 +72,7 @@ object MapNavigationUtils {
                 }
             }
         } catch (e: Exception) {
-            Toast.makeText(context, "无法打开地图应用: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "${context.getString(R.string.error_map_open_failed)}: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
     

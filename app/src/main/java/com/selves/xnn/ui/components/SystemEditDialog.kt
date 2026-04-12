@@ -26,6 +26,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.selves.xnn.model.System
@@ -180,7 +182,7 @@ fun SystemEditDialog(
                             systemName = newValue.replace("\n", "")
                             showError = false 
                         },
-                        label = { Text("系统名称") },
+                        label = { Text(stringResource(R.string.system_name)) },
                         isError = showError,
                         supportingText = if (showError) {
                             { Text(errorMessage) }
@@ -216,7 +218,7 @@ fun SystemEditDialog(
                         horizontalArrangement = Arrangement.End
                     ) {
                         TextButton(onClick = onDismiss) {
-                            Text("取消")
+                            Text(stringResource(R.string.btn_cancel))
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -229,7 +231,7 @@ fun SystemEditDialog(
                                     strokeWidth = 2.dp
                                 )
                             } else {
-                                Text("确定")
+                                Text(stringResource(R.string.btn_confirm))
                             }
                         }
                     }

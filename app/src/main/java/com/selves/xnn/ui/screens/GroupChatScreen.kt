@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.MessageType
@@ -98,7 +100,7 @@ fun GroupChatScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("暂无群聊，请点击右下角创建")
+                    Text(stringResource(R.string.group_chat_empty))
                 }
             } else {
                 LazyColumn(
@@ -159,7 +161,7 @@ fun GroupChatScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "创建群聊"
+                contentDescription = stringResource(R.string.cd_create_group)
             )
         }
     }
@@ -262,7 +264,7 @@ fun GroupItem(
                 )
             } else {
                 Text(
-                    text = "暂无消息",
+                    text = stringResource(R.string.group_no_message),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontSize = 14.sp
                     ),

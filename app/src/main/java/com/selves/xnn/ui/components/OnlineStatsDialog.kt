@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 import java.text.SimpleDateFormat
 import java.util.*
@@ -60,7 +62,7 @@ fun OnlineStatsDialog(
                     Spacer(modifier = Modifier.width(12.dp))
                     
                     Text(
-                        text = "在线统计",
+                        text = stringResource(R.string.online_stats_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -82,19 +84,19 @@ fun OnlineStatsDialog(
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         StatItem(
-                            title = "总成员",
+                            title = stringResource(R.string.online_stats_total_members),
                             value = members.size.toString(),
                             color = MaterialTheme.colorScheme.primary
                         )
                         
                         StatItem(
-                            title = "活跃",
+                            title = stringResource(R.string.online_stats_active),
                             value = members.filter { !it.isDeleted }.size.toString(),
                             color = MaterialTheme.colorScheme.secondary
                         )
                         
                         StatItem(
-                            title = "在线",
+                            title = stringResource(R.string.online_stats_online),
                             value = onlineStats.onlineCount.toString(),
                             color = MaterialTheme.colorScheme.tertiary
                         )
@@ -126,7 +128,7 @@ fun OnlineStatsDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("关闭")
+                        Text(stringResource(R.string.btn_close))
                     }
                 }
             }
@@ -171,7 +173,7 @@ fun OnlineStatItem(
         // 头像
         AvatarImage(
             avatarUrl = memberStat.member.avatarUrl,
-            contentDescription = "成员头像",
+            contentDescription = stringResource(R.string.member_avatar),
             size = 40.dp
         )
         
@@ -199,14 +201,21 @@ fun OnlineStatItem(
                 }
             }
             
+            val onlineTimeText = when {
+                memberStat.todayOnlineMinutes == 0 -> stringResource(R.string.online_stats_never_online)
+                memberStat.todayOnlineMinutes < 60 -> "${memberStat.todayOnlineMinutes}${stringResource(R.string.online_stats_minutes)}"
+                memberStat.todayOnlineMinutes < 1440 -> "${memberStat.todayOnlineMinutes / 60}${stringResource(R.string.online_stats_hours)}${memberStat.todayOnlineMinutes % 60}${stringResource(R.string.online_stats_minutes)}"
+                else -> "${memberStat.todayOnlineMinutes / 1440}${stringResource(R.string.online_stats_days)}${(memberStat.todayOnlineMinutes % 1440) / 60}${stringResource(R.string.online_stats_hours)}"
+            }
+            
             Text(
-                text = "今日在线: ${formatOnlineTime(memberStat.todayOnlineMinutes)}",
+                text = stringResource(R.string.online_stats_today_prefix) + onlineTimeText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             
             Text(
-                text = "最后活跃: ${formatLastActiveTime(memberStat.lastActiveTime)}",
+                text = stringResource(R.string.online_stats_last_active_prefix) + formatLastActiveTime(memberStat.lastActiveTime),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

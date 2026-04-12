@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.Vote
@@ -133,13 +135,13 @@ fun VoteScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = if (filterActive) "暂无进行中的投票" else "暂无已结束的投票",
+                                        text = if (filterActive) stringResource(R.string.vote_no_active) else stringResource(R.string.vote_no_ended),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 16.sp
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "点击右下角按钮创建第一个投票",
+                                        text = stringResource(R.string.vote_create_first),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                         fontSize = 14.sp
                                     )
@@ -196,7 +198,7 @@ fun VoteTopBar(
                             ) + fadeOut(animationSpec = tween(300))
                         ) {
                             Text(
-                                text = "投票",
+                                text = stringResource(R.string.vote_title),
                                 fontWeight = FontWeight.Normal
                             )
                         }
@@ -216,15 +218,15 @@ fun VoteTopBar(
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = onSearchChange,
-                                placeholder = { Text("搜索投票...") },
+                                placeholder = { Text(stringResource(R.string.vote_search_hint)) },
                                 trailingIcon = {
                                     if (searchQuery.isNotEmpty()) {
                                         IconButton(onClick = { onSearchChange("") }) {
-                                            Icon(Icons.Default.Clear, contentDescription = "清除")
+                                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_clear))
                                         }
                                     } else {
                                         IconButton(onClick = onSearchClose) {
-                                            Icon(Icons.Default.Close, contentDescription = "关闭搜索")
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.btn_close))
                                         }
                                     }
                                 },
@@ -240,7 +242,7 @@ fun VoteTopBar(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -251,7 +253,7 @@ fun VoteTopBar(
                         exit = fadeOut(animationSpec = tween(300))
                     ) {
                         IconButton(onClick = onSearchClick) {
-                            Icon(Icons.Default.Search, contentDescription = "搜索")
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
                         }
                     }
                 },
@@ -274,7 +276,7 @@ fun VoteTopBar(
             ) {
                 FilterChip(
                     onClick = { onFilterChange(true) },
-                    label = { Text("进行中") },
+                    label = { Text(stringResource(R.string.vote_status_active)) },
                     selected = filterActive,
                     leadingIcon = if (filterActive) {
                         { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
@@ -283,7 +285,7 @@ fun VoteTopBar(
                 
                 FilterChip(
                     onClick = { onFilterChange(false) },
-                    label = { Text("已结束") },
+                    label = { Text(stringResource(R.string.vote_status_ended)) },
                     selected = !filterActive,
                     leadingIcon = if (!filterActive) {
                         { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
@@ -415,7 +417,7 @@ fun VoteCard(
                 
                 if (vote.options.size > 4) {
                     Text(
-                        text = "还有 ${vote.options.size - 4} 个选项",
+                        text = stringResource(R.string.vote_more_options, vote.options.size - 4),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
@@ -450,7 +452,7 @@ fun VoteCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "${vote.totalVotes} 人参与",
+                        text = stringResource(R.string.vote_participants, vote.totalVotes),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -497,7 +499,7 @@ fun VoteCard(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "您已参与投票",
+                            text = stringResource(R.string.vote_you_participated),
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Medium
@@ -538,7 +540,7 @@ private fun VoteStatusChip(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = if (isActive) "进行中" else "已结束",
+                text = if (isActive) stringResource(R.string.vote_status_active_text) else stringResource(R.string.vote_status_ended_text),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
@@ -602,7 +604,7 @@ private fun VoteOptionPreview(
             // 投票数和百分比
             if (showPercentage) {
                 Text(
-                    text = "${option.voteCount} 票",
+                    text = stringResource(R.string.vote_count, option.voteCount),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium

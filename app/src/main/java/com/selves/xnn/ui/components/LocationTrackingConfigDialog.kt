@@ -14,6 +14,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.TrackingConfig
 
 @Composable
@@ -186,7 +188,7 @@ fun LocationTrackingConfigDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -194,7 +196,7 @@ fun LocationTrackingConfigDialog(
                             onConfigUpdate(tempConfig)
                         }
                     ) {
-                        Text("保存")
+                        Text(stringResource(R.string.btn_save))
                     }
                 }
             }

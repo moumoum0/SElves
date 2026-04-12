@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.ColorScheme
 import com.selves.xnn.model.getDisplayName
 import com.selves.xnn.model.getDescription
@@ -22,12 +25,13 @@ fun ColorSchemeDialog(
     onColorSchemeSelected: (ColorScheme) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     if (isOpen) {
         AlertDialog(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    text = "颜色与个性化",
+                    text = stringResource(R.string.settings_color),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Medium
                 )
@@ -69,7 +73,7 @@ fun ColorSchemeDialog(
                             
                             Column {
                                 Text(
-                                    text = colorScheme.getDisplayName(),
+                                    text = colorScheme.getDisplayName(context),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = if (isEnabled) {
                                         MaterialTheme.colorScheme.onSurface
@@ -79,7 +83,7 @@ fun ColorSchemeDialog(
                                 )
                                 
                                 Text(
-                                    text = colorScheme.getDescription(),
+                                    text = colorScheme.getDescription(context),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = if (isEnabled) {
                                         MaterialTheme.colorScheme.onSurfaceVariant
@@ -94,12 +98,12 @@ fun ColorSchemeDialog(
             },
             confirmButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("确定")
+                    Text(stringResource(R.string.btn_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )

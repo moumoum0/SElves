@@ -1,13 +1,16 @@
 package com.selves.xnn.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.selves.xnn.R
 import com.selves.xnn.data.repository.VoteRepository
 import com.selves.xnn.model.Vote
 import com.selves.xnn.model.VoteRecord
 import com.selves.xnn.model.VoteStats
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -22,7 +25,8 @@ data class VoteUiState(
 
 @HiltViewModel
 class VoteViewModel @Inject constructor(
-    private val voteRepository: VoteRepository
+    private val voteRepository: VoteRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     
     private val TAG = "VoteViewModel"
@@ -113,10 +117,10 @@ class VoteViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isLoading = false)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "加载投票失败", e)
+                Log.e(TAG, context.getString(R.string.error_vote_load_failed), e)
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "加载投票失败: ${e.message}"
+                    error = "${context.getString(R.string.error_vote_load_failed)}: ${e.message}"
                 )
             }
         }
@@ -135,7 +139,7 @@ class VoteViewModel @Inject constructor(
     ) {
         val userId = _currentUserId.value
         if (userId == null) {
-            _uiState.value = _uiState.value.copy(error = "请先选择用户")
+            _uiState.value = _uiState.value.copy(error = context.getString(R.string.error_vote_please_select_user))
             return
         }
         
@@ -158,10 +162,10 @@ class VoteViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isCreating = false)
                 
             } catch (e: Exception) {
-                Log.e(TAG, "创建投票失败", e)
+                Log.e(TAG, context.getString(R.string.error_vote_create_failed), e)
                 _uiState.value = _uiState.value.copy(
                     isCreating = false,
-                    error = "创建投票失败: ${e.message}"
+                    error = "${context.getString(R.string.error_vote_create_failed)}: ${e.message}"
                 )
             }
         }
@@ -171,7 +175,7 @@ class VoteViewModel @Inject constructor(
     fun vote(voteId: String, optionIds: List<String>, userName: String, userAvatar: String?) {
         val userId = _currentUserId.value
         if (userId == null) {
-            _uiState.value = _uiState.value.copy(error = "请先选择用户")
+            _uiState.value = _uiState.value.copy(error = context.getString(R.string.error_vote_please_select_user))
             return
         }
         
@@ -188,16 +192,16 @@ class VoteViewModel @Inject constructor(
                 )
                 
                 if (!success) {
-                    _uiState.value = _uiState.value.copy(error = "投票失败")
+                    _uiState.value = _uiState.value.copy(error = context.getString(R.string.error_vote_failed))
                 }
                 
                 _uiState.value = _uiState.value.copy(isVoting = false)
                 
             } catch (e: Exception) {
-                Log.e(TAG, "投票失败", e)
+                Log.e(TAG, context.getString(R.string.error_vote_failed), e)
                 _uiState.value = _uiState.value.copy(
                     isVoting = false,
-                    error = "投票失败: ${e.message}"
+                    error = "${context.getString(R.string.error_vote_failed)}: ${e.message}"
                 )
             }
         }
@@ -209,9 +213,9 @@ class VoteViewModel @Inject constructor(
             try {
                 voteRepository.deleteVote(voteId)
             } catch (e: Exception) {
-                Log.e(TAG, "删除投票失败", e)
+                Log.e(TAG, context.getString(R.string.error_vote_delete_failed), e)
                 _uiState.value = _uiState.value.copy(
-                    error = "删除投票失败: ${e.message}"
+                    error = "${context.getString(R.string.error_vote_delete_failed)}: ${e.message}"
                 )
             }
         }
@@ -223,9 +227,9 @@ class VoteViewModel @Inject constructor(
             try {
                 voteRepository.endVote(voteId)
             } catch (e: Exception) {
-                Log.e(TAG, "结束投票失败", e)
+                Log.e(TAG, context.getString(R.string.error_vote_end_failed), e)
                 _uiState.value = _uiState.value.copy(
-                    error = "结束投票失败: ${e.message}"
+                    error = "${context.getString(R.string.error_vote_end_failed)}: ${e.message}"
                 )
             }
         }

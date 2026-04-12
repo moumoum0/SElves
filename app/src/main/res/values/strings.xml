@@ -1,3 +1,524 @@
 <resources>
     <string name="app_name">selves</string>
+    
+    <!-- 底部导航栏 -->
+    <string name="nav_home">首页</string>
+    <string name="nav_chat">聊天</string>
+    <string name="nav_system">系统</string>
+    
+    <!-- 通用按钮 -->
+    <string name="btn_confirm">确定</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_delete">删除</string>
+    <string name="btn_edit">编辑</string>
+    <string name="btn_add">添加</string>
+    <string name="btn_back">返回</string>
+    <string name="btn_next">下一步</string>
+    <string name="btn_start">开始</string>
+    <string name="btn_close">关闭</string>
+    <string name="btn_clear">清除</string>
+    <string name="btn_search">搜索</string>
+    <string name="btn_filter">筛选</string>
+    <string name="btn_publish">发布</string>
+    
+    <!-- 欢迎引导 -->
+    <string name="guide_welcome_title">你好</string>
+    <string name="guide_welcome_subtitle">欢迎使用 selves</string>
+    <string name="guide_welcome_description">一个为多意识体设计的交流工具</string>
+    <string name="guide_choose_title">选择你的方式</string>
+    <string name="guide_option_new_title">全新开始</string>
+    <string name="guide_option_new_subtitle">创建你的系统和第一个成员</string>
+    <string name="guide_option_import_title">导入备份</string>
+    <string name="guide_option_import_subtitle">从备份文件恢复所有数据</string>
+    <string name="guide_create_system_title">创建你的系统</string>
+    <string name="guide_create_system_subtitle">为你的系统起一个名字吧</string>
+    <string name="guide_create_member_title">添加第一个成员</string>
+    <string name="guide_create_member_subtitle">你可以之后继续添加更多成员</string>
+    <string name="guide_complete_title">一切就绪</string>
+    <string name="guide_complete_subtitle">所有信息均在本地存储</string>
+    <string name="guide_feature_add_members">添加更多成员</string>
+    <string name="guide_feature_edit_system">修改系统信息</string>
+    <string name="guide_feature_backup">备份和恢复数据</string>
+    <string name="guide_feature_customize">自定义外观和功能</string>
+    <string name="guide_note_can_modify">这些信息之后都可以修改</string>
+    <string name="guide_note_add_more_later">之后可以在设置中添加更多成员</string>
+    <string name="guide_note_you_can_always">你随时可以</string>
+    <string name="guide_btn_enter_app">进入应用</string>
+    <string name="guide_importing_backup">正在导入备份</string>
+    <string name="guide_import_failed">导入失败</string>
+    
+    <!-- 系统管理 -->
+    <string name="system_title">系统</string>
+    <string name="system_name">系统名称</string>
+    <string name="system_description">系统描述</string>
+    <string name="system_create">创建系统</string>
+    <string name="system_edit">编辑系统</string>
+    <string name="system_settings">系统设置</string>
+    <string name="system_info">系统信息</string>
+    <string name="system_members">系统成员</string>
+    <string name="system_member_count">成员数量</string>
+    <string name="system_created_at">创建时间</string>
+    
+    <!-- 成员管理 -->
+    <string name="member_title">成员</string>
+    <string name="member_name">成员名称</string>
+    <string name="member_pronouns">代词</string>
+    <string name="member_role">角色</string>
+    <string name="member_description">成员描述</string>
+    <string name="member_avatar">头像</string>
+    <string name="member_color">颜色</string>
+    <string name="member_create">创建成员</string>
+    <string name="member_edit">编辑成员</string>
+    <string name="member_delete">删除成员</string>
+    <string name="member_select">选择成员</string>
+    <string name="member_switch">切换成员</string>
+    <string name="member_current">当前成员</string>
+    <string name="member_management">成员管理</string>
+    <string name="member_quick_switch">快捷切换成员</string>
+    <string name="member_quick_switch_desc">在投票和聊天界面显示快捷成员切换</string>
+    
+    <!-- 聊天 -->
+    <string name="chat_title">聊天</string>
+    <string name="chat_input_hint">输入消息...</string>
+    <string name="chat_send">发送</string>
+    <string name="chat_image">图片</string>
+    <string name="chat_group">群组</string>
+    <string name="chat_group_create">创建群组</string>
+    <string name="chat_group_edit">编辑群组</string>
+    <string name="chat_group_name">群组名称</string>
+    <string name="chat_group_members">群组成员</string>
+    <string name="chat_group_management">群组管理</string>
+    <string name="chat_no_messages">暂无消息</string>
+    <string name="chat_search_hint">搜索聊天...</string>
+    
+    <!-- 投票 -->
+    <string name="vote_title">投票</string>
+    <string name="vote_create">创建投票</string>
+    <string name="vote_edit">编辑投票</string>
+    <string name="vote_delete">删除投票</string>
+    <string name="vote_info">投票信息</string>
+    <string name="vote_info_subtitle">填写投票的基本信息</string>
+    <string name="vote_title_label">投票标题</string>
+    <string name="vote_description">投票描述</string>
+    <string name="vote_options">投票选项</string>
+    <string name="vote_options_subtitle">至少添加2个选项</string>
+    <string name="vote_option_label">选项 %1$d</string>
+    <string name="vote_add_option">添加选项</string>
+    <string name="vote_delete_option">删除选项</string>
+    <string name="vote_settings">投票设置</string>
+    <string name="vote_settings_subtitle">配置投票的附加选项</string>
+    <string name="vote_allow_multiple">允许多选</string>
+    <string name="vote_allow_multiple_desc">允许用户选择多个选项</string>
+    <string name="vote_anonymous">匿名投票</string>
+    <string name="vote_anonymous_desc">投票结果不显示投票者</string>
+    <string name="vote_end_time">投票截止时间</string>
+    <string name="vote_end_time_none">不限制</string>
+    <string name="vote_end_time_format">截止: %1$s</string>
+    <string name="vote_status_active">进行中</string>
+    <string name="vote_status_ended">已结束</string>
+    <string name="vote_search_hint">搜索投票...</string>
+    <string name="vote_no_votes">暂无投票</string>
+    <string name="vote_select_time">选择时间</string>
+    <string name="vote_results">投票结果</string>
+    <string name="vote_total_votes">总票数: %1$d</string>
+    
+    <!-- 待办 -->
+    <string name="todo_title">待办</string>
+    <string name="todo_create">创建待办</string>
+    <string name="todo_edit">编辑待办</string>
+    <string name="todo_delete">删除待办</string>
+    <string name="todo_content">待办内容</string>
+    <string name="todo_due_date">截止日期</string>
+    <string name="todo_priority">优先级</string>
+    <string name="todo_priority_high">高</string>
+    <string name="todo_priority_medium">中</string>
+    <string name="todo_priority_low">低</string>
+    <string name="todo_status">状态</string>
+    <string name="todo_status_pending">待完成</string>
+    <string name="todo_status_completed">已完成</string>
+    <string name="todo_no_todos">暂无待办</string>
+    <string name="todo_mark_complete">标记完成</string>
+    <string name="todo_mark_incomplete">标记未完成</string>
+    
+    <!-- 动态 -->
+    <string name="dynamic_title">动态</string>
+    <string name="dynamic_create">创建动态</string>
+    <string name="dynamic_edit">编辑动态</string>
+    <string name="dynamic_delete">删除动态</string>
+    <string name="dynamic_content">动态内容</string>
+    <string name="dynamic_latest">最新动态</string>
+    <string name="dynamic_no_dynamics">暂无动态</string>
+    
+    <!-- 位置追踪 -->
+    <string name="location_title">轨迹记录</string>
+    <string name="location_tracking">位置追踪</string>
+    <string name="location_start">开始记录</string>
+    <string name="location_stop">停止记录</string>
+    <string name="location_history">历史记录</string>
+    <string name="location_config">追踪设置</string>
+    <string name="location_no_records">暂无记录</string>
+    
+    <!-- 在线统计 -->
+    <string name="online_stats_title">在线统计</string>
+    <string name="online_stats_today">今日在线</string>
+    <string name="online_stats_week">本周在线</string>
+    <string name="online_stats_month">本月在线</string>
+    <string name="online_stats_total">总在线时长</string>
+    <string name="online_stats_member">成员统计</string>
+    
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_general">通用</string>
+    <string name="settings_language">语言</string>
+    <string name="settings_language_zh">简体中文</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_theme">深色模式</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色模式</string>
+    <string name="settings_theme_dark">深色模式</string>
+    <string name="settings_color">颜色与个性化</string>
+    <string name="settings_color_default">应用默认</string>
+    <string name="settings_color_default_desc">使用应用默认配色方案</string>
+    <string name="settings_color_wallpaper">壁纸取色</string>
+    <string name="settings_color_wallpaper_desc">根据系统壁纸自动调整配色 (Android 12+)</string>
+    <string name="settings_color_cloud_field">云野</string>
+    <string name="settings_color_cloud_field_desc">云野 - 自然清新的绿色主题</string>
+    <string name="settings_data_backup">数据与备份</string>
+    <string name="settings_backup_auto">定时备份</string>
+    <string name="settings_backup_auto_desc">设置自动备份频率和时间</string>
+    <string name="settings_backup_export">导出备份</string>
+    <string name="settings_backup_export_desc">备份应用数据到文件</string>
+    <string name="settings_backup_import">导入备份</string>
+    <string name="settings_backup_import_desc">从文件恢复应用数据</string>
+    <string name="settings_backup_progress">正在备份</string>
+    <string name="settings_backup_complete">备份完成</string>
+    <string name="settings_backup_success">备份导出成功</string>
+    <string name="settings_backup_failed">导出失败: %1$s</string>
+    <string name="settings_import_success">备份导入成功</string>
+    <string name="settings_import_failed">导入失败: %1$s</string>
+    <string name="settings_import_warning_title">导入备份警告</string>
+    <string name="settings_import_warning_message">导入备份将覆盖当前所有数据,此操作不可撤销。是否继续?</string>
+    <string name="settings_other">其他</string>
+    <string name="settings_about">关于</string>
+    <string name="settings_about_desc">应用信息和版本</string>
+    
+    <!-- 关于 -->
+    <string name="about_title">关于</string>
+    <string name="about_version">版本</string>
+    <string name="about_description">一个为多意识体设计的本地交流工具</string>
+    <string name="about_features">功能特性</string>
+    <string name="about_privacy">隐私保护</string>
+    <string name="about_privacy_desc">所有数据均存储在本地,不会上传到任何服务器</string>
+    
+    <!-- 首页模块 -->
+    <string name="home_title">首页</string>
+    <string name="home_module_functions">功能模块</string>
+    <string name="home_module_location">轨迹记录</string>
+    <string name="home_module_todo">待办事项</string>
+    <string name="home_module_dynamic">最新动态</string>
+    <string name="home_module_vote">投票活动</string>
+    <string name="home_edit_layout">编辑首页布局</string>
+    <string name="home_edit_layout_desc">点击切换模块显示/隐藏</string>
+    <string name="home_manage_functions">管理功能模块</string>
+    
+    <!-- 内容描述 -->
+    <string name="cd_back">返回</string>
+    <string name="cd_search">搜索</string>
+    <string name="cd_close">关闭</string>
+    <string name="cd_clear">清除</string>
+    <string name="cd_delete">删除</string>
+    <string name="cd_edit">编辑</string>
+    <string name="cd_add">添加</string>
+    <string name="cd_menu">菜单</string>
+    <string name="cd_settings">设置</string>
+    <string name="cd_avatar">头像</string>
+    <string name="cd_image">图片</string>
+    <string name="cd_send">发送</string>
+    <string name="cd_attach">附加</string>
+    
+    <!-- 错误和提示 -->
+    <string name="error_network">网络错误</string>
+    <string name="error_unknown">未知错误</string>
+    <string name="error_empty_field">此字段不能为空</string>
+    <string name="msg_loading">加载中...</string>
+    <string name="msg_no_data">暂无数据</string>
+    <string name="msg_operation_success">操作成功</string>
+    <string name="msg_operation_failed">操作失败</string>
+    
+    <!-- 日期时间 -->
+    <string name="date_today">今天</string>
+    <string name="date_yesterday">昨天</string>
+    <string name="date_tomorrow">明天</string>
+    <string name="time_hour">小时</string>
+    <string name="time_minute">分钟</string>
+    <string name="time_second">秒</string>
+    
+    <!-- 首页编辑模式 -->
+    <string name="home_edit_mode">编辑模式</string>
+    <string name="home_edit_mode_exit">完成</string>
+    <string name="home_module_functions_edit">编辑</string>
+    <string name="home_module_todo_empty">暂无待办</string>
+    <string name="home_module_todo_create">点击创建待办事项</string>
+    <string name="home_module_todo_more">还有 %1$d 项待办</string>
+    <string name="home_module_todo_hide">隐藏</string>
+    <string name="home_module_location_hide">隐藏</string>
+    <string name="home_module_location_more">查看更多</string>
+    <string name="home_module_dynamic_empty">暂无动态</string>
+    <string name="home_module_dynamic_create">点击创建动态</string>
+    <string name="home_module_dynamic_more">查看更多</string>
+    <string name="home_module_dynamic_hide">隐藏</string>
+    <string name="home_module_vote_empty">暂无投票</string>
+    <string name="home_module_vote_create">点击创建投票</string>
+    <string name="home_module_vote_more">查看更多</string>
+    <string name="home_module_vote_hide">隐藏</string>
+    <string name="dynamic_title_empty">无标题</string>
+    <string name="dynamic_author">作者: %1$s</string>
+    <string name="todo_priority_normal">普通</string>
+    <string name="location_tracking_status_recording">记录中</string>
+    <string name="location_tracking_status_stopped">已停止</string>
+    <string name="location_tracking_status_unknown">未知</string>
+    <string name="location_tracking_today">今日</string>
+    <string name="location_tracking_total">总计</string>
+    <string name="location_tracking_last">最近</string>
+    <string name="vote_end_time_days">%1$d天后结束</string>
+    <string name="vote_end_time_hours">%1$d小时后结束</string>
+    <string name="vote_end_time_minutes">%1$d分钟后结束</string>
+    <string name="vote_end_time_soon">即将结束</string>
+    <string name="vote_end_time_unknown">无截止时间</string>
+    
+    <!-- 投票错误消息 -->
+    <string name="error_vote_load_failed">加载投票失败</string>
+    <string name="error_vote_please_select_user">请先选择用户</string>
+    <string name="error_vote_create_failed">创建投票失败</string>
+    <string name="error_vote_failed">投票失败</string>
+    <string name="error_vote_delete_failed">删除投票失败</string>
+    <string name="error_vote_end_failed">结束投票失败</string>
+    
+    <!-- 待办错误消息 -->
+    <string name="error_todo_load_failed">加载待办事项失败</string>
+    <string name="error_todo_create_failed">创建待办事项失败</string>
+    <string name="error_todo_update_status_failed">更新待办事项状态失败</string>
+    <string name="error_todo_update_failed">更新待办事项失败</string>
+    <string name="error_todo_delete_failed">删除待办事项失败</string>
+    <string name="error_todo_get_member_failed">获取成员信息失败</string>
+    <string name="error_todo_viewmodel_exception">TodoViewModel异常</string>
+    
+    <!-- 动态错误消息 -->
+    <string name="error_dynamic_load_failed">加载动态失败</string>
+    <string name="error_dynamic_create_failed">创建动态失败</string>
+    <string name="error_dynamic_delete_failed">删除动态失败</string>
+    <string name="error_dynamic_operation_failed">操作失败</string>
+    <string name="error_dynamic_add_comment_failed">添加评论失败</string>
+    <string name="error_dynamic_delete_comment_failed">删除评论失败</string>
+    
+    <!-- 系统错误消息 -->
+    <string name="error_system_coroutine_cancelled">协程被取消</string>
+    <string name="error_system_coroutine_exception">协程异常</string>
+    <string name="error_system_operation_failed">系统操作失败</string>
+    <string name="error_system_load_stream_cancelled">加载系统流被取消</string>
+    <string name="error_system_load_failed">加载系统失败</string>
+    <string name="msg_system_loaded">当前系统已加载</string>
+    <string name="msg_system_created">系统已创建</string>
+    <string name="error_system_create_failed">创建系统失败</string>
+    <string name="msg_system_updated">系统已更新</string>
+    <string name="error_system_update_failed">更新系统失败</string>
+    <string name="error_system_check_exists_failed">检查系统存在性失败</string>
+    
+    <!-- 地图导航 -->
+    <string name="error_map_open_failed">无法打开地图应用</string>
+    
+    <!-- 群聊 -->
+    <string name="group_chat_empty">暂无群聊，请点击右下角创建</string>
+    <string name="cd_create_group">创建群聊</string>
+    <string name="group_no_message">暂无消息</string>
+    
+    <!-- 成员管理 -->
+    <string name="member_no_match">没有找到匹配的成员</string>
+    
+    <!-- 投票屏幕 -->
+    <string name="vote_create_first">点击右下角按钮创建第一个投票</string>
+    <string name="vote_more_options">还有 %1$d 个选项</string>
+    <string name="vote_participants">%1$d 人参与</string>
+    <string name="vote_you_participated">您已参与投票</string>
+    <string name="vote_status_active_text">进行中</string>
+    <string name="vote_status_ended_text">已结束</string>
+    <string name="vote_no_active">暂无进行中的投票</string>
+    <string name="vote_no_ended">暂无已结束的投票</string>
+    <string name="vote_count">%1$d 票</string>
+    
+    <!-- 投票详情屏幕 -->
+    <string name="vote_detail_title">投票详情</string>
+    <string name="vote_detail_total_votes">%1$d 票</string>
+    <string name="vote_detail_deadline">截止 %1$s</string>
+    <string name="vote_detail_options_title">投票选项</string>
+    <string name="vote_detail_records_title">投票记录 (%1$d)</string>
+    <string name="vote_detail_no_records">暂无投票记录</string>
+    
+    <!-- 待办事项屏幕 -->
+    <string name="todo_screen_title">待办事项</string>
+    <string name="todo_empty">暂无待办</string>
+    <string name="todo_create_first">点击右下角按钮创建第一个待办</string>
+    <string name="todo_pending_count">待办事项 (%1$d)</string>
+    <string name="todo_completed_count">已完成 (%1$d)</string>
+    <string name="todo_detail_title">待办事项详情</string>
+    <string name="todo_detail_priority">优先级：</string>
+    <string name="todo_detail_status">状态：</string>
+    <string name="todo_detail_creator">创建人：</string>
+    <string name="todo_detail_created_time">创建时间：%1$s</string>
+    <string name="todo_detail_completed_time">完成时间：%1$s</string>
+    
+    <!-- 系统屏幕 -->
+    <string name="system_management">系统管理</string>
+    <string name="system_other">其它</string>
+    
+    <!-- 通用内容描述 -->
+    <string name="cd_delete">删除</string>
+    <string name="cd_author_avatar">作者头像</string>
+    <string name="cd_end_vote">结束投票</string>
+    <string name="cd_voter_avatar">投票者头像</string>
+    <string name="cd_expand">展开</string>
+    <string name="cd_collapse">收起</string>
+    
+    <!-- 投票详情 -->
+    <string name="vote_action">投票</string>
+    <string name="vote_not_found">投票不存在或已被删除</string>
+    <string name="vote_multiple_choice">多选</string>
+    <string name="vote_anonymous">匿名</string>
+    <string name="vote_option_votes">%1$d 票</string>
+    
+    <!-- 待办事项统计 -->
+    <string name="todo_stats_total">总计</string>
+    <string name="todo_stats_pending">待办</string>
+    <string name="todo_stats_completed">已完成</string>
+    <string name="todo_stats_high_priority">高优先级</string>
+    
+    <!-- 待办事项操作 -->
+    <string name="todo_action_create">创建待办事项</string>
+    <string name="todo_action_edit">编辑</string>
+    <string name="todo_action_delete">删除</string>
+    <string name="todo_action_mark_complete">标记为完成</string>
+    <string name="todo_action_mark_pending">标记为待办</string>
+    
+    <!-- 待办事项优先级 -->
+    <string name="todo_priority_high">紧急</string>
+    <string name="todo_priority_low">不急</string>
+    <string name="todo_priority_normal">普通</string>
+    
+    <!-- 待办事项时间 -->
+    <string name="todo_time_completed">完成于 %1$s</string>
+    <string name="todo_time_created">创建于 %1$s</string>
+    
+    <!-- 待办事项状态 -->
+    <string name="todo_status_completed">已完成</string>
+    <string name="todo_status_pending">待办</string>
+    
+    <!-- 待办事项详情其它 -->
+    <string name="todo_close">关闭</string>
+    <string name="cd_creator_avatar">创建者头像</string>
+    
+    <!-- 系统管理 -->
+    <string name="system_edit">系统编辑</string>
+    <string name="system_edit_subtitle">修改系统名称和头像</string>
+    <string name="system_member_management">成员管理</string>
+    <string name="system_member_management_subtitle">管理系统成员</string>
+    <string name="system_online_stats">在线统计</string>
+    <string name="system_online_stats_subtitle">查看成员活跃度和在线时间</string>
+    <string name="system_settings">设置</string>
+    <string name="system_settings_subtitle">应用设置和偏好</string>
+    <string name="cd_system_avatar">系统头像</string>
+    
+    <!-- 成员管理 -->
+    <string name="member_management_title">成员管理</string>
+    <string name="member_current">当前</string>
+    
+    <!-- 聊天 -->
+    <string name="chat_image_load_failed">图片加载失败</string>
+    <string name="chat_image_unavailable">图片不可用</string>
+    <string name="chat_send_image">发送图片</string>
+    <string name="chat_input_message">输入消息</string>
+    <string name="chat_send">发送</string>
+    <string name="chat_unknown_member">未知成员</string>
+    <string name="chat_sender_avatar">发送者头像</string>
+    <string name="chat_current_member_avatar">当前成员头像</string>
+    <string name="chat_message_image">消息图片</string>
+    <string name="chat_copy">复制</string>
+    <string name="chat_delete">删除</string>
+    <string name="chat_more_options">更多选项</string>
+    
+    <!-- 动态 -->
+    <string name="dynamic_empty">暂无动态</string>
+    <string name="dynamic_create_first">点击右下角按钮发布第一条动态</string>
+    <string name="dynamic_title">动态</string>
+    <string name="dynamic_create">创建动态</string>
+    <string name="dynamic_search">搜索动态...</string>
+    <string name="dynamic_search_action">搜索</string>
+    <string name="dynamic_filter">过滤</string>
+    <string name="dynamic_close_search">关闭搜索</string>
+    <string name="dynamic_author_avatar">作者头像</string>
+    <string name="dynamic_like">点赞</string>
+    <string name="dynamic_comment">评论</string>
+    
+    <!-- 在线统计 -->
+    <string name="online_stats_title">在线统计</string>
+    <string name="online_stats_today">今日在线: %1$s</string>
+    <string name="online_stats_login_title">登录统计</string>
+    <string name="online_stats_avg_today">今日平均在线时长: %1$s</string>
+    <string name="online_stats_login">登录: %1$s</string>
+    <string name="online_stats_online">在线中</string>
+    <string name="online_stats_logout">登出: %1$s • 时长: %2$s</string>
+    <string name="online_stats_no_logs">暂无登录日志</string>
+    <string name="online_stats_today_duration">今日在线时长</string>
+    
+    <!-- 关于 -->
+    <string name="about_title">关于</string>
+    <string name="about_version">版本 %1$s</string>
+    <string name="about_developer">开发者</string>
+    <string name="about_third_party">使用的第三方库</string>
+    <string name="about_thanks">感谢所有开源项目的贡献者</string>
+    <string name="about_library_version">版本 %1$s</string>
+    
+    <!-- 对话框通用 -->
+    <string name="dialog_delete_member">删除成员</string>
+    <string name="dialog_delete_member_confirm">确定要删除成员「%1$s」吗？此操作不可撤销。</string>
+    <string name="dialog_group_name">群聊名称</string>
+    <string name="dialog_group_name_empty">群聊名称不能为空</string>
+    <string name="dialog_select_map">选择地图应用</string>
+    <string name="dialog_no_map_app">未检测到已安装的地图应用</string>
+    <string name="dialog_remove">移除</string>
+    
+    <!-- 群聊管理 -->
+    <string name="group_management">群聊管理</string>
+    <string name="group_add_members">添加成员</string>
+    <string name="group_add_members_desc">邀请新成员加入群聊</string>
+    <string name="group_remove_members">移除成员</string>
+    <string name="group_remove_members_desc">将成员移出群聊</string>
+    <string name="group_edit_info">修改群聊信息</string>
+    <string name="group_edit_info_desc">更改群聊的名称和头像</string>
+    <string name="group_dismiss">解散群聊</string>
+    <string name="group_dismiss_desc">永久删除此群聊</string>
+    <string name="group_no_members_to_add">没有可添加的成员</string>
+    <string name="group_no_members_to_remove">没有可移除的成员</string>
+    <string name="group_avatar">群聊头像</string>
+    <string name="group_name">群聊名称</string>
+    <string name="group_name_error">群聊名称不能为空</string>
+    <string name="group_dismiss_confirm">确定要解散群聊「%1$s」吗？此操作无法撤销，所有聊天记录将被永久删除。</string>
+    <string name="group_dismiss_action">解散</string>
+    <string name="change_avatar">更换头像</string>
+    
+    <!-- 在线统计 -->
+    <string name="online_stats_total_members">总成员</string>
+    <string name="online_stats_active">活跃</string>
+    <string name="online_stats_online">在线</string>
+    <string name="online_stats_today_prefix">今日在线:</string>
+    <string name="online_stats_last_active_prefix">最后活跃:</string>
+    <string name="online_stats_never_online">未在线</string>
+    <string name="online_stats_minutes">分钟</string>
+    <string name="online_stats_hours">小时</string>
+    <string name="online_stats_days">天</string>
+    
+    <!-- 成员选择对话框 -->
+    <string name="member_select_title">选择群成员</string>
+    <string name="member_select_creator_note">创建者将自动成为群主</string>
+    <string name="member_group_owner">群主</string>
 </resources>

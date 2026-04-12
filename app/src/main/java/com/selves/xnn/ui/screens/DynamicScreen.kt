@@ -23,7 +23,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.selves.xnn.R
 import com.selves.xnn.model.Dynamic
 import com.selves.xnn.model.DynamicType
 import com.selves.xnn.model.Member
@@ -79,7 +81,7 @@ fun DynamicScreen(
             FloatingActionButton(
                 onClick = onNavigateToCreateDynamic
             ) {
-                Icon(Icons.Default.Add, contentDescription = "创建动态")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.dynamic_create))
             }
         }
     ) { paddingValues ->
@@ -136,13 +138,13 @@ fun DynamicScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "暂无动态",
+                                        text = stringResource(R.string.dynamic_empty),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 16.sp
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text(
-                                        text = "点击右下角按钮发布第一条动态",
+                                        text = stringResource(R.string.dynamic_create_first),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                         fontSize = 14.sp
                                     )
@@ -215,7 +217,7 @@ fun DynamicTopBar(
                             ) + fadeOut(animationSpec = tween(300))
                         ) {
                             Text(
-                                text = "动态",
+                                text = stringResource(R.string.dynamic_title),
                                 fontWeight = FontWeight.Normal
                             )
                         }
@@ -235,9 +237,9 @@ fun DynamicTopBar(
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = onSearchChange,
-                                placeholder = { Text("搜索动态...") },
+                                placeholder = { Text(stringResource(R.string.dynamic_search)) },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Search, contentDescription = "搜索")
+                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.dynamic_search_action))
                                 },
                                 trailingIcon = {
                                     Row {
@@ -260,7 +262,7 @@ fun DynamicTopBar(
                                                     DynamicType.TEXT -> Icons.Default.TextFormat
                                                     else -> Icons.Default.FilterList
                                                 },
-                                                contentDescription = "过滤",
+                                                contentDescription = stringResource(R.string.dynamic_filter),
                                                 tint = if (filterType != null) MaterialTheme.colorScheme.primary 
                                                        else MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -268,7 +270,7 @@ fun DynamicTopBar(
                                         
                                         // 关闭搜索按钮
                                         IconButton(onClick = onSearchClose) {
-                                            Icon(Icons.Default.Close, contentDescription = "关闭搜索")
+                                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.dynamic_close_search))
                                         }
                                     }
                                 },
@@ -284,7 +286,7 @@ fun DynamicTopBar(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -295,7 +297,7 @@ fun DynamicTopBar(
                         exit = fadeOut(animationSpec = tween(300))
                     ) {
                         IconButton(onClick = onSearchClick) {
-                            Icon(Icons.Default.Search, contentDescription = "搜索")
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.dynamic_search_action))
                         }
                     }
                 },
@@ -340,7 +342,7 @@ fun DynamicCard(
                 ) {
                     AvatarImage(
                         avatarUrl = dynamic.authorAvatar,
-                        contentDescription = "作者头像",
+                        contentDescription = stringResource(R.string.dynamic_author_avatar),
                         size = 40.dp
                     )
                     
@@ -365,7 +367,7 @@ fun DynamicCard(
                     IconButton(onClick = onDeleteClick) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "删除",
+                            contentDescription = stringResource(R.string.cd_delete),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -435,7 +437,7 @@ fun DynamicCard(
                     ) {
                         Icon(
                             imageVector = if (dynamic.isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "点赞",
+                            contentDescription = stringResource(R.string.dynamic_like),
                             tint = if (dynamic.isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -454,7 +456,7 @@ fun DynamicCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Comment,
-                            contentDescription = "评论",
+                            contentDescription = stringResource(R.string.dynamic_comment),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )

@@ -1,14 +1,17 @@
 package com.selves.xnn.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.selves.xnn.R
 import com.selves.xnn.data.repository.TodoRepository
 import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.model.Todo
 import com.selves.xnn.model.TodoPriority
 import com.selves.xnn.model.Member
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
@@ -17,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class TodoViewModel @Inject constructor(
     private val todoRepository: TodoRepository,
-    private val memberRepository: MemberRepository
+    private val memberRepository: MemberRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
     
     private val TAG = "TodoViewModel"
@@ -62,7 +66,7 @@ class TodoViewModel @Inject constructor(
     
     // 异常处理
     private val exceptionHandler = kotlinx.coroutines.CoroutineExceptionHandler { _, exception ->
-        Log.e(TAG, "TodoViewModel异常: ${exception.message}", exception)
+        Log.e(TAG, context.getString(R.string.error_todo_viewmodel_exception) + ": ${exception.message}", exception)
         _error.value = exception.message
         _isLoading.value = false
     }
@@ -94,8 +98,8 @@ class TodoViewModel @Inject constructor(
                     _isLoading.value = false
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "加载待办事项失败: ${e.message}", e)
-                _error.value = "加载待办事项失败: ${e.message}"
+                Log.e(TAG, context.getString(R.string.error_todo_load_failed) + ": ${e.message}", e)
+                _error.value = "${context.getString(R.string.error_todo_load_failed)}: ${e.message}"
                 _isLoading.value = false
             }
         }
@@ -123,8 +127,8 @@ class TodoViewModel @Inject constructor(
                 
                 todoRepository.saveTodo(todo)
             } catch (e: Exception) {
-                Log.e(TAG, "创建待办事项失败: ${e.message}", e)
-                _error.value = "创建待办事项失败: ${e.message}"
+                Log.e(TAG, context.getString(R.string.error_todo_create_failed) + ": ${e.message}", e)
+                _error.value = "${context.getString(R.string.error_todo_create_failed)}: ${e.message}"
             }
         }
     }
@@ -137,8 +141,8 @@ class TodoViewModel @Inject constructor(
             try {
                 todoRepository.updateTodoStatus(todoId, isCompleted)
             } catch (e: Exception) {
-                Log.e(TAG, "更新待办事项状态失败: ${e.message}", e)
-                _error.value = "更新待办事项状态失败: ${e.message}"
+                Log.e(TAG, context.getString(R.string.error_todo_update_status_failed) + ": ${e.message}", e)
+                _error.value = "${context.getString(R.string.error_todo_update_status_failed)}: ${e.message}"
             }
         }
     }
@@ -151,8 +155,8 @@ class TodoViewModel @Inject constructor(
             try {
                 todoRepository.updateTodo(todo)
             } catch (e: Exception) {
-                Log.e(TAG, "更新待办事项失败: ${e.message}", e)
-                _error.value = "更新待办事项失败: ${e.message}"
+                Log.e(TAG, context.getString(R.string.error_todo_update_failed) + ": ${e.message}", e)
+                _error.value = "${context.getString(R.string.error_todo_update_failed)}: ${e.message}"
             }
         }
     }
@@ -165,8 +169,8 @@ class TodoViewModel @Inject constructor(
             try {
                 todoRepository.deleteTodoById(todoId)
             } catch (e: Exception) {
-                Log.e(TAG, "删除待办事项失败: ${e.message}", e)
-                _error.value = "删除待办事项失败: ${e.message}"
+                Log.e(TAG, context.getString(R.string.error_todo_delete_failed) + ": ${e.message}", e)
+                _error.value = "${context.getString(R.string.error_todo_delete_failed)}: ${e.message}"
             }
         }
     }
@@ -192,7 +196,7 @@ class TodoViewModel @Inject constructor(
         return try {
             memberRepository.getMemberByIdIncludingDeleted(memberId)
         } catch (e: Exception) {
-            Log.e(TAG, "获取成员信息失败: ${e.message}", e)
+            Log.e(TAG, context.getString(R.string.error_todo_get_member_failed) + ": ${e.message}", e)
             null
         }
     }

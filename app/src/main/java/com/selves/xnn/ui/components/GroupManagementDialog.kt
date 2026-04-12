@@ -22,11 +22,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.canhub.cropper.CropImageContract
+import com.selves.xnn.R
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Member
 import com.selves.xnn.util.ImageUtils
@@ -109,7 +111,7 @@ fun GroupManagementDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "群聊管理",
+                    text = stringResource(R.string.group_management),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -117,16 +119,16 @@ fun GroupManagementDialog(
                 // 管理选项列表
                 ManagementOption(
                     icon = Icons.Default.GroupAdd,
-                    title = "添加成员",
-                    subtitle = "邀请新成员加入群聊",
+                    title = stringResource(R.string.group_add_members),
+                    subtitle = stringResource(R.string.group_add_members_desc),
                     onClick = { showAddMemberDialog = true }
                 )
 
                 if (isOwner) {
                     ManagementOption(
                         icon = Icons.Default.PersonRemove,
-                        title = "移除成员",
-                        subtitle = "将成员移出群聊",
+                        title = stringResource(R.string.group_remove_members),
+                        subtitle = stringResource(R.string.group_remove_members_desc),
                         onClick = { showRemoveMemberDialog = true }
                     )
                 }
@@ -134,8 +136,8 @@ fun GroupManagementDialog(
                 if (isOwner) {
                     ManagementOption(
                         icon = Icons.Default.Edit,
-                        title = "修改群聊信息",
-                        subtitle = "更改群聊的名称和头像",
+                        title = stringResource(R.string.group_edit_info),
+                        subtitle = stringResource(R.string.group_edit_info_desc),
                         onClick = { showEditInfoDialog = true }
                     )
                 }
@@ -143,8 +145,8 @@ fun GroupManagementDialog(
                 if (isOwner) {
                     ManagementOption(
                         icon = Icons.Default.Delete,
-                        title = "解散群聊",
-                        subtitle = "永久删除此群聊",
+                        title = stringResource(R.string.group_dismiss),
+                        subtitle = stringResource(R.string.group_dismiss_desc),
                         onClick = { showDeleteConfirmDialog = true },
                         isDestructive = true
                     )
@@ -157,7 +159,7 @@ fun GroupManagementDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("关闭")
+                        Text(stringResource(R.string.btn_close))
                     }
                 }
             }
@@ -255,14 +257,14 @@ fun AddMemberDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "添加成员",
+                    text = stringResource(R.string.group_add_members),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 if (availableMembers.isEmpty()) {
                     Text(
-                        text = "没有可添加的成员",
+                        text = stringResource(R.string.group_no_members_to_add),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -302,7 +304,7 @@ fun AddMemberDialog(
                                 
                                 AvatarImage(
                                     avatarUrl = member.avatarUrl,
-                                    contentDescription = "成员头像",
+                                    contentDescription = stringResource(R.string.member_avatar),
                                     size = 40.dp
                                 )
                                 
@@ -325,7 +327,7 @@ fun AddMemberDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -334,7 +336,7 @@ fun AddMemberDialog(
                         },
                         enabled = selectedMembers.isNotEmpty()
                     ) {
-                        Text("确定")
+                        Text(stringResource(R.string.btn_confirm))
                     }
                 }
             }
@@ -370,13 +372,13 @@ fun RemoveMemberDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "移除成员",
+                    text = stringResource(R.string.group_remove_members),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
                 Text(
-                    text = "选择要移除的成员",
+                    text = stringResource(R.string.group_remove_members_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -384,7 +386,7 @@ fun RemoveMemberDialog(
 
                 if (removableMembers.isEmpty()) {
                     Text(
-                        text = "没有可移除的成员",
+                        text = stringResource(R.string.group_no_members_to_remove),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -424,7 +426,7 @@ fun RemoveMemberDialog(
                                 
                                 AvatarImage(
                                     avatarUrl = member.avatarUrl,
-                                    contentDescription = "成员头像",
+                                    contentDescription = stringResource(R.string.member_avatar),
                                     size = 40.dp
                                 )
                                 
@@ -447,7 +449,7 @@ fun RemoveMemberDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -459,7 +461,7 @@ fun RemoveMemberDialog(
                             containerColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("移除")
+                        Text(stringResource(R.string.dialog_remove))
                     }
                 }
             }
@@ -505,7 +507,7 @@ fun EditGroupInfoDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "修改群聊信息",
+                    text = stringResource(R.string.group_edit_info),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -538,7 +540,7 @@ fun EditGroupInfoDialog(
                         if (newAvatarUrl != null) {
                             AvatarImage(
                                 avatarUrl = newAvatarUrl,
-                                contentDescription = "群聊头像",
+                                contentDescription = stringResource(R.string.group_avatar),
                                 size = 80.dp
                             )
                         } else {
@@ -553,7 +555,7 @@ fun EditGroupInfoDialog(
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.CameraAlt,
-                                    contentDescription = "更换头像",
+                                    contentDescription = stringResource(R.string.change_avatar),
                                     tint = MaterialTheme.colorScheme.surface,
                                     modifier = Modifier.size(32.dp)
                                 )
@@ -564,7 +566,7 @@ fun EditGroupInfoDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "点击更换群聊头像",
+                        text = stringResource(R.string.change_avatar),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -578,10 +580,10 @@ fun EditGroupInfoDialog(
                         newName = it
                         showError = false
                     },
-                    label = { Text("群聊名称") },
+                    label = { Text(stringResource(R.string.group_name)) },
                     isError = showError,
                     supportingText = if (showError) {
-                        { Text("群聊名称不能为空") }
+                        { Text(stringResource(R.string.group_name_error)) }
                     } else null,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -593,7 +595,7 @@ fun EditGroupInfoDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -605,7 +607,7 @@ fun EditGroupInfoDialog(
                             }
                         }
                     ) {
-                        Text("确定")
+                        Text(stringResource(R.string.btn_confirm))
                     }
                 }
             }
@@ -623,13 +625,13 @@ fun DeleteGroupConfirmDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "解散群聊",
+                text = stringResource(R.string.group_dismiss),
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Text(
-                text = "确定要解散群聊「$groupName」吗？此操作无法撤销，所有聊天记录将被永久删除。",
+                text = stringResource(R.string.group_dismiss_confirm, groupName),
                 style = MaterialTheme.typography.bodyMedium
             )
         },
@@ -640,13 +642,13 @@ fun DeleteGroupConfirmDialog(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("解散")
+                Text(stringResource(R.string.group_dismiss_action))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )
-} 
+}

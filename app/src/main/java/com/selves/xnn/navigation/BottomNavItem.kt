@@ -1,31 +1,33 @@
 package com.selves.xnn.navigation
 
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.selves.xnn.R
 
 sealed class BottomNavItem(
     val route: String,
-    val title: String,
+    @StringRes val titleResId: Int,
     val icon: ImageVector
 ) {
     object Home : BottomNavItem(
         route = "home",
-        title = "首页",
+        titleResId = R.string.nav_home,
         icon = Icons.Default.Home
     )
     
     object Chat : BottomNavItem(
         route = "chat",
-        title = "聊天",
+        titleResId = R.string.nav_chat,
         icon = Icons.Default.Chat
     )
     
     object Settings : BottomNavItem(
         route = "system",
-        title = "系统",
+        titleResId = R.string.nav_system,
         icon = Icons.Default.AccountTree
     )
     

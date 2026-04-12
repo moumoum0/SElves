@@ -31,8 +31,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import com.selves.xnn.R
 import com.selves.xnn.model.Todo
 import com.selves.xnn.model.TodoPriority
 import com.selves.xnn.model.Member
@@ -93,7 +95,7 @@ fun TodoScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "待办事项",
+                        text = stringResource(R.string.todo_screen_title),
                         fontWeight = FontWeight.Normal
                     )
                 },
@@ -101,7 +103,7 @@ fun TodoScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 },
@@ -117,7 +119,7 @@ fun TodoScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "创建待办事项"
+                    contentDescription = stringResource(R.string.todo_action_create)
                 )
             }
         }
@@ -173,13 +175,13 @@ fun TodoScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "暂无待办",
+                                    text = stringResource(R.string.todo_empty),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 16.sp
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "点击右下角按钮创建第一个待办",
+                                    text = stringResource(R.string.todo_create_first),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                                     fontSize = 14.sp
                                 )
@@ -208,7 +210,7 @@ fun TodoScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "待办事项 (${pendingTodos.size})",
+                                    text = stringResource(R.string.todo_pending_count, pendingTodos.size),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -220,7 +222,7 @@ fun TodoScreen(
                                 
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (showPendingTodos) "收起" else "展开",
+                                    contentDescription = if (showPendingTodos) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                                     modifier = Modifier.rotate(rotation),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -261,7 +263,7 @@ fun TodoScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "已完成 (${completedTodos.size})",
+                                    text = stringResource(R.string.todo_completed_count, completedTodos.size),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -273,7 +275,7 @@ fun TodoScreen(
                                 
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
-                                    contentDescription = if (showCompletedTodos) "收起" else "展开",
+                                    contentDescription = if (showCompletedTodos) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                                     modifier = Modifier.rotate(rotation),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -354,19 +356,19 @@ fun TodoStatsCard(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             StatItem(
-                title = "总计",
+                title = stringResource(R.string.todo_stats_total),
                 value = stats.total.toString(),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f)
             )
             StatItem(
-                title = "待办",
+                title = stringResource(R.string.todo_stats_pending),
                 value = stats.pending.toString(),
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.weight(1f)
             )
             StatItem(
-                title = "已完成",
+                title = stringResource(R.string.todo_stats_completed),
                 value = stats.completed.toString(),
                 color = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f)
@@ -456,8 +458,8 @@ fun TodoItem(
                         ) {
                             Text(
                                 text = when (todo.priority) {
-                                    TodoPriority.HIGH -> "紧急"
-                                    TodoPriority.LOW -> "不急"
+                                    TodoPriority.HIGH -> stringResource(R.string.todo_priority_high)
+                                    TodoPriority.LOW -> stringResource(R.string.todo_priority_low)
                                     else -> ""
                                 },
                                 color = when (todo.priority) {
@@ -490,9 +492,9 @@ fun TodoItem(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = if (todo.isCompleted) {
-                        "完成于 ${formatTime(todo.completedAt ?: todo.createdAt)}"
+                        stringResource(R.string.todo_time_completed, formatTime(todo.completedAt ?: todo.createdAt))
                     } else {
-                        "创建于 ${formatTime(todo.createdAt)}"
+                        stringResource(R.string.todo_time_created, formatTime(todo.createdAt))
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -533,7 +535,7 @@ fun TodoDetailBottomSheet(
     ) {
         // 标题
         Text(
-            text = "待办事项详情",
+            text = stringResource(R.string.todo_detail_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -565,7 +567,7 @@ fun TodoDetailBottomSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "优先级：",
+                text = stringResource(R.string.todo_detail_priority),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -579,9 +581,9 @@ fun TodoDetailBottomSheet(
             ) {
                 Text(
                     text = when (todo.priority) {
-                        TodoPriority.HIGH -> "紧急"
-                        TodoPriority.LOW -> "不急"
-                        else -> "一般"
+                        TodoPriority.HIGH -> stringResource(R.string.todo_priority_high)
+                        TodoPriority.LOW -> stringResource(R.string.todo_priority_low)
+                        else -> stringResource(R.string.todo_priority_normal)
                     },
                     color = when (todo.priority) {
                         TodoPriority.HIGH -> MaterialTheme.colorScheme.onError
@@ -602,12 +604,12 @@ fun TodoDetailBottomSheet(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "状态：",
+                text = stringResource(R.string.todo_detail_status),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = if (todo.isCompleted) "已完成" else "待办",
+                text = if (todo.isCompleted) stringResource(R.string.todo_status_completed) else stringResource(R.string.todo_status_pending),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (todo.isCompleted) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium
@@ -623,14 +625,14 @@ fun TodoDetailBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "创建人：",
+                    text = stringResource(R.string.todo_detail_creator),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 AvatarImage(
                     avatarUrl = creator!!.avatarUrl,
-                    contentDescription = "创建者头像",
+                    contentDescription = stringResource(R.string.cd_creator_avatar),
                     size = 24.dp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -644,7 +646,7 @@ fun TodoDetailBottomSheet(
         
         // 创建时间
         Text(
-            text = "创建时间：${formatTime(todo.createdAt)}",
+            text = stringResource(R.string.todo_detail_created_time, formatTime(todo.createdAt)),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 8.dp)
@@ -653,7 +655,7 @@ fun TodoDetailBottomSheet(
         // 完成时间
         if (todo.isCompleted && todo.completedAt != null) {
             Text(
-                text = "完成时间：${formatTime(todo.completedAt)}",
+                text = stringResource(R.string.todo_detail_completed_time, formatTime(todo.completedAt)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -669,7 +671,7 @@ fun TodoDetailBottomSheet(
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         ) {
-            Text("关闭")
+            Text(stringResource(R.string.todo_close))
         }
     }
 } 

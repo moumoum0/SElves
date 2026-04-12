@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.ui.components.CreateMemberForm
 import com.selves.xnn.ui.components.CreateSystemForm
 import com.selves.xnn.ui.components.BackupProgressDialog
@@ -58,7 +60,9 @@ fun WelcomeGuideScreen(
     showImportWarningDialog: Boolean = false,
     onConfirmImport: () -> Unit = {},
     onCancelImport: () -> Unit = {},
-    backupImportSuccess: Boolean = false
+    backupImportSuccess: Boolean = false,
+    backupErrorMessage: String? = null,
+    onDismissError: () -> Unit = {}
 ) {
     var currentStep by remember { mutableStateOf(GuideStep.WELCOME) }
     
@@ -173,7 +177,7 @@ fun WelcomeGuideScreen(
     // 备份进度对话框
     BackupProgressDialog(
         isVisible = isBackupInProgress,
-        title = "正在导入备份",
+        title = stringResource(R.string.guide_importing_backup),
         message = backupProgressMessage,
         progress = backupProgress
     )
@@ -184,6 +188,20 @@ fun WelcomeGuideScreen(
         onConfirm = onConfirmImport,
         onDismiss = onCancelImport
     )
+    
+    // 错误消息对话框
+    if (backupErrorMessage != null) {
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = { Text(stringResource(R.string.guide_import_failed)) },
+            text = { Text(backupErrorMessage) },
+            confirmButton = {
+                TextButton(onClick = onDismissError) {
+                    Text(stringResource(R.string.btn_confirm))
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -255,7 +273,7 @@ private fun GuideBottomBar(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        text = "返回",
+                        text = stringResource(R.string.btn_back),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -265,11 +283,11 @@ private fun GuideBottomBar(
             // 主操作按钮
             if (showNextButton) {
                 val buttonText = when (currentStep) {
-                    GuideStep.WELCOME -> "开始"
-                    GuideStep.COMPLETE -> "进入应用"
-                    GuideStep.CREATE_SYSTEM -> "下一步"
-                    GuideStep.CREATE_MEMBER -> "下一步"
-                    else -> "下一步"
+                    GuideStep.WELCOME -> stringResource(R.string.btn_start)
+                    GuideStep.COMPLETE -> stringResource(R.string.guide_btn_enter_app)
+                    GuideStep.CREATE_SYSTEM -> stringResource(R.string.btn_next)
+                    GuideStep.CREATE_MEMBER -> stringResource(R.string.btn_next)
+                    else -> stringResource(R.string.btn_next)
                 }
                 val isEnabled = when (currentStep) {
                     GuideStep.WELCOME -> true
@@ -355,7 +373,7 @@ private fun WelcomeStepContent() {
         
         // 大标题 - 左对齐，澎湃OS风格
         Text(
-            text = "你好",
+            text = stringResource(R.string.guide_welcome_title),
             style = MaterialTheme.typography.displayLarge.copy(
                 fontSize = 48.sp,
                 lineHeight = 56.sp
@@ -370,7 +388,7 @@ private fun WelcomeStepContent() {
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "欢迎使用 Selves",
+            text = stringResource(R.string.guide_welcome_subtitle),
             style = MaterialTheme.typography.displaySmall.copy(
                 fontSize = 36.sp,
                 lineHeight = 44.sp
@@ -386,7 +404,7 @@ private fun WelcomeStepContent() {
         
         // 副标题描述
         Text(
-            text = "让我们花一点时间\n完成一些简单的设置",
+            text = stringResource(R.string.guide_welcome_description),
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 18.sp,
                 lineHeight = 28.sp
@@ -448,7 +466,7 @@ private fun ImportOrCreateStepContent(
         
         // 标题区域 - 左对齐
         Text(
-            text = "选择你的方式",
+            text = stringResource(R.string.guide_choose_title),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontSize = 32.sp
             ),
@@ -459,7 +477,7 @@ private fun ImportOrCreateStepContent(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "导入已有数据，或从零开始",
+            text = stringResource(R.string.guide_option_new_subtitle),
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 16.sp,
                 lineHeight = 24.sp
@@ -472,8 +490,8 @@ private fun ImportOrCreateStepContent(
         // 创建新系统 - 主要选项
         GuideOptionCard(
             icon = Icons.Default.Add,
-            title = "全新开始",
-            subtitle = "创建你的系统和第一个成员",
+            title = stringResource(R.string.guide_option_new_title),
+            subtitle = stringResource(R.string.guide_option_new_subtitle),
             isPrimary = true,
             onClick = onSelectCreate
         )
@@ -483,8 +501,8 @@ private fun ImportOrCreateStepContent(
         // 导入备份 - 次要选项
         GuideOptionCard(
             icon = Icons.Outlined.CloudDownload,
-            title = "导入备份",
-            subtitle = "从备份文件恢复所有数据",
+            title = stringResource(R.string.guide_option_import_title),
+            subtitle = stringResource(R.string.guide_option_import_subtitle),
             isPrimary = false,
             onClick = onSelectImport
         )
@@ -613,7 +631,7 @@ private fun CreateSystemStepContent(
         
         // 标题 - 左对齐
         Text(
-            text = "创建你的系统",
+            text = stringResource(R.string.guide_create_system_title),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontSize = 32.sp
             ),
@@ -624,7 +642,7 @@ private fun CreateSystemStepContent(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "为你的系统起一个名字吧",
+            text = stringResource(R.string.guide_create_system_subtitle),
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 16.sp,
                 lineHeight = 24.sp
@@ -645,7 +663,7 @@ private fun CreateSystemStepContent(
         
         // 提示文字
         Text(
-            text = "这些信息之后都可以修改",
+            text = stringResource(R.string.guide_note_can_modify),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             modifier = Modifier.fillMaxWidth(),
@@ -684,7 +702,7 @@ private fun CreateMemberStepContent(
         
         // 标题 - 左对齐
         Text(
-            text = "添加第一个成员",
+            text = stringResource(R.string.guide_create_member_title),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontSize = 32.sp
             ),
@@ -695,7 +713,7 @@ private fun CreateMemberStepContent(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "你可以之后继续添加更多成员",
+            text = stringResource(R.string.guide_create_member_subtitle),
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 16.sp,
                 lineHeight = 24.sp
@@ -715,7 +733,7 @@ private fun CreateMemberStepContent(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "之后可以在设置中添加更多成员",
+            text = stringResource(R.string.guide_note_add_more_later),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
             modifier = Modifier.fillMaxWidth(),
@@ -774,7 +792,7 @@ private fun CompleteStepContent() {
         
         // 完成标题
         Text(
-            text = "一切就绪",
+            text = stringResource(R.string.guide_complete_title),
             style = MaterialTheme.typography.displaySmall.copy(
                 fontSize = 36.sp
             ),
@@ -789,7 +807,7 @@ private fun CompleteStepContent() {
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "所有信息均在本地存储",
+            text = stringResource(R.string.guide_complete_subtitle),
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = 18.sp,
                 lineHeight = 28.sp
@@ -816,7 +834,7 @@ private fun CompleteStepContent() {
                 modifier = Modifier.padding(24.dp)
             ) {
                 Text(
-                    text = "你随时可以",
+                    text = stringResource(R.string.guide_note_you_can_always),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -824,11 +842,11 @@ private fun CompleteStepContent() {
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                GuideFeatureItem(text = "添加更多成员")
+                GuideFeatureItem(text = stringResource(R.string.guide_feature_add_members))
                 Spacer(modifier = Modifier.height(10.dp))
-                GuideFeatureItem(text = "修改系统信息")
+                GuideFeatureItem(text = stringResource(R.string.guide_feature_edit_system))
                 Spacer(modifier = Modifier.height(10.dp))
-                GuideFeatureItem(text = "创建聊天群组")
+                GuideFeatureItem(text = stringResource(R.string.guide_feature_backup))
             }
         }
         

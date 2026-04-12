@@ -19,17 +19,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 import com.selves.xnn.model.System
 import com.selves.xnn.ui.components.SystemAvatarImage
 import com.selves.xnn.viewmodel.SystemViewModel
 import com.selves.xnn.ui.components.SystemEditDialog
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,7 +68,7 @@ fun SystemScreen(
         // 系统管理功能列表
         item {
             Text(
-                text = "系统管理",
+                text = stringResource(R.string.system_management),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
@@ -79,8 +78,8 @@ fun SystemScreen(
         item {
             SystemManagementItem(
                 icon = Icons.Default.Edit,
-                title = "系统编辑",
-                subtitle = "修改系统名称和头像",
+                title = stringResource(R.string.system_edit),
+                subtitle = stringResource(R.string.system_edit_subtitle),
                 onClick = { showSystemEditDialog = true }
             )
         }
@@ -88,8 +87,8 @@ fun SystemScreen(
         item {
             SystemManagementItem(
                 icon = Icons.Default.Group,
-                title = "成员管理",
-                subtitle = "管理系统成员",
+                title = stringResource(R.string.system_member_management),
+                subtitle = stringResource(R.string.system_member_management_subtitle),
                 onClick = onNavigateToMemberManagement
             )
         }
@@ -97,8 +96,8 @@ fun SystemScreen(
         item {
             SystemManagementItem(
                 icon = Icons.Default.Schedule,
-                title = "在线统计",
-                subtitle = "查看成员活跃度和在线时间",
+                title = stringResource(R.string.system_online_stats),
+                subtitle = stringResource(R.string.system_online_stats_subtitle),
                 onClick = onNavigateToOnlineStats
             )
         }
@@ -106,7 +105,7 @@ fun SystemScreen(
         // 其它功能列表
         item {
             Text(
-                text = "其它",
+                text = stringResource(R.string.system_other),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
@@ -116,8 +115,8 @@ fun SystemScreen(
         item {
             SystemManagementItem(
                 icon = Icons.Default.Settings,
-                title = "设置",
-                subtitle = "应用设置和偏好",
+                title = stringResource(R.string.system_settings),
+                subtitle = stringResource(R.string.system_settings_subtitle),
                 onClick = onNavigateToSettings
             )
         }
@@ -153,7 +152,7 @@ fun SystemInfoCard(
             // 系统头像
             SystemAvatarImage(
                 avatarUrl = system.avatarUrl,
-                contentDescription = "系统头像",
+                contentDescription = stringResource(R.string.cd_system_avatar),
                 size = 60.dp
             )
             

@@ -10,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 
 @Composable
@@ -37,13 +39,13 @@ fun MemberSelectionDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "选择群成员",
+                    text = stringResource(R.string.member_select_title),
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 
                 Text(
-                    text = "创建者将自动成为群主",
+                    text = stringResource(R.string.member_select_creator_note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)
@@ -90,7 +92,7 @@ fun MemberSelectionDialog(
                             
                             AvatarImage(
                                 avatarUrl = member.avatarUrl,
-                                contentDescription = "成员头像",
+                                contentDescription = stringResource(R.string.member_avatar),
                                 size = 40.dp
                             )
                             
@@ -105,7 +107,7 @@ fun MemberSelectionDialog(
                                 )
                                 if (isCurrentMember) {
                                     Text(
-                                        text = "群主",
+                                        text = stringResource(R.string.member_group_owner),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )
@@ -122,7 +124,7 @@ fun MemberSelectionDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("取消")
+                        Text(stringResource(R.string.btn_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
@@ -131,7 +133,7 @@ fun MemberSelectionDialog(
                         },
                         enabled = selectedMembers.isNotEmpty()
                     ) {
-                        Text("确定")
+                        Text(stringResource(R.string.btn_confirm))
                     }
                 }
             }

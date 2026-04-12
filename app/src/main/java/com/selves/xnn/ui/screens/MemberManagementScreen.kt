@@ -25,9 +25,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 import com.selves.xnn.ui.components.AlphabetIndexBar
 import com.selves.xnn.ui.components.AvatarImage
@@ -173,7 +175,7 @@ fun MemberManagementScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "没有找到匹配的成员",
+                                    text = stringResource(R.string.member_no_match),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -296,7 +298,7 @@ fun MemberManagementTopBar(
                     ) + fadeOut(animationSpec = tween(300))
                 ) {
                     Text(
-                        text = "成员管理",
+                        text = stringResource(R.string.member_management_title),
                         fontWeight = FontWeight.Normal
                     )
                 }
@@ -402,7 +404,7 @@ fun MemberItem(
                         color = MaterialTheme.colorScheme.primary
                     ) {
                         Text(
-                            text = "当前",
+                            text = stringResource(R.string.member_current),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

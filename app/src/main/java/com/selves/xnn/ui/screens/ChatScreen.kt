@@ -47,12 +47,14 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
@@ -72,6 +74,7 @@ import com.selves.xnn.ui.components.GroupManagementDialog
 import com.selves.xnn.ui.components.ImageViewer
 import com.selves.xnn.ui.components.QuickMemberSwitch
 import com.selves.xnn.data.MemberPreferences
+import com.selves.xnn.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -182,7 +185,7 @@ fun ChatScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Image,
-                            contentDescription = "发送图片",
+                            contentDescription = stringResource(R.string.send_image),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -192,7 +195,7 @@ fun ChatScreen(
                     value = messageText,
                     onValueChange = { messageText = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("输入消息") },
+                    placeholder = { Text(stringResource(R.string.input_message)) },
                     maxLines = 5
                 )
 
@@ -203,7 +206,7 @@ fun ChatScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Image,
-                            contentDescription = "发送图片",
+                            contentDescription = stringResource(R.string.send_image),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -219,7 +222,7 @@ fun ChatScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Send,
-                        contentDescription = "发送",
+                        contentDescription = stringResource(R.string.send),
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -242,7 +245,7 @@ fun ChatScreen(
                 previewImagePosition = null
                 previewImageSize = null
             },
-            senderName = sender?.name ?: "未知成员",
+            senderName = sender?.name ?: stringResource(R.string.unknown_member),
             timestamp = imageMessage?.timestamp ?: 0L,
             startPosition = previewImagePosition,
             startSize = previewImageSize
@@ -294,7 +297,7 @@ fun MessageItem(
                 // 头像
                 MessageAvatarImage(
                     avatarUrl = sender?.avatarUrl,
-                    contentDescription = "发送者头像",
+                    contentDescription = stringResource(R.string.sender_avatar),
                     size = 40.dp
                 )
                 
@@ -304,7 +307,7 @@ fun MessageItem(
                 Column {
                     // 成员名
                     Text(
-                        text = sender?.name ?: "未知成员",
+                        text = sender?.name ?: stringResource(R.string.unknown_member),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -363,7 +366,7 @@ fun MessageItem(
                 // 当前成员头像
                 MessageAvatarImage(
                     avatarUrl = sender?.avatarUrl,
-                    contentDescription = "当前成员头像",
+                    contentDescription = stringResource(R.string.current_member_avatar),
                     size = 40.dp
                 )
             }
@@ -475,7 +478,7 @@ fun ImageMessage(
             
             AsyncImage(
                 model = imageRequest,
-                contentDescription = "消息图片",
+                contentDescription = stringResource(R.string.message_image),
                 modifier = Modifier
                     .widthIn(max = 240.dp)
                     .heightIn(max = 360.dp)
@@ -504,7 +507,7 @@ fun ImageMessage(
         } else {
             // 图片加载失败时显示错误信息
             Text(
-                text = "图片加载失败",
+                text = stringResource(R.string.chat_image_load_failed),
                 color = contentColor.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.bodySmall
             )
@@ -512,7 +515,7 @@ fun ImageMessage(
     } else {
         // 没有图片路径时显示错误信息
         Text(
-            text = "图片不可用",
+            text = stringResource(R.string.chat_image_unavailable),
             color = contentColor.copy(alpha = 0.7f),
             style = MaterialTheme.typography.bodySmall
         )
@@ -535,22 +538,22 @@ fun MessageMenu(
             properties = PopupProperties(focusable = true)
         ) {
             DropdownMenuItem(
-                text = { Text("复制") },
+                text = { Text(stringResource(R.string.chat_copy)) },
                 onClick = onCopy,
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "复制"
+                        contentDescription = stringResource(R.string.chat_copy)
                     )
                 }
             )
             DropdownMenuItem(
-                text = { Text("删除") },
+                text = { Text(stringResource(R.string.chat_delete)) },
                 onClick = onDelete,
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "删除"
+                        contentDescription = stringResource(R.string.chat_delete)
                     )
                 }
             )
@@ -612,7 +615,7 @@ fun ChatTopBar(
             IconButton(onClick = onNavigateBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "返回"
+                    contentDescription = stringResource(R.string.cd_back)
                 )
             }
         },
@@ -620,7 +623,7 @@ fun ChatTopBar(
             IconButton(onClick = onMenuClick) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "更多选项"
+                    contentDescription = stringResource(R.string.chat_more_options)
                 )
             }
         },

@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.getDisplayName
 
@@ -20,12 +23,13 @@ fun ThemeModeDialog(
     onThemeModeSelected: (ThemeMode) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val context = LocalContext.current
     if (isOpen) {
         AlertDialog(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    text = "选择深色模式",
+                    text = stringResource(R.string.settings_theme),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Medium
                 )
@@ -57,16 +61,16 @@ fun ThemeModeDialog(
                             
                             Column {
                                 Text(
-                                    text = themeMode.getDisplayName(),
+                                    text = themeMode.getDisplayName(context),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 
                                 Text(
                                     text = when (themeMode) {
-                                        ThemeMode.SYSTEM -> "根据系统设置自动切换"
-                                        ThemeMode.LIGHT -> "使用浅色主题"
-                                        ThemeMode.DARK -> "使用深色主题"
+                                        ThemeMode.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                        ThemeMode.LIGHT -> stringResource(R.string.settings_theme_light)
+                                        ThemeMode.DARK -> stringResource(R.string.settings_theme_dark)
                                     },
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -78,12 +82,12 @@ fun ThemeModeDialog(
             },
             confirmButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("确定")
+                    Text(stringResource(R.string.btn_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text("取消")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )

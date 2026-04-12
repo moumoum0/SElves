@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import com.selves.xnn.model.Member
 
 @Composable
@@ -110,7 +112,7 @@ fun MemberManagementDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("关闭")
+                        Text(stringResource(R.string.btn_close))
                     }
                 }
             }
@@ -122,10 +124,10 @@ fun MemberManagementDialog(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = null },
             title = {
-                Text("删除成员")
+                Text(stringResource(R.string.dialog_delete_member))
             },
             text = {
-                Text("确定要删除成员「${showDeleteConfirmation!!.name}」吗？此操作不可撤销。")
+                Text(stringResource(R.string.dialog_delete_member_confirm, showDeleteConfirmation!!.name))
             },
             confirmButton = {
                 Button(
@@ -137,14 +139,14 @@ fun MemberManagementDialog(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("删除")
+                    Text(stringResource(R.string.btn_delete))
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showDeleteConfirmation = null }
                 ) {
-                    Text("取消")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         )
@@ -242,7 +244,7 @@ fun MemberItem(
             ) {
                 // 编辑选项 - 所有成员都可以编辑
                 DropdownMenuItem(
-                    text = { Text("编辑") },
+                    text = { Text(stringResource(R.string.btn_edit)) },
                     leadingIcon = {
                         Icon(Icons.Default.Edit, contentDescription = null)
                     },

@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.model.Member
 import com.selves.xnn.viewmodel.VoteViewModel
@@ -49,10 +51,10 @@ fun CreateVoteScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("创建投票") },
+                title = { Text(stringResource(R.string.vote_create)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
@@ -76,7 +78,7 @@ fun CreateVoteScreen(
                         enabled = title.isNotBlank() && description.isNotBlank() && options.count { it.isNotBlank() } >= 2
                     ) {
                         Text(
-                            text = "发布",
+                            text = stringResource(R.string.btn_publish),
                             color = if (title.isNotBlank() && description.isNotBlank() && options.count { it.isNotBlank() } >= 2) {
                                 MaterialTheme.colorScheme.primary
                             } else {
@@ -151,8 +153,8 @@ private fun VoteInfoCard(
         Column(modifier = Modifier.padding(16.dp)) {
             SectionHeader(
                 icon = Icons.Default.Title,
-                title = "投票信息",
-                subtitle = "填写投票的基本信息"
+                title = stringResource(R.string.vote_info),
+                subtitle = stringResource(R.string.vote_info_subtitle)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -160,7 +162,7 @@ private fun VoteInfoCard(
             OutlinedTextField(
                 value = title,
                 onValueChange = onTitleChange,
-                label = { Text("投票标题") },
+                label = { Text(stringResource(R.string.vote_title_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -174,7 +176,7 @@ private fun VoteInfoCard(
             OutlinedTextField(
                 value = description,
                 onValueChange = onDescriptionChange,
-                label = { Text("投票描述") },
+                label = { Text(stringResource(R.string.vote_description)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 6,
@@ -199,8 +201,8 @@ private fun VoteOptionsCard(
         Column(modifier = Modifier.padding(16.dp)) {
             SectionHeader(
                 icon = Icons.Default.List,
-                title = "投票选项",
-                subtitle = "至少添加2个选项"
+                title = stringResource(R.string.vote_options),
+                subtitle = stringResource(R.string.vote_options_subtitle)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -215,7 +217,7 @@ private fun VoteOptionsCard(
                         onValueChange = { newValue ->
                             onOptionsChange(options.toMutableList().apply { this[index] = newValue })
                         },
-                        label = { Text("选项 ${index + 1}") },
+                        label = { Text(stringResource(R.string.vote_option_label, index + 1)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -228,7 +230,7 @@ private fun VoteOptionsCard(
                         IconButton(
                             onClick = { onOptionsChange(options.toMutableList().apply { removeAt(index) }) }
                         ) {
-                            Icon(Icons.Default.Delete, contentDescription = "删除选项", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.vote_delete_option), tint = MaterialTheme.colorScheme.error)
                         }
                     } else {
                         Spacer(modifier = Modifier.width(48.dp))
@@ -247,9 +249,9 @@ private fun VoteOptionsCard(
                     onClick = { onOptionsChange(options.toMutableList().apply { add("") }) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "添加选项")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.vote_add_option))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("添加选项")
+                    Text(stringResource(R.string.vote_add_option))
                 }
             }
         }
@@ -275,16 +277,16 @@ private fun VoteSettingsCard(
         Column(modifier = Modifier.padding(16.dp)) {
             SectionHeader(
                 icon = Icons.Default.Settings,
-                title = "投票设置",
-                subtitle = "配置投票的附加选项"
+                title = stringResource(R.string.vote_settings),
+                subtitle = stringResource(R.string.vote_settings_subtitle)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             SettingsRow(
                 icon = Icons.Default.List,
-                title = "允许多选",
-                subtitle = "允许用户选择多个选项",
+                title = stringResource(R.string.vote_allow_multiple),
+                subtitle = stringResource(R.string.vote_allow_multiple_desc),
                 trailing = {
                     Switch(checked = allowMultipleChoice, onCheckedChange = onMultipleChoiceChange)
                 }
@@ -294,8 +296,8 @@ private fun VoteSettingsCard(
 
             SettingsRow(
                 icon = Icons.Default.VisibilityOff,
-                title = "匿名投票",
-                subtitle = "投票结果不显示投票者",
+                title = stringResource(R.string.vote_anonymous),
+                subtitle = stringResource(R.string.vote_anonymous_desc),
                 trailing = {
                     Switch(checked = isAnonymous, onCheckedChange = onAnonymousChange)
                 }
@@ -305,14 +307,14 @@ private fun VoteSettingsCard(
 
             SettingsRow(
                 icon = Icons.Default.Schedule,
-                title = "投票截止时间",
+                title = stringResource(R.string.vote_end_time),
                 subtitle = endTime?.let {
-                    "截止: ${it.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))}"
-                } ?: "不限制",
+                    stringResource(R.string.vote_end_time_format, it.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")))
+                } ?: stringResource(R.string.vote_end_time_none),
                 trailing = {
                     if (endTime != null) {
                         IconButton(onClick = { onEndTimeChange(null) }) {
-                            Icon(Icons.Default.Clear, contentDescription = "清除")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.cd_clear))
                         }
                     }
                 },
@@ -339,12 +341,12 @@ private fun VoteSettingsCard(
                         onShowDatePickerChange(false)
                     }
                 ) {
-                    Text("确定")
+                    Text(stringResource(R.string.btn_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { onShowDatePickerChange(false) }) {
-                    Text("取消")
+                    Text(stringResource(R.string.btn_cancel))
                 }
             }
         ) {

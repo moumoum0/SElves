@@ -690,119 +690,101 @@ class BackupService @Inject constructor(
      * 将备份数据导入到数据库
      */
     private suspend fun importDataToDatabase(backupData: BackupData) {
-        // 清空现有数据
-        clearAllData()
+        Log.d(TAG, "开始导入数据到数据库（使用事务保护）...")
         
-        // 导入数据
-        Log.d(TAG, "开始导入数据到数据库...")
-        
-        Log.d(TAG, "导入 ${backupData.members.size} 个成员")
-        backupData.members.forEach { member ->
-            database.memberDao().insertMember(member)
-        }
-        
-        Log.d(TAG, "导入 ${backupData.chatGroups.size} 个群组")
-        backupData.chatGroups.forEach { group ->
-            database.chatGroupDao().insertGroup(group)
-        }
-        
-        Log.d(TAG, "导入 ${backupData.messages.size} 个消息")
-        backupData.messages.forEach { message ->
-            database.messageDao().insertMessage(message)
-        }
-        
-        Log.d(TAG, "导入 ${backupData.messageReadStatus.size} 个已读状态")
-        backupData.messageReadStatus.forEach { status ->
-            database.messageReadStatusDao().insertReadStatus(status)
-        }
-        
-        Log.d(TAG, "导入 ${backupData.todos.size} 个待办事项")
-        backupData.todos.forEach { todo ->
-            database.todoDao().insertTodo(todo)
-        }
-        
-        Log.d(TAG, "导入 ${backupData.dynamics.size} 个动态")
-        backupData.dynamics.forEach { dynamic ->
-            try {
-                Log.d(TAG, "导入动态: ${dynamic.id}, createdAt=${dynamic.createdAt}, updatedAt=${dynamic.updatedAt}")
-                database.dynamicDao().insertDynamic(dynamic)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入动态失败: ${dynamic.id}, ${e.message}", e)
+        // 使用数据库事务确保操作的原子性
+        // 如果导入过程中出现任何错误，所有更改都会回滚
+        try {
+            database.runInTransaction {
+                // 在事务中执行所有数据库操作
+                kotlinx.coroutines.runBlocking {
+                    // 清空现有数据
+                    Log.d(TAG, "清空现有数据...")
+                    clearAllData()
+                    
+                    // 导入数据
+                    Log.d(TAG, "导入 ${backupData.members.size} 个成员")
+                    backupData.members.forEach { member ->
+                        database.memberDao().insertMember(member)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.chatGroups.size} 个群组")
+                    backupData.chatGroups.forEach { group ->
+                        database.chatGroupDao().insertGroup(group)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.messages.size} 个消息")
+                    backupData.messages.forEach { message ->
+                        database.messageDao().insertMessage(message)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.messageReadStatus.size} 个已读状态")
+                    backupData.messageReadStatus.forEach { status ->
+                        database.messageReadStatusDao().insertReadStatus(status)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.todos.size} 个待办事项")
+                    backupData.todos.forEach { todo ->
+                        database.todoDao().insertTodo(todo)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.dynamics.size} 个动态")
+                    backupData.dynamics.forEach { dynamic ->
+                        Log.v(TAG, "导入动态: ${dynamic.id}, createdAt=${dynamic.createdAt}, updatedAt=${dynamic.updatedAt}")
+                        database.dynamicDao().insertDynamic(dynamic)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.dynamicComments.size} 个动态评论")
+                    backupData.dynamicComments.forEach { comment ->
+                        database.dynamicDao().insertComment(comment)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.dynamicLikes.size} 个动态点赞")
+                    backupData.dynamicLikes.forEach { like ->
+                        database.dynamicDao().insertLike(like)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.votes.size} 个投票")
+                    backupData.votes.forEach { vote ->
+                        Log.v(TAG, "导入投票: ${vote.id}, createdAt=${vote.createdAt}, endTime=${vote.endTime}")
+                        database.voteDao().insertVote(vote)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.voteOptions.size} 个投票选项")
+                    backupData.voteOptions.forEach { option ->
+                        database.voteDao().insertVoteOption(option)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.voteRecords.size} 个投票记录")
+                    backupData.voteRecords.forEach { record ->
+                        database.voteDao().insertVoteRecord(record)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.systems.size} 个系统")
+                    backupData.systems.forEach { system ->
+                        database.systemDao().insertSystem(system)
+                    }
+                    
+                    Log.d(TAG, "导入 ${backupData.onlineStatus.size} 个在线状态")
+                    backupData.onlineStatus.forEach { status ->
+                        database.onlineStatusDao().insertOnlineStatus(status)
+                    }
+                    
+                    // 同步所有用户信息，确保数据一致性
+                    Log.d(TAG, "开始同步用户信息，确保数据一致性...")
+                    syncUserInfoAfterRestore()
+                }
             }
+            
+            // 事务成功提交后，恢复用户偏好设置
+            // 偏好设置不在数据库事务中，因为它使用DataStore
+            restorePreferences(backupData.preferences)
+            
+            Log.d(TAG, "数据导入完成（事务已提交）")
+        } catch (e: Exception) {
+            Log.e(TAG, "导入数据失败，事务已回滚: ${e.message}", e)
+            throw e // 重新抛出异常，让调用者知道导入失败
         }
-        
-        Log.d(TAG, "导入 ${backupData.dynamicComments.size} 个动态评论")
-        backupData.dynamicComments.forEach { comment ->
-            try {
-                database.dynamicDao().insertComment(comment)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入动态评论失败: ${comment.id}, ${e.message}", e)
-            }
-        }
-        
-        Log.d(TAG, "导入 ${backupData.dynamicLikes.size} 个动态点赞")
-        backupData.dynamicLikes.forEach { like ->
-            try {
-                database.dynamicDao().insertLike(like)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入动态点赞失败: ${like.id}, ${e.message}", e)
-            }
-        }
-        
-        Log.d(TAG, "导入 ${backupData.votes.size} 个投票")
-        backupData.votes.forEach { vote ->
-            try {
-                Log.d(TAG, "导入投票: ${vote.id}, createdAt=${vote.createdAt}, endTime=${vote.endTime}")
-                database.voteDao().insertVote(vote)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入投票失败: ${vote.id}, ${e.message}", e)
-            }
-        }
-        
-        Log.d(TAG, "导入 ${backupData.voteOptions.size} 个投票选项")
-        backupData.voteOptions.forEach { option ->
-            try {
-                database.voteDao().insertVoteOption(option)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入投票选项失败: ${option.id}, ${e.message}", e)
-            }
-        }
-        
-        Log.d(TAG, "导入 ${backupData.voteRecords.size} 个投票记录")
-        backupData.voteRecords.forEach { record ->
-            try {
-                database.voteDao().insertVoteRecord(record)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入投票记录失败: ${record.id}, ${e.message}", e)
-            }
-        }
-        
-        Log.d(TAG, "导入 ${backupData.systems.size} 个系统")
-        backupData.systems.forEach { system ->
-            try {
-                database.systemDao().insertSystem(system)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入系统失败: ${system.id}, ${e.message}", e)
-            }
-        }
-        
-        Log.d(TAG, "导入 ${backupData.onlineStatus.size} 个在线状态")
-        backupData.onlineStatus.forEach { status ->
-            try {
-                database.onlineStatusDao().insertOnlineStatus(status)
-            } catch (e: Exception) {
-                Log.e(TAG, "导入在线状态失败: ${status.id}, ${e.message}", e)
-            }
-        }
-        
-        // 恢复用户偏好设置
-        restorePreferences(backupData.preferences)
-        
-        // 同步所有用户信息，确保数据一致性
-        Log.d(TAG, "开始同步用户信息，确保数据一致性...")
-        syncUserInfoAfterRestore()
-        
-        Log.d(TAG, "数据导入完成")
     }
     
     /**

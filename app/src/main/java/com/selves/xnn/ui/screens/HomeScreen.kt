@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.res.stringResource
+import com.selves.xnn.R
 import android.util.Log
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.ui.components.AvatarImage
@@ -176,13 +178,13 @@ fun HomeMainScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "桌面编辑模式",
+                            text = stringResource(R.string.home_edit_mode),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                     TextButton(onClick = { viewModel.exitHomeEditMode() }) {
-                        Text("完成")
+                        Text(stringResource(R.string.home_edit_mode_exit))
                     }
                 }
             }
@@ -377,7 +379,7 @@ fun HomeMainScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "编辑布局"
+                    contentDescription = stringResource(R.string.home_edit_layout)
                 )
             }
         }
@@ -443,7 +445,7 @@ fun FunctionModulesSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "功能模块",
+                    text = stringResource(R.string.home_module_functions),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(bottom = 12.dp)
@@ -452,11 +454,11 @@ fun FunctionModulesSection(
                     TextButton(onClick = onEditClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "编辑",
+                            contentDescription = stringResource(R.string.home_module_functions_edit),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("管理")
+                        Text(stringResource(R.string.home_module_functions_edit))
                     }
                 }
             }
@@ -563,7 +565,7 @@ fun TodoSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "待办事项",
+                    text = stringResource(R.string.home_module_todo),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -571,7 +573,7 @@ fun TodoSection(
                     IconButton(onClick = onEditClick) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "隐藏",
+                            contentDescription = stringResource(R.string.home_module_todo_hide),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )
@@ -580,7 +582,7 @@ fun TodoSection(
                     IconButton(onClick = onNavigateToTodo) {
                         Icon(
                             Icons.Default.ChevronRight,
-                            contentDescription = "查看更多",
+                            contentDescription = stringResource(R.string.home_module_todo_more),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -605,13 +607,13 @@ fun TodoSection(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "暂无待办事项",
+                        text = stringResource(R.string.home_module_todo_empty),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 15.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "点击右上角进入待办页面创建",
+                        text = stringResource(R.string.home_module_todo_create),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontSize = 13.sp
                     )
@@ -629,7 +631,7 @@ fun TodoSection(
                 // 如果有更多待办事项，显示提示
                 if (pendingTodos.size > 2) {
                     Text(
-                        text = "还有 ${pendingTodos.size - 2} 个待办事项",
+                        text = stringResource(R.string.home_module_todo_more, pendingTodos.size - 2),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -689,9 +691,9 @@ fun TodoItem(
             ) {
                 Text(
                     text = when (todo.priority) {
-                        com.selves.xnn.model.TodoPriority.HIGH -> "紧急"
-                        com.selves.xnn.model.TodoPriority.LOW -> "不急"
-                        else -> "一般"
+                        com.selves.xnn.model.TodoPriority.HIGH -> stringResource(R.string.todo_priority_high)
+                        com.selves.xnn.model.TodoPriority.LOW -> stringResource(R.string.todo_priority_low)
+                        else -> stringResource(R.string.todo_priority_normal)
                     },
                     fontSize = 12.sp,
                     color = when (todo.priority) {
@@ -727,9 +729,9 @@ fun LocationTrackingSection(
     }
     val statusText = remember(trackingUiState.trackingStatus) {
         when (trackingUiState.trackingStatus) {
-            TrackingStatus.RECORDING -> "记录中"
-            TrackingStatus.STOPPED -> "未记录"
-            else -> "未知"
+            TrackingStatus.RECORDING -> stringResource(R.string.location_tracking_status_recording)
+            TrackingStatus.STOPPED -> stringResource(R.string.location_tracking_status_stopped)
+            else -> stringResource(R.string.location_tracking_status_unknown)
         }
     }
 
@@ -761,7 +763,7 @@ fun LocationTrackingSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "轨迹记录",
+                    text = stringResource(R.string.home_module_location),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -771,7 +773,7 @@ fun LocationTrackingSection(
                         IconButton(onClick = onEditClick) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "隐藏",
+                                contentDescription = stringResource(R.string.home_module_location_hide),
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -800,7 +802,7 @@ fun LocationTrackingSection(
                         IconButton(onClick = onNavigateToLocation) {
                             Icon(
                                 Icons.Default.ChevronRight,
-                                contentDescription = "查看更多",
+                                contentDescription = stringResource(R.string.home_module_location_more),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -818,19 +820,19 @@ fun LocationTrackingSection(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 LocationStatItem(
-                    label = "今日记录",
+                    label = stringResource(R.string.location_tracking_today),
                     value = trackingStats.todayRecords.toString(),
                     icon = Icons.Default.Today
                 )
 
                 LocationStatItem(
-                    label = "总记录数",
+                    label = stringResource(R.string.location_tracking_total),
                     value = trackingStats.totalRecords.toString(),
                     icon = Icons.Default.Timeline
                 )
 
                 LocationStatItem(
-                    label = "最后记录",
+                    label = stringResource(R.string.location_tracking_last),
                     value = lastRecordTimeText,
                     icon = Icons.Default.Schedule
                 )
@@ -902,7 +904,7 @@ fun DynamicSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "最新动态",
+                    text = stringResource(R.string.home_module_dynamic),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -910,7 +912,7 @@ fun DynamicSection(
                     IconButton(onClick = onEditClick) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "隐藏",
+                            contentDescription = stringResource(R.string.home_module_dynamic_hide),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )
@@ -919,7 +921,7 @@ fun DynamicSection(
                     IconButton(onClick = onNavigateToDynamic) {
                         Icon(
                             Icons.Default.ChevronRight,
-                            contentDescription = "查看更多",
+                            contentDescription = stringResource(R.string.home_module_dynamic_more),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -944,13 +946,13 @@ fun DynamicSection(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "暂无动态",
+                        text = stringResource(R.string.home_module_dynamic_empty),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 15.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "点击右上角进入动态页面发布",
+                        text = stringResource(R.string.home_module_dynamic_create),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontSize = 13.sp
                     )
@@ -962,7 +964,7 @@ fun DynamicSection(
 
                 if (dynamics.size >= 3) {
                     Text(
-                        text = "查看更多动态",
+                        text = stringResource(R.string.home_module_dynamic_more),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -988,7 +990,7 @@ fun DynamicItem(dynamic: com.selves.xnn.model.Dynamic, modifier: Modifier = Modi
             .padding(vertical = 8.dp)
     ) {
         Text(
-            text = dynamic.title.ifEmpty { "无标题" },
+            text = dynamic.title.ifEmpty { stringResource(R.string.dynamic_title_empty) },
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium
         )
@@ -1010,7 +1012,7 @@ fun DynamicItem(dynamic: com.selves.xnn.model.Dynamic, modifier: Modifier = Modi
             )
             if (dynamic.authorName.isNotEmpty()) {
                 Text(
-                    text = "by ${dynamic.authorName}",
+                    text = stringResource(R.string.dynamic_author, dynamic.authorName),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -1051,7 +1053,7 @@ fun VoteSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "投票活动",
+                    text = stringResource(R.string.home_module_vote),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -1059,7 +1061,7 @@ fun VoteSection(
                     IconButton(onClick = onEditClick) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "隐藏",
+                            contentDescription = stringResource(R.string.home_module_vote_hide),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(20.dp)
                         )
@@ -1068,7 +1070,7 @@ fun VoteSection(
                     IconButton(onClick = onNavigateToVote) {
                         Icon(
                             Icons.Default.ChevronRight,
-                            contentDescription = "查看更多",
+                            contentDescription = stringResource(R.string.home_module_vote_more),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -1093,13 +1095,13 @@ fun VoteSection(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "暂无投票活动",
+                        text = stringResource(R.string.home_module_vote_empty),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 15.sp
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "点击右上角进入投票页面创建",
+                        text = stringResource(R.string.home_module_vote_create),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         fontSize = 13.sp
                     )
@@ -1114,7 +1116,7 @@ fun VoteSection(
 
                 if (votes.size >= 2) {
                     Text(
-                        text = "查看更多投票",
+                        text = stringResource(R.string.home_module_vote_more),
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
@@ -1138,12 +1140,12 @@ fun VoteItem(
         vote.endTime?.let { endTime ->
             val duration = java.time.Duration.between(now, endTime)
             when {
-                duration.toDays() > 0 -> "还有${duration.toDays()}天结束"
-                duration.toHours() > 0 -> "还有${duration.toHours()}小时结束"
-                duration.toMinutes() > 0 -> "还有${duration.toMinutes()}分钟结束"
-                else -> "即将结束"
+                duration.toDays() > 0 -> stringResource(R.string.vote_end_time_days, duration.toDays())
+                duration.toHours() > 0 -> stringResource(R.string.vote_end_time_hours, duration.toHours())
+                duration.toMinutes() > 0 -> stringResource(R.string.vote_end_time_minutes, duration.toMinutes())
+                else -> stringResource(R.string.vote_end_time_soon)
             }
-        } ?: "无时间限制"
+        } ?: stringResource(R.string.vote_end_time_unknown)
     }
     Column(
         modifier = Modifier
@@ -1174,7 +1176,7 @@ fun VoteItem(
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "${vote.totalVotes} 票",
+                text = stringResource(R.string.vote_total_votes, vote.totalVotes),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1196,12 +1198,12 @@ fun HomeLayoutEditDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(text = "编辑首页布局")
+            Text(text = stringResource(R.string.home_edit_layout))
         },
         text = {
             Column {
                 Text(
-                    text = "点击切换模块显示/隐藏",
+                    text = stringResource(R.string.home_edit_layout_desc),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -1230,11 +1232,11 @@ fun HomeLayoutEditDialog(
                         ) {
                             Text(
                                 text = when (moduleType) {
-                                    HomeModuleType.FUNCTION_MODULES -> "功能模块"
-                                    HomeModuleType.LOCATION_TRACKING -> "轨迹记录"
-                                    HomeModuleType.TODO -> "待办事项"
-                                    HomeModuleType.DYNAMIC -> "最新动态"
-                                    HomeModuleType.VOTE -> "投票活动"
+                                    HomeModuleType.FUNCTION_MODULES -> stringResource(R.string.home_module_functions)
+                                    HomeModuleType.LOCATION_TRACKING -> stringResource(R.string.home_module_location)
+                                    HomeModuleType.TODO -> stringResource(R.string.home_module_todo)
+                                    HomeModuleType.DYNAMIC -> stringResource(R.string.home_module_dynamic)
+                                    HomeModuleType.VOTE -> stringResource(R.string.home_module_vote)
                                 }
                             )
                             Switch(
@@ -1262,12 +1264,12 @@ fun HomeLayoutEditDialog(
                     )
                 }
             ) {
-                Text("保存")
+                Text(stringResource(R.string.btn_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )
@@ -1286,7 +1288,7 @@ fun FunctionModuleEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("管理功能模块") },
+        title = { Text(stringResource(R.string.home_manage_functions)) },
         text = {
             Column {
                 modules.forEach { module ->
@@ -1312,12 +1314,12 @@ fun FunctionModuleEditDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(modules) }) {
-                Text("保存")
+                Text(stringResource(R.string.btn_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.btn_cancel))
             }
         }
     )
