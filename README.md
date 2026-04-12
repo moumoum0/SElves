@@ -92,10 +92,10 @@
 ### 贡献者
 
 <a href="https://github.com/moumoum0/SElves/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=moumoum0/SElves" />
+  <img src="https://contrib.rocks/image?repo=moumoum0/SElves&max=100&columns=8" />
 </a>
 
-使用 [contrib.rocks](https://contrib.rocks) 生成。
+Made with [contrib.rocks](https://contrib.rocks).
 
 ## 许可证
 
