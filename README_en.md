@@ -5,7 +5,7 @@
 
   <!-- <img src="./img/app_icon.png" width="128" height="128" /> -->
 
-  <b>简体中文</b> | <a href="./README_en.md">English</a>
+  <a href="./README.md">简体中文</a> | <b>English</b>
 
   <a href="https://github.com/moumoum0/SElves/blob/master/LICENSE">
     <img alt="LICENSE" src="https://img.shields.io/badge/license-GPLv3-green"></a>
@@ -26,75 +26,80 @@
   <img alt="Android" src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
 
   <p>
-    一款为多意识体系统设计的交流与协作 Android 应用
+    An Android app designed for communication and collaboration within plural systems
   </p>
 </div>
 
 ---
 
-## 功能特性
+## Features
 
-- **群聊**：系统成员之间的实时消息沟通，支持多群组管理
-- **待办**：共享任务列表与进度追踪
-- **动态**：发布与查看成员动态，支持点赞与评论
-- **投票**：发起集体决策投票，查看投票详情与结果
-- **位置记录**：追踪与记录系统成员的位置信息
-- **在线状态**：查看各成员的在线记录与统计
-- **成员管理**：创建、切换、管理系统成员
-- **系统设置**：主题模式（深色/浅色/跟随系统）、多语言、个性化配置
-- **首次引导**：全新的欢迎引导流程，支持备份导入
-- **数据本地化**：所有数据存储在本地，保护隐私
+- **Group Chat**: Real-time messaging between system members, with multi-group support
+- **Todo**: Shared task lists with progress tracking
+- **Dynamics**: Post and view member updates, with likes and comments
+- **Voting**: Create collective decision polls, view vote details and results
+- **Location Tracking**: Track and record system members' location information
+- **Online Stats**: View each member's online history and statistics
+- **Member Management**: Create, switch, and manage system members
+- **Settings**: Theme modes (dark/light/system), multi-language support, personalized configuration
+- **Welcome Guide**: First-launch onboarding flow with backup import support
+- **Local Storage**: All data stored locally to protect privacy
 
-## 截图
+## Screenshots
 
-<!-- 待添加应用截图 -->
+<!-- Screenshots coming soon -->
 <!-- 
-|                        主界面                        |                       群聊界面                            |
+|                        Home                          |                       Group Chat                          |
 |:----------------------------------------------------:|:-------------------------------------------------------:|
 | <img src="img/screenshot_main.png" width="300" /> | <img src="img/screenshot_chat.png" width="300" /> |
 -->
 
-## 快速开始
+## Getting Started
 
-### 前提条件
+### Prerequisites
 
-- [Android Studio](https://developer.android.com/studio) (最新稳定版)
+- [Android Studio](https://developer.android.com/studio) (latest stable)
 - JDK 11+
 - Android SDK (API 26+)
 
-### 安装与运行
+### Installation
 
-1. 克隆仓库
+1. Clone the repository
    ```sh
    git clone https://github.com/moumoum0/SElves.git
    ```
-2. 使用 Android Studio 打开项目
-3. 编译并安装到设备
+2. Open the project in Android Studio
+3. Build and install to your device
    ```sh
    ./gradlew installDebug
    ```
 
-## 路线图
+## Roadmap
 
-- [x] 交流功能
-- [x] 待办功能
-- [ ] 投票功能
-- [ ] 数据云同步
-- [ ] 多语言支持（English）
+- [x] Group chat
+- [x] Todo list
+- [x] Dynamics feed
+- [x] Voting system
+- [x] Location tracking
+- [x] Online stats
+- [x] Member management
+- [x] Settings & theming
+- [ ] Cloud data sync
+- [ ] English localization
 
-查看 [Issues](https://github.com/moumoum0/SElves/issues) 了解已提出的功能与已知问题。
+See [Issues](https://github.com/moumoum0/SElves/issues) for proposed features and known bugs.
 
-## 贡献
+## Contributing
 
-欢迎任何形式的贡献！无论是报告 Bug、建议新功能、帮助翻译还是贡献代码，请查看我们的贡献指南开始参与。
+Contributions of all kinds are welcome! Whether it's reporting a bug, suggesting a feature, helping with translations, or contributing code — please get involved.
 
-1. Fork 本项目
-2. 创建你的功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### 贡献者
+### Contributors
 
 <a href="https://github.com/moumoum0/SElves/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=moumoum0/SElves&max=100&columns=8" />
@@ -102,9 +107,9 @@
 
 Made with [contrib.rocks](https://contrib.rocks).
 
-## 许可证
+## License
 
-本项目基于 GPL-3.0 许可证发布，详见 [`LICENSE`](LICENSE)。
+Distributed under the GPL-3.0 License. See [`LICENSE`](LICENSE) for more information.
 
 ## Star History
 
