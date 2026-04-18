@@ -30,10 +30,14 @@ import com.selves.xnn.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onDeveloperModeUnlocked: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    var iconTapCount by remember { mutableStateOf(0) }
+    var developerModeUnlocked by remember { mutableStateOf(false) }
     val unknownVersion = stringResource(R.string.about_unknown_version)
+
     val versionName = remember {
         try {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: unknownVersion
@@ -76,7 +80,16 @@ fun AboutScreen(
                 Box(
                     modifier = Modifier
                         .size(120.dp)
-                        .clip(RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            if (!developerModeUnlocked) {
+                                iconTapCount += 1
+                                if (iconTapCount >= 7) {
+                                    developerModeUnlocked = true
+                                    onDeveloperModeUnlocked()
+                                }
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     // 背景层

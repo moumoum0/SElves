@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
@@ -93,6 +94,7 @@ fun AppNavigationScreen(
     viewModel: MainViewModel
 ) {
     val navController = rememberNavController()
+    var developerModeArmed by rememberSaveable { mutableStateOf(false) }
     val isLoading by viewModel.isLoading.collectAsState()
     val needsGuide by viewModel.needsGuide.collectAsState()
     
@@ -430,7 +432,15 @@ fun AppNavigationScreen(
                         messages = messages[groupId] ?: emptyList(),
                         members = members,
                         onSendMessage = { content ->
-                            viewModel.sendMessage(groupId, content)
+                            val isDeveloperCommand = content.trim().equals("selves", ignoreCase = true)
+                            if (developerModeArmed && isDeveloperCommand) {
+                                developerModeArmed = false
+                                navController.navigate("developer_mode") {
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                viewModel.sendMessage(groupId, content)
+                            }
                         },
                         onSendImageMessage = { imageUri ->
                             viewModel.sendImageMessage(groupId, imageUri)
@@ -566,6 +576,23 @@ fun AppNavigationScreen(
                 popExitTransition = { slideOutToRight }
             ) {
                 AboutScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onDeveloperModeUnlocked = {
+                        developerModeArmed = true
+                    }
+                )
+            }
+
+            composable(
+                route = "developer_mode",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
+                DeveloperModeScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     }
