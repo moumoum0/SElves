@@ -62,7 +62,7 @@ fun BackupProgressDialog(
                     
                     if (progress != null) {
                         LinearProgressIndicator(
-                            progress = progress,
+                            progress = { progress },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp),

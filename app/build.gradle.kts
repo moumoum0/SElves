@@ -9,24 +9,6 @@ plugins {
 
 import java.util.Properties
 
-val roomVersion = "2.6.1"
-val hiltVersion = "2.52"
-val datastoreVersion = "1.1.1"
-val coilVersion = "2.7.0"
-val navigationComposeVersion = "2.8.5"
-val accompanistVersion = "0.36.0"
-val imageCropperVersion = "4.3.2"
-val composeBomVersion = "2024.12.01"
-val gsonVersion = "2.11.0"
-val kotlinCoroutinesVersion = "2.1.0"
-val coreKtxVersion = "1.15.0"
-val lifecycleVersion = "2.8.7"
-val activityComposeVersion = "1.9.3"
-val appcompatVersion = "1.7.0"
-val splashScreenVersion = "1.0.1"
-val hiltNavigationComposeVersion = "1.2.0"
-val tinyPinyinVersion = "2.0.3"
-
 // 读取 local.properties 中的签名配置
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
@@ -75,23 +57,23 @@ android {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
 
-        buildConfigField("String", "COMPOSE_BOM_VERSION", "\"$composeBomVersion\"")
-        buildConfigField("String", "ROOM_VERSION", "\"$roomVersion\"")
-        buildConfigField("String", "HILT_VERSION", "\"$hiltVersion\"")
-        buildConfigField("String", "NAVIGATION_COMPOSE_VERSION", "\"$navigationComposeVersion\"")
-        buildConfigField("String", "COIL_VERSION", "\"$coilVersion\"")
-        buildConfigField("String", "DATASTORE_VERSION", "\"$datastoreVersion\"")
-        buildConfigField("String", "IMAGE_CROPPER_VERSION", "\"$imageCropperVersion\"")
-        buildConfigField("String", "ACCOMPANIST_VERSION", "\"$accompanistVersion\"")
-        buildConfigField("String", "GSON_VERSION", "\"$gsonVersion\"")
-        buildConfigField("String", "KOTLIN_BOM_VERSION", "\"$kotlinCoroutinesVersion\"")
-        buildConfigField("String", "CORE_KTX_VERSION", "\"$coreKtxVersion\"")
-        buildConfigField("String", "LIFECYCLE_VERSION", "\"$lifecycleVersion\"")
-        buildConfigField("String", "ACTIVITY_COMPOSE_VERSION", "\"$activityComposeVersion\"")
-        buildConfigField("String", "APPCOMPAT_VERSION", "\"$appcompatVersion\"")
-        buildConfigField("String", "SPLASH_SCREEN_VERSION", "\"$splashScreenVersion\"")
-        buildConfigField("String", "HILT_NAVIGATION_COMPOSE_VERSION", "\"$hiltNavigationComposeVersion\"")
-        buildConfigField("String", "TINYPINYIN_VERSION", "\"$tinyPinyinVersion\"")
+        buildConfigField("String", "COMPOSE_BOM_VERSION", "\"${libs.versions.composeBom.get()}\"")
+        buildConfigField("String", "ROOM_VERSION", "\"${libs.versions.room.get()}\"")
+        buildConfigField("String", "HILT_VERSION", "\"${libs.versions.hilt.get()}\"")
+        buildConfigField("String", "NAVIGATION_COMPOSE_VERSION", "\"${libs.versions.navigationCompose.get()}\"")
+        buildConfigField("String", "COIL_VERSION", "\"${libs.versions.coil.get()}\"")
+        buildConfigField("String", "DATASTORE_VERSION", "\"${libs.versions.datastore.get()}\"")
+        buildConfigField("String", "IMAGE_CROPPER_VERSION", "\"${libs.versions.imageCropper.get()}\"")
+        buildConfigField("String", "ACCOMPANIST_VERSION", "\"${libs.versions.accompanist.get()}\"")
+        buildConfigField("String", "GSON_VERSION", "\"${libs.versions.gson.get()}\"")
+        buildConfigField("String", "KOTLIN_BOM_VERSION", "\"${libs.versions.kotlinCoroutines.get()}\"")
+        buildConfigField("String", "CORE_KTX_VERSION", "\"${libs.versions.coreKtx.get()}\"")
+        buildConfigField("String", "LIFECYCLE_VERSION", "\"${libs.versions.lifecycleRuntimeKtx.get()}\"")
+        buildConfigField("String", "ACTIVITY_COMPOSE_VERSION", "\"${libs.versions.activityCompose.get()}\"")
+        buildConfigField("String", "APPCOMPAT_VERSION", "\"${libs.versions.appcompat.get()}\"")
+        buildConfigField("String", "SPLASH_SCREEN_VERSION", "\"${libs.versions.splashScreen.get()}\"")
+        buildConfigField("String", "HILT_NAVIGATION_COMPOSE_VERSION", "\"${libs.versions.hiltNavigationCompose.get()}\"")
+        buildConfigField("String", "TINYPINYIN_VERSION", "\"${libs.versions.tinyPinyin.get()}\"")
     }
 
     ksp {
@@ -147,61 +129,61 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:$coreKtxVersion")
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:$kotlinCoroutinesVersion"))
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
-    implementation("androidx.activity:activity-compose:$activityComposeVersion")
-    implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.navigation:navigation-compose:$navigationComposeVersion")
+    implementation(libs.androidx.core.ktx)
+    implementation(platform(libs.kotlin.bom))
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
     
     // Material Icons Extended
-    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.androidx.material.icons.extended)
     
     // AppCompat (for CropImageActivity)
-    implementation("androidx.appcompat:appcompat:$appcompatVersion")
+    implementation(libs.androidx.appcompat)
     
     // DataStore
-    implementation("androidx.datastore:datastore-preferences:$datastoreVersion")
-    implementation("androidx.datastore:datastore-preferences-core:$datastoreVersion")
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.datastore.preferences.core)
     
     // Room
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     
     // Hilt
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    ksp("com.google.dagger:hilt-compiler:$hiltVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:$hiltNavigationComposeVersion")
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
     
     // Coil for image loading
-    implementation("io.coil-kt:coil-compose:$coilVersion")
+    implementation(libs.coil.compose)
     
     // Image cropper
-    implementation("com.github.CanHub:Android-Image-Cropper:$imageCropperVersion")
+    implementation(libs.android.image.cropper)
     
     // SplashScreen
-    implementation("androidx.core:core-splashscreen:$splashScreenVersion")
+    implementation(libs.androidx.core.splashscreen)
     
     // Accompanist for System UI Controller
-    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
+    implementation(libs.accompanist.systemuicontroller)
     
     // Gson for JSON serialization
-    implementation("com.google.code.gson:gson:$gsonVersion")
+    implementation(libs.gson)
     
     // TinyPinyin for Chinese pinyin conversion
-    implementation("com.github.promeg:tinypinyin:$tinyPinyinVersion")
+    implementation(libs.tinypinyin)
     
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 

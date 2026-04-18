@@ -95,7 +95,7 @@ fun CreateTodoDialog(
                             unfocusedTextColor = getPriorityColor(priority)
                         ),
                         modifier = Modifier
-                            .menuAnchor()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
                             .fillMaxWidth()
                             .padding(bottom = 16.dp)
                     )

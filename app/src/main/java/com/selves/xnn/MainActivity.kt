@@ -28,7 +28,6 @@ import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
 import com.selves.xnn.utils.LanguageManager
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import android.content.Context
@@ -88,23 +87,20 @@ class MainActivity : ComponentActivity() {
                 themeMode = themeMode,
                 colorScheme = colorScheme
             ) {
-                val systemUiController = rememberSystemUiController()
                 val isDarkTheme = shouldUseDarkTheme(themeMode)
                 val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
                 val surfaceColor = MaterialTheme.colorScheme.surface
 
                 SideEffect {
-                    // 根据主题模式设置状态栏颜色
-                    systemUiController.setStatusBarColor(
-                        color = if (isDarkTheme) surfaceColor else Color.White,
-                        darkIcons = !isDarkTheme
-                    )
+                    // 使用传统方式设置状态栏和导航栏颜色
+                    window.statusBarColor = if (isDarkTheme) surfaceColor.toArgb() else Color.White.toArgb()
+                    window.navigationBarColor = surfaceVariantColor.toArgb()
                     
-                    // 导航栏使用surfaceVariant颜色
-                    systemUiController.setNavigationBarColor(
-                        color = surfaceVariantColor,
-                        darkIcons = !isDarkTheme
-                    )
+                    // 设置状态栏图标颜色
+                    WindowCompat.getInsetsController(window, window.decorView).apply {
+                        isAppearanceLightStatusBars = !isDarkTheme
+                        isAppearanceLightNavigationBars = !isDarkTheme
+                    }
                 }
 
                 Surface(color = MaterialTheme.colorScheme.background) {
