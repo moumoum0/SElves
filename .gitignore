@@ -367,3 +367,5 @@ crashlytics-build.properties
 fabric.properties
 
 todo.txt
+CLAUDE.md
+.claude/
