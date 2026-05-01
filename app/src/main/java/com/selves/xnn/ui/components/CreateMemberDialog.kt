@@ -43,10 +43,11 @@ import com.canhub.cropper.CropImageView
 fun CreateMemberDialog(
     existingMemberNames: List<String>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String?, String) -> Unit
+    onConfirm: (String, String?, String, String) -> Unit
 ) {
     var memberName by remember { mutableStateOf("") }
     var memberBio by remember { mutableStateOf("") }
+    var memberPronouns by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -80,7 +81,7 @@ fun CreateMemberDialog(
                     val savedAvatarPath = ImageUtils.saveAvatarToInternalStorage(context, avatarUri)
                     
                     // 使用保存后的头像路径
-                    onConfirm(memberName, savedAvatarPath, memberBio)
+                    onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns)
                 }
             }
         }
@@ -178,9 +179,21 @@ fun CreateMemberDialog(
                 OutlinedTextField(
                     value = memberBio,
                     onValueChange = { memberBio = it },
-                    label = { Text("简介") },
-                    placeholder = { Text("介绍一下这位成员...") },
+                    label = { Text(stringResource(R.string.label_member_bio)) },
+                    placeholder = { Text(stringResource(R.string.placeholder_member_bio)) },
                     maxLines = 4,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+
+                // 代词输入框
+                OutlinedTextField(
+                    value = memberPronouns,
+                    onValueChange = { memberPronouns = it },
+                    label = { Text(stringResource(R.string.label_member_pronouns)) },
+                    placeholder = { Text(stringResource(R.string.placeholder_member_pronouns)) },
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)

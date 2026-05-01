@@ -549,6 +549,8 @@
     
     <!-- 表单标签 -->
     <string name="label_member_name">成员名</string>
+    <string name="label_member_bio">简介</string>
+    <string name="label_member_pronouns">代词</string>
     <string name="label_system_name">系统名称</string>
     <string name="label_group_name">群聊名称</string>
     <string name="label_title">标题</string>
@@ -557,6 +559,8 @@
     
     <!-- 占位符 -->
     <string name="placeholder_member_name">请输入成员名</string>
+    <string name="placeholder_member_bio">介绍一下这位成员...</string>
+    <string name="placeholder_member_pronouns">例如：他/她/more</string>
     <string name="placeholder_system_name">请输入系统名称</string>
     <string name="placeholder_share_thoughts">分享你的想法...</string>
     <string name="placeholder_search_members">搜索成员...</string>

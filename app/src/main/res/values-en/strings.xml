@@ -547,6 +547,8 @@
     
     <!-- Form Labels -->
     <string name="label_member_name">Name</string>
+    <string name="label_member_bio">Bio</string>
+    <string name="label_member_pronouns">Pronouns</string>
     <string name="label_system_name">System Name</string>
     <string name="label_group_name">Group Name</string>
     <string name="label_title">Title</string>
@@ -555,6 +557,8 @@
     
     <!-- Placeholders -->
     <string name="placeholder_member_name">Enter name</string>
+    <string name="placeholder_member_bio">Introduce this member...</string>
+    <string name="placeholder_member_pronouns">e.g. he/she/more</string>
     <string name="placeholder_system_name">Enter system name</string>
     <string name="placeholder_share_thoughts">Share your thoughts...</string>
     <string name="placeholder_search_members">Search members...</string>

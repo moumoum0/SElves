@@ -251,6 +251,15 @@ fun MemberManagementScreen(
                         MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
+                if (member.pronouns.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = member.pronouns,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
                 Spacer(modifier = Modifier.height(24.dp))
                 OutlinedButton(
                     onClick = {
@@ -305,8 +314,8 @@ fun MemberManagementScreen(
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl, bio ->
-                mainViewModel.createMember(name, avatarUrl, bio, shouldSetAsCurrent = false)
+            onConfirm = { name, avatarUrl, bio, pronouns ->
+                mainViewModel.createMember(name, avatarUrl, bio, pronouns, shouldSetAsCurrent = false)
                 showCreateMemberDialog = false
             }
         )
@@ -318,8 +327,8 @@ fun MemberManagementScreen(
             member = member,
             existingMemberNames = members.map { it.name },
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl, bio ->
-                mainViewModel.updateMember(member.id, name, avatarUrl, bio)
+            onConfirm = { name, avatarUrl, bio, pronouns ->
+                mainViewModel.updateMember(member.id, name, avatarUrl, bio, pronouns)
                 memberToEdit = null
             }
         )

@@ -102,11 +102,11 @@ fun MainTabScreen(
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl, bio ->
+            onConfirm = { name, avatarUrl, bio, pronouns ->
                 // 立即关闭对话框，防止多次点击
                 showCreateMemberDialog = false
                 // 创建成员
-                viewModel.createMember(name, avatarUrl, bio)
+                viewModel.createMember(name, avatarUrl, bio, pronouns)
             }
         )
     }

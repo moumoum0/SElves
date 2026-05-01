@@ -416,14 +416,15 @@ class MainViewModel @Inject constructor(
     }
     
     // 创建成员
-    fun createMember(name: String, avatarUrl: String?, bio: String = "", shouldSetAsCurrent: Boolean = true) {
+    fun createMember(name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", shouldSetAsCurrent: Boolean = true) {
         val memberId = UUID.randomUUID().toString()
         
         val member = Member(
             id = memberId,
             name = name,
             avatarUrl = avatarUrl,
-            bio = bio
+            bio = bio,
+            pronouns = pronouns
         )
         
         // 使用单一协程进行所有操作，避免并发问题
@@ -453,7 +454,7 @@ class MainViewModel @Inject constructor(
     }
     
     // 更新成员信息
-    fun updateMember(memberId: String, name: String, avatarUrl: String?, bio: String = "") {
+    fun updateMember(memberId: String, name: String, avatarUrl: String?, bio: String = "", pronouns: String = "") {
         
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
@@ -465,7 +466,8 @@ class MainViewModel @Inject constructor(
                     val updatedMember = existingMember.copy(
                         name = name,
                         avatarUrl = avatarUrl ?: existingMember.avatarUrl,
-                        bio = bio
+                        bio = bio,
+                        pronouns = pronouns
                     )
                     
                     // 保存到数据库

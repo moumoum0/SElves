@@ -159,8 +159,8 @@ fun MemberManagementDialog(
             member = member,
             existingMemberNames = members.map { it.name },
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl, bio ->
-                onEditMember(member.copy(name = name, avatarUrl = avatarUrl, bio = bio))
+            onConfirm = { name, avatarUrl, bio, pronouns ->
+                onEditMember(member.copy(name = name, avatarUrl = avatarUrl, bio = bio, pronouns = pronouns))
                 memberToEdit = null
             }
         )
@@ -227,6 +227,15 @@ fun MemberItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            if (member.pronouns.isNotBlank()) {
+                Text(
+                    text = member.pronouns,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
         
         // 操作菜单 - 所有成员都显示菜单，但当前成员只能编辑，不能删除
