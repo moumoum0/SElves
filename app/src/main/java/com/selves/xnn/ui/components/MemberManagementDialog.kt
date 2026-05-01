@@ -16,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.res.stringResource
@@ -158,8 +159,8 @@ fun MemberManagementDialog(
             member = member,
             existingMemberNames = members.map { it.name },
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl ->
-                onEditMember(member.copy(name = name, avatarUrl = avatarUrl))
+            onConfirm = { name, avatarUrl, bio ->
+                onEditMember(member.copy(name = name, avatarUrl = avatarUrl, bio = bio))
                 memberToEdit = null
             }
         )
@@ -220,9 +221,11 @@ fun MemberItem(
             }
             
             Text(
-                text = "ID: ${member.id.take(8)}...",
+                text = if (member.bio.isBlank()) "暂无简介" else member.bio,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         

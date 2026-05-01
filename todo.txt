@@ -1,41 +1,1417 @@
-我有问题，为什么这明明是首页的功能，却在群聊里面导航，但是你的修改是正确的
+# 计划
 
-您问得非常好！这确实是一个架构设计上的问题。让我分析一下为什么会出现这种情况：
-Read file: app/src/main/java/com/selves/xnn/ui/screens/GroupChatScreen.kt
-Read file: app/src/main/java/com/selves/xnn/MainActivity.kt
-您说得完全正确！这确实是一个架构设计问题。让我分析一下现在的架构：
+我先做一次**面向整个项目的代码审查**，重点看：
 
-**当前架构问题：**
-1. `MainActivity` → `GroupChatScreen` → 这里成了整个应用的根导航
-2. `GroupChatScreen`名字暗示它是群聊屏幕，但实际上它承担了整个应用的导航职责
-3. 首页功能（Home、动态、待办）都在"群聊屏幕"中导航，这在语义上是错误的
+- **项目结构与技术栈**
+- **构建配置与依赖风险**
+- **Android 架构、数据层、数据库设计**
+- **UI/状态管理/可能的稳定性问题**
+- **可维护性、测试与安全性**
 
-**正确的架构应该是：**
-```
-MainActivity → AppNavigation → {
-    HomeScreen (with bottom navigation)
-    TodoScreen (full screen)
-    DynamicScreen (full screen)
-    ChatScreen (full screen)
+我会先读 `README` 和关键入口，再抽查核心 Kotlin 文件，最后给你一份按严重程度分类的审查报告。
+# 开始审查
+
+我先快速梳理项目入口、核心层次和构建文件，再深入看数据库与主要 UI/状态流。  
+这一步先**建立代码地图**，避免只看局部得出片面结论。
+
+# 读取关键文件
+
+我先看说明文档、Gradle 配置和几个核心 Kotlin 文件，确认架构、依赖和实现风格，再给你做分层审查。
+
+# 深入核心层
+
+我继续抽查数据层、ViewModel、服务层和测试目录，重点找：
+
+- **架构边界是否清晰**
+- **线程/生命周期问题**
+- **Room 迁移可靠性**
+- **Compose 重组与状态管理风险**
+- **权限/备份/隐私问题**
+# 检查风险点
+
+我现在做一轮针对性检索，看看是否存在明显的高风险实现，例如：
+
+- **`GlobalScope` / `runBlocking` / 进程强杀**
+- **过度权限申请**
+- **超大 ViewModel / UI 直接持有业务逻辑**
+- **TODO 未实现项**
+- **测试缺失**
+# 定位具体问题
+
+我已经看到几个可疑点了：  
+`MainViewModel` 过大、权限声明偏重、测试几乎为空。现在补读几个最关键的实现，确认这些是否只是风格问题，还是已经影响稳定性与可维护性。
+# 补看数据库与关键 ViewModel
+
+接下来我重点确认两个高风险区域：
+
+- **Room 数据库与迁移**
+- **超大 ViewModel / 重复数据流收集**
+
+这两个地方最容易在后期演化成稳定性问题。
+# 再补两类检查
+
+我再做两类补充审查，确保结论更扎实：
+
+- **数据库实体/迁移是否一致**
+- **后台定位与权限申请是否合规、是否过度**
+
+这两部分直接关系到上线稳定性和商店审核风险。
+
+# 收尾核验
+
+我再补一个小检查：  
+确认 `TypeConverter`、导航层和设置重启逻辑是不是和我前面发现的问题一致。然后我就给你出完整审查报告。
+# 整理报告
+
+我已经完成静态审查了。  
+先把任务状态收尾，然后我给你一份**按严重程度分类**的完整审查报告。
+
+# 审查结论
+
+我已经对你的项目做了一次**静态全量代码审查**。  
+结论先说：
+
+- **整体评价**：项目已经具备明确产品方向，功能面比较完整，Jetpack Compose + Room + Hilt 的技术路线是对的。
+- **主要问题**：当前代码的核心风险不在“功能不能跑”，而在于**架构膨胀、生命周期处理不稳、权限策略过重、数据库迁移治理不足、测试几乎缺失**。
+- **是否适合继续扩功能**：**可以，但不建议继续无约束扩张**。如果不先收敛几个核心问题，后面维护成本会快速升高。
+
+下面我按严重程度给你报告。
+
+---
+
+# 一、严重问题
+
+## 1. [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1) 已经过大，承担了过多职责
+
+文件：
+- [app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:0:0-0:0)
+
+问题表现：
+
+- 文件长度约 **1233 行**
+- 同时承担了：
+  - 启动加载流程
+  - 成员状态管理
+  - 群组/消息管理
+  - 未读数管理
+  - 首页布局配置
+  - 备份导入
+  - 引导流程
+  - 头像/图片预加载
+  - 在线记录相关状态
+
+这已经不是单纯的 “Main” ViewModel，而是接近一个**应用协调器 + 多业务聚合器**。
+
+风险：
+
+- **单点复杂度过高**
+- 任意一个功能改动都可能影响启动流程
+- 更难写测试
+- 更容易引入竞态、重复加载、状态错乱
+- Compose 页面会被迫依赖一个过于庞大的状态源
+
+证据点：
+
+- 大量 `MutableStateFlow`
+- 大量 `launch/async/collect`
+- 同时管理备份导入、UI loading、群聊消息、首页模块配置
+- [updateTodoStatus()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:1215:4-1220:5) 还是空代理实现，说明职责已经开始外溢
+
+建议：
+
+- 按业务拆分为多个 ViewModel / Coordinator：
+  - `AppStartupViewModel`
+  - `SessionViewModel`
+  - `ChatViewModel`
+  - `HomeLayoutViewModel`
+  - `BackupViewModel`
+- [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1) 只保留真正的全局会话状态，不再直接持有所有业务逻辑
+
+---
+
+## 2. 启动与事务中使用 `runBlocking` / `runInTransaction + runBlocking`，有卡顿与死锁风险
+
+文件：
+- [app/src/main/java/com/selves/xnn/MainActivity.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:0:0-0:0)
+- [app/src/main/java/com/selves/xnn/data/BackupService.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:0:0-0:0)
+
+### 2.1 [MainActivity.attachBaseContext()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:44:4-57:5) 中使用 `runBlocking`
+
+```kotlin
+val languageCode = runBlocking {
+    memberPrefs.language.first()
 }
 ```
 
-**为什么我的修改是正确的：**
-虽然架构设计有问题，但在当前架构下，我的修改是正确的，因为：
-1. 保持了TodoScreen和DynamicScreen在同一层级
-2. 解决了布局问题
-3. 没有破坏现有的功能
+问题：
 
-**建议的重构方案：**
-应该将`GroupChatScreen`重命名为`AppNavigation`或`MainNavigation`，因为它实际上是整个应用的导航容器，而不是群聊屏幕。
+- [attachBaseContext()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:44:4-57:5) 是启动关键路径
+- 在这里阻塞读取 DataStore，容易增加冷启动延迟
+- 如果后续语言逻辑变复杂，会让启动更脆弱
 
-这是一个典型的"技术债务"问题 - 随着功能增加，原本设计用于群聊的屏幕逐渐承担了更多职责，但没有及时重构。
+结论：
 
-您的观察非常敏锐！这确实暴露了代码架构需要重构的问题。在实际项目中，应该：
-1. 重命名`GroupChatScreen`为更合适的名称
-2. 重新组织导航结构
-3. 让每个组件承担单一职责
+- 这不是一定崩，但属于**高风险启动阻塞点**
 
-但在当前情况下，我的修改至少解决了布局问题，并且保持了功能的一致性。
+### 2.2 [BackupService.importDataToDatabase()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:688:4-787:5) 中：
 
-好了
+```kotlin
+database.runInTransaction {
+    kotlinx.coroutines.runBlocking {
+        ...
+    }
+}
+```
+
+问题：
+
+- 在 Room 事务里再套 `runBlocking` 是很危险的设计
+- 事务应该尽量同步、短时、无阻塞地完成
+- 这种写法非常容易在未来演化中引入：
+  - 卡死
+  - 隐式线程阻塞
+  - 导入大数据时性能急剧下降
+  - 更难定位事务失败原因
+
+建议：
+
+- 改成纯同步 DAO 调用事务
+- 或者使用 Room 官方推荐的协程事务方式，而不是事务里包 `runBlocking`
+
+---
+
+## 3. 语言切换通过 `killProcess()` 强杀进程，体验与稳定性都不好
+
+文件：
+- [app/src/main/java/com/selves/xnn/ui/viewmodels/SettingsViewModel.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/SettingsViewModel.kt:0:0-0:0)
+
+代码：
+
+```kotlin
+context.startActivity(intent)
+android.os.Process.killProcess(android.os.Process.myPid())
+```
+
+问题：
+
+- 这不是正常的 Android 重建 Activity 方式
+- 会导致：
+  - 用户感知到“闪退式重启”
+  - 未提交状态丢失
+  - 某些后台流程/服务被粗暴中断
+  - 日志与崩溃监控会更混乱
+
+建议：
+
+- 用 Activity recreate / task 重建方案
+- 如果涉及语言上下文切换，也应通过受控的导航栈重建，而不是直接杀进程
+
+---
+
+## 4. 权限策略明显过重，存在审核与隐私风险
+
+文件：
+- [app/src/main/AndroidManifest.xml](cci:7://file:///d:/project/selves/app/src/main/AndroidManifest.xml:0:0-0:0)
+
+高风险权限包括：
+
+- `MANAGE_EXTERNAL_STORAGE`
+- `QUERY_PACKAGES`
+- `com.android.permission.GET_INSTALLED_APPS`
+- `ACCESS_BACKGROUND_LOCATION`
+- `SCHEDULE_EXACT_ALARM`
+- `USE_EXACT_ALARM`
+- `requestLegacyExternalStorage="true"`
+
+问题：
+
+- 你的实际备份导入导出已经走了 `CreateDocument/OpenDocument`
+- 这类 SAF 流程通常**不需要全盘存储权限**
+- 对地图检测、应用列表、后台定位、精确闹钟的声明都属于**商店审核高敏感项**
+- 特别是：
+  - `MANAGE_EXTERNAL_STORAGE` 基本是高危声明
+  - `GET_INSTALLED_APPS` 极其敏感
+  - `requestLegacyExternalStorage` 已经过时
+  - `USE_EXACT_ALARM` 不是随便就该声明的
+
+结论：
+
+- 这是我看到的**最明显的合规风险点**
+
+建议：
+
+- 最小权限原则
+- 能用 SAF 的地方，不要申请文件管理权限
+- 只有功能确实需要且 UI 已完整申请引导时，再保留后台定位/精确闹钟
+- `queries` 比 `QUERY_PACKAGES` 更合理，但也应尽量克制
+
+---
+
+# 二、高优先级问题
+
+## 5. Room 迁移治理不够规范，`exportSchema = false` 不利于长期演进
+
+文件：
+- [app/src/main/java/com/selves/xnn/data/AppDatabase.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/AppDatabase.kt:0:0-0:0)
+- [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0)
+
+问题：
+
+- 数据库版本已到 `12`
+- 已经存在大量 Migration
+- 但 `exportSchema = false`
+- 这意味着：
+  - 无 schema 历史产物
+  - 很难验证迁移前后结构一致性
+  - 回归测试成本高
+  - 将来某次迁移一旦失误，不容易定位
+
+这对一个正在快速扩张的本地数据应用来说是明显短板。
+
+建议：
+
+- 开启 `exportSchema = true`
+- 将 schema 输出纳入版本控制
+- 为关键迁移写 migration test
+
+---
+
+## 6. 部分迁移吞异常，可能造成“假成功”
+
+文件：
+- [AppDatabase.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/AppDatabase.kt:0:0-0:0)
+
+例如早期迁移里存在：
+
+```kotlin
+catch (e: Exception) {
+    Log.e(...)
+}
+```
+
+但**没有抛出异常**。
+
+问题：
+
+- Room 会认为迁移过程完成
+- 但实际表结构可能已经部分失败
+- 后面可能在运行期才暴露出“神秘数据库问题”
+
+你在后面的 `9->10`、`10->11`、`11->12` 已经开始 `throw e`，这说明你自己也意识到了问题。  
+但前面版本迁移风格并不一致。
+
+建议：
+
+- 所有迁移失败都应该明确失败
+- 不要仅记录日志后继续
+
+---
+
+## 7. 存在较多 `!!` 强制非空，容易在边界状态崩溃
+
+主要文件：
+- [AppNavigationScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/AppNavigationScreen.kt:0:0-0:0)
+- [MainTabScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/MainTabScreen.kt:0:0-0:0)
+- [TodoScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/TodoScreen.kt:0:0-0:0)
+- 其他组件
+
+例子很多：
+
+- `currentMember!!`
+- `selectedTodo!!`
+- `creator!!`
+- `showDeleteConfirmation!!.name`
+- `backupProgress!!`
+
+问题：
+
+- 这些在“正常流程”下也许没问题
+- 但只要遇到：
+  - 状态恢复
+  - 异步加载时机变化
+  - 导航参数异常
+  - 数据被删除后页面还保留引用
+- 就可能直接 NPE
+
+建议：
+
+- 使用显式分支保护
+- 让 UI 在空状态下显示占位/关闭弹层，而不是假定永远非空
+
+---
+
+## 8. [TodoViewModel.refreshTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:184:4-189:5) 会重复收集 Flow，存在重复订阅风险
+
+文件：
+- [app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:0:0-0:0)
+
+问题：
+
+- [loadAllTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:86:4-105:5) 内部 `collect`
+- `init` 时已经调用一次
+- [refreshTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:184:4-189:5) 又再次调用 [loadAllTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:86:4-105:5)
+- 如果没有取消旧任务，就会产生重复 collector
+
+风险：
+
+- 重复刷新
+- 状态多次回调
+- 内存/协程泄漏式增长
+- 日后更难排查 UI 重组异常
+
+建议：
+
+- 持有加载 Job
+- 刷新前取消旧收集
+- 或直接把 repository flow `stateIn` 成 VM 内的唯一状态源
+
+---
+
+## 9. [ChatApplication](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ChatApplication.kt:15:0-58:1) 使用 `GlobalScope`
+
+文件：
+- [app/src/main/java/com/selves/xnn/ChatApplication.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ChatApplication.kt:0:0-0:0)
+
+问题：
+
+```kotlin
+GlobalScope.launch(Dispatchers.IO) {
+    setupCoilImageLoader()
+}
+```
+
+这是典型不推荐写法。
+
+风险：
+
+- 生命周期不可控
+- 启动过程状态不可追踪
+- 如果初始化异常，难治理
+- 后期若加入更多 App 初始化任务，会变得混乱
+
+建议：
+
+- 用明确的 `CoroutineScope(SupervisorJob() + Dispatchers.IO)`
+- 或直接同步初始化一个轻量版 ImageLoader
+- 不建议继续扩展 `GlobalScope`
+
+---
+
+# 三、中等问题
+
+## 10. [MainActivity](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:37:0-115:1) 主题和语言配置方式偏“手工”，状态收集写法不够优雅
+
+文件：
+- [MainActivity.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:0:0-0:0)
+
+现在写法：
+
+- `remember + mutableStateOf`
+- 两个 `LaunchedEffect(Unit)` 分别 `collect`
+
+问题：
+
+- 能跑，但不够 Compose 化
+- 更标准的方式通常是把 flow 转成 state，而不是手写常驻 collect
+
+影响：
+
+- 可读性一般
+- 后续加入更多偏好项时会越来越散
+
+---
+
+## 11. 存在包结构不统一问题
+
+目录同时存在：
+
+- [ui/viewmodels](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels:0:0-0:0)
+- [viewmodel](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel:0:0-0:0)
+
+这说明项目的结构规则已经开始松动。
+
+影响：
+
+- 新代码放置位置不统一
+- 团队协作时检索成本上升
+- 架构边界越来越模糊
+
+建议：
+
+- 统一 ViewModel 所在目录
+- 统一命名与包层级
+
+---
+
+## 12. [settings.gradle.kts](cci:7://file:///d:/project/selves/settings.gradle.kts:0:0-0:0) 仍保留默认项目名
+
+文件：
+- [settings.gradle.kts](cci:7://file:///d:/project/selves/settings.gradle.kts:0:0-0:0)
+
+```kotlin
+rootProject.name = "My Application"
+```
+
+这明显是初始化模板残留。
+
+影响：
+
+- 不影响运行
+- 但影响工程专业度、一致性、CI 标识、IDE 展示
+
+建议：
+
+- 改成真实项目名 `Selves`
+
+---
+
+## 13. 依赖版本管理不统一
+
+文件：
+- [gradle/libs.versions.toml](cci:7://file:///d:/project/selves/gradle/libs.versions.toml:0:0-0:0)
+- [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0)
+
+问题：
+
+- 你有 [libs.versions.toml](cci:7://file:///d:/project/selves/gradle/libs.versions.toml:0:0-0:0)
+- 但 [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0) 又手写了大量版本常量
+- 甚至 Compose BOM 版本前后不一致：
+  - [libs.versions.toml](cci:7://file:///d:/project/selves/gradle/libs.versions.toml:0:0-0:0): `2024.09.00`
+  - [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0): `2024.12.01`
+  - [androidTest](cci:9://file:///d:/project/selves/app/src/androidTest:0:0-0:0): `2023.08.00`
+
+这会导致：
+
+- 版本来源分裂
+- 测试/主代码依赖不一致
+- 升级更难
+
+建议：
+
+- 全量收敛到 version catalog
+- 测试与主模块 BOM 保持一致
+
+---
+
+## 14. `SettingsScreen` 中权限相关逻辑存在“准备了但没真正接好”的迹象
+
+文件：
+- [SettingsScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/SettingsScreen.kt:0:0-0:0)
+
+你创建了：
+
+- `RequestMultiplePermissions()` launcher
+
+但结果回调基本没处理，且当前设置页实际备份功能又依赖 SAF，不是真正需要这些重权限。
+
+说明：
+
+- 这块设计还没有完全收敛
+- 有“功能预埋”但未成型的问题
+
+---
+
+## 15. 测试几乎等于没有
+
+文件：
+- [ExampleUnitTest.kt](cci:7://file:///d:/project/selves/app/src/test/java/com/selves/xnn/ExampleUnitTest.kt:0:0-0:0)
+- [ExampleInstrumentedTest.kt](cci:7://file:///d:/project/selves/app/src/androidTest/java/com/selves/xnn/ExampleInstrumentedTest.kt:0:0-0:0)
+
+目前只有模板测试。
+
+这对你的项目来说已经不够了，尤其你已经有：
+
+- Room 迁移
+- 备份导入导出
+- DataStore 偏好
+- 多个 ViewModel
+- 后台定位服务
+
+缺少测试意味着：
+
+- 每次改动都靠手测
+- 数据迁移/导入最容易回归出错
+- 架构越大越难控
+
+---
+
+# 四、优点与值得保留的部分
+
+## 1. 技术选型整体正确
+
+你选了：
+
+- Kotlin
+- Jetpack Compose
+- Room
+- Hilt
+- DataStore
+
+对于本地优先的 Android 应用，这是合理的路线。
+
+---
+
+## 2. 功能域划分已经初步形成
+
+从目录和仓库类来看，你已经有：
+
+- [repository](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/repository:0:0-0:0)
+- [dao](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/dao:0:0-0:0)
+- [entity](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/entity:0:0-0:0)
+- `ui/screens`
+- [viewmodel](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel:0:0-0:0)
+
+虽然还不够统一，但基础分层已经建立起来了，不是“全塞 Activity”的项目。
+
+---
+
+## 3. 对数据安全有一定意识
+
+比如：
+
+- Room 去掉了 destructive migration
+- 备份导入用了事务保护思路
+- 本地化存储思路明确
+
+说明你的方向是对的，只是实现细节还需要更稳。
+
+---
+
+## 4. 一些性能意识是有的
+
+例如：
+
+- 启动加载中有并行处理
+- 图片预加载
+- 前后台状态记录
+- 前台服务用于定位
+
+说明你已经开始考虑用户体验与性能，不是只顾功能堆砌。
+
+---
+
+# 五、我建议你优先修的 5 件事
+
+## P0
+
+- **拆分 [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1)**
+- **去掉 `killProcess()`**
+- **移除不必要的高危权限**
+
+## P1
+
+- **修正 [BackupService](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:134:0-875:1) 中事务 + `runBlocking` 的实现**
+- **统一 Room 迁移策略，开启 schema 导出**
+
+## P2
+
+- **清理 `!!`**
+- **修复 [TodoViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:19:0-202:1) 重复收集**
+- **统一依赖版本管理**
+- **补核心测试**
+
+---
+
+# 六、建议补的测试
+
+## 必补
+
+- **[数据库迁移测试]**
+  - `1 -> 12`
+  - `10 -> 11`
+  - `11 -> 12`
+
+- **[备份导入导出测试]**
+  - 空备份
+  - 缺字段备份
+  - 大量消息备份
+  - 图片恢复路径
+
+- **[ViewModel 状态测试]**
+  - [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1) 启动加载流程
+  - [SettingsViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/SettingsViewModel.kt:19:0-285:1) 语言/主题设置
+  - [TodoViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:19:0-202:1) 刷新行为
+
+- **[服务行为测试]**
+  - 定位服务启动/停止
+  - 自动重启调度条件判断
+
+---
+
+# 七、综合评分
+
+按当前仓库状态，我会这样评估：
+
+- **功能完成度**：8/10
+- **架构健康度**：5.5/10
+- **稳定性风险控制**：5/10
+- **可维护性**：5/10
+- **上线合规性（权限角度）**：4/10
+- **测试完备度**：1/10
+
+总体就是：
+
+**这是一个“已经做出很多功能”的项目，但还不是一个“足够稳、足够易维护”的项目。**
+
+---
+
+# 八、如果你愿意，我建议下一步这样做
+
+我可以继续直接帮你做下面任意一种：
+
+- **方案A：输出一份“问题整改清单”**
+  - 按 `P0/P1/P2`
+  - 每项包含改法、影响范围、预计工作量
+
+- **方案B：我直接开始重构最危险的部分**
+  - 先拆 [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1)
+  - 或先修 [BackupService](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:134:0-875:1)
+  - 或先清理权限与语言切换
+
+- **方案C：我继续做第二轮更深入审查**
+  - 逐文件给出更细的 review
+  - 包含更多具体行级问题
+
+# 完成状态
+
+- **已完成**：项目级静态代码审查与风险分级报告
+- **未执行**：`gradlew lint / test / assemble` 等实际构建验证  
+- **下一步建议**：优先处理 [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1)、备份事务、权限策略、语言重启逻辑
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 计划
+
+我先做一次**面向整个项目的代码审查**，重点看：
+
+- **项目结构与技术栈**
+- **构建配置与依赖风险**
+- **Android 架构、数据层、数据库设计**
+- **UI/状态管理/可能的稳定性问题**
+- **可维护性、测试与安全性**
+
+我会先读 `README` 和关键入口，再抽查核心 Kotlin 文件，最后给你一份按严重程度分类的审查报告。
+# 开始审查
+
+我先快速梳理项目入口、核心层次和构建文件，再深入看数据库与主要 UI/状态流。  
+这一步先**建立代码地图**，避免只看局部得出片面结论。
+
+# 读取关键文件
+
+我先看说明文档、Gradle 配置和几个核心 Kotlin 文件，确认架构、依赖和实现风格，再给你做分层审查。
+
+# 深入核心层
+
+我继续抽查数据层、ViewModel、服务层和测试目录，重点找：
+
+- **架构边界是否清晰**
+- **线程/生命周期问题**
+- **Room 迁移可靠性**
+- **Compose 重组与状态管理风险**
+- **权限/备份/隐私问题**
+# 检查风险点
+
+我现在做一轮针对性检索，看看是否存在明显的高风险实现，例如：
+
+- **`GlobalScope` / `runBlocking` / 进程强杀**
+- **过度权限申请**
+- **超大 ViewModel / UI 直接持有业务逻辑**
+- **TODO 未实现项**
+- **测试缺失**
+# 定位具体问题
+
+我已经看到几个可疑点了：  
+`MainViewModel` 过大、权限声明偏重、测试几乎为空。现在补读几个最关键的实现，确认这些是否只是风格问题，还是已经影响稳定性与可维护性。
+# 补看数据库与关键 ViewModel
+
+接下来我重点确认两个高风险区域：
+
+- **Room 数据库与迁移**
+- **超大 ViewModel / 重复数据流收集**
+
+这两个地方最容易在后期演化成稳定性问题。
+# 再补两类检查
+
+我再做两类补充审查，确保结论更扎实：
+
+- **数据库实体/迁移是否一致**
+- **后台定位与权限申请是否合规、是否过度**
+
+这两部分直接关系到上线稳定性和商店审核风险。
+
+# 收尾核验
+
+我再补一个小检查：  
+确认 `TypeConverter`、导航层和设置重启逻辑是不是和我前面发现的问题一致。然后我就给你出完整审查报告。
+# 整理报告
+
+我已经完成静态审查了。  
+先把任务状态收尾，然后我给你一份**按严重程度分类**的完整审查报告。
+
+# 审查结论
+
+我已经对你的项目做了一次**静态全量代码审查**。  
+结论先说：
+
+- **整体评价**：项目已经具备明确产品方向，功能面比较完整，Jetpack Compose + Room + Hilt 的技术路线是对的。
+- **主要问题**：当前代码的核心风险不在“功能不能跑”，而在于**架构膨胀、生命周期处理不稳、权限策略过重、数据库迁移治理不足、测试几乎缺失**。
+- **是否适合继续扩功能**：**可以，但不建议继续无约束扩张**。如果不先收敛几个核心问题，后面维护成本会快速升高。
+
+下面我按严重程度给你报告。
+
+---
+
+# 一、严重问题
+
+## 1. [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1) 已经过大，承担了过多职责
+
+文件：
+- [app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:0:0-0:0)
+
+问题表现：
+
+- 文件长度约 **1233 行**
+- 同时承担了：
+  - 启动加载流程
+  - 成员状态管理
+  - 群组/消息管理
+  - 未读数管理
+  - 首页布局配置
+  - 备份导入
+  - 引导流程
+  - 头像/图片预加载
+  - 在线记录相关状态
+
+这已经不是单纯的 “Main” ViewModel，而是接近一个**应用协调器 + 多业务聚合器**。
+
+风险：
+
+- **单点复杂度过高**
+- 任意一个功能改动都可能影响启动流程
+- 更难写测试
+- 更容易引入竞态、重复加载、状态错乱
+- Compose 页面会被迫依赖一个过于庞大的状态源
+
+证据点：
+
+- 大量 `MutableStateFlow`
+- 大量 `launch/async/collect`
+- 同时管理备份导入、UI loading、群聊消息、首页模块配置
+- [updateTodoStatus()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:1215:4-1220:5) 还是空代理实现，说明职责已经开始外溢
+
+建议：
+
+- 按业务拆分为多个 ViewModel / Coordinator：
+  - `AppStartupViewModel`
+  - `SessionViewModel`
+  - `ChatViewModel`
+  - `HomeLayoutViewModel`
+  - `BackupViewModel`
+- [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1) 只保留真正的全局会话状态，不再直接持有所有业务逻辑
+
+---
+
+## 2. 启动与事务中使用 `runBlocking` / `runInTransaction + runBlocking`，有卡顿与死锁风险
+
+文件：
+- [app/src/main/java/com/selves/xnn/MainActivity.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:0:0-0:0)
+- [app/src/main/java/com/selves/xnn/data/BackupService.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:0:0-0:0)
+
+### 2.1 [MainActivity.attachBaseContext()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:44:4-57:5) 中使用 `runBlocking`
+
+```kotlin
+val languageCode = runBlocking {
+    memberPrefs.language.first()
+}
+```
+
+问题：
+
+- [attachBaseContext()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:44:4-57:5) 是启动关键路径
+- 在这里阻塞读取 DataStore，容易增加冷启动延迟
+- 如果后续语言逻辑变复杂，会让启动更脆弱
+
+结论：
+
+- 这不是一定崩，但属于**高风险启动阻塞点**
+
+### 2.2 [BackupService.importDataToDatabase()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:688:4-787:5) 中：
+
+```kotlin
+database.runInTransaction {
+    kotlinx.coroutines.runBlocking {
+        ...
+    }
+}
+```
+
+问题：
+
+- 在 Room 事务里再套 `runBlocking` 是很危险的设计
+- 事务应该尽量同步、短时、无阻塞地完成
+- 这种写法非常容易在未来演化中引入：
+  - 卡死
+  - 隐式线程阻塞
+  - 导入大数据时性能急剧下降
+  - 更难定位事务失败原因
+
+建议：
+
+- 改成纯同步 DAO 调用事务
+- 或者使用 Room 官方推荐的协程事务方式，而不是事务里包 `runBlocking`
+
+---
+
+## 3. 语言切换通过 `killProcess()` 强杀进程，体验与稳定性都不好
+
+文件：
+- [app/src/main/java/com/selves/xnn/ui/viewmodels/SettingsViewModel.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/SettingsViewModel.kt:0:0-0:0)
+
+代码：
+
+```kotlin
+context.startActivity(intent)
+android.os.Process.killProcess(android.os.Process.myPid())
+```
+
+问题：
+
+- 这不是正常的 Android 重建 Activity 方式
+- 会导致：
+  - 用户感知到“闪退式重启”
+  - 未提交状态丢失
+  - 某些后台流程/服务被粗暴中断
+  - 日志与崩溃监控会更混乱
+
+建议：
+
+- 用 Activity recreate / task 重建方案
+- 如果涉及语言上下文切换，也应通过受控的导航栈重建，而不是直接杀进程
+
+---
+
+## 4. 权限策略明显过重，存在审核与隐私风险
+
+文件：
+- [app/src/main/AndroidManifest.xml](cci:7://file:///d:/project/selves/app/src/main/AndroidManifest.xml:0:0-0:0)
+
+高风险权限包括：
+
+- `MANAGE_EXTERNAL_STORAGE`
+- `QUERY_PACKAGES`
+- `com.android.permission.GET_INSTALLED_APPS`
+- `ACCESS_BACKGROUND_LOCATION`
+- `SCHEDULE_EXACT_ALARM`
+- `USE_EXACT_ALARM`
+- `requestLegacyExternalStorage="true"`
+
+问题：
+
+- 你的实际备份导入导出已经走了 `CreateDocument/OpenDocument`
+- 这类 SAF 流程通常**不需要全盘存储权限**
+- 对地图检测、应用列表、后台定位、精确闹钟的声明都属于**商店审核高敏感项**
+- 特别是：
+  - `MANAGE_EXTERNAL_STORAGE` 基本是高危声明
+  - `GET_INSTALLED_APPS` 极其敏感
+  - `requestLegacyExternalStorage` 已经过时
+  - `USE_EXACT_ALARM` 不是随便就该声明的
+
+结论：
+
+- 这是我看到的**最明显的合规风险点**
+
+建议：
+
+- 最小权限原则
+- 能用 SAF 的地方，不要申请文件管理权限
+- 只有功能确实需要且 UI 已完整申请引导时，再保留后台定位/精确闹钟
+- `queries` 比 `QUERY_PACKAGES` 更合理，但也应尽量克制
+
+---
+
+# 二、高优先级问题
+
+## 5. Room 迁移治理不够规范，`exportSchema = false` 不利于长期演进
+
+文件：
+- [app/src/main/java/com/selves/xnn/data/AppDatabase.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/AppDatabase.kt:0:0-0:0)
+- [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0)
+
+问题：
+
+- 数据库版本已到 `12`
+- 已经存在大量 Migration
+- 但 `exportSchema = false`
+- 这意味着：
+  - 无 schema 历史产物
+  - 很难验证迁移前后结构一致性
+  - 回归测试成本高
+  - 将来某次迁移一旦失误，不容易定位
+
+这对一个正在快速扩张的本地数据应用来说是明显短板。
+
+建议：
+
+- 开启 `exportSchema = true`
+- 将 schema 输出纳入版本控制
+- 为关键迁移写 migration test
+
+---
+
+## 6. 部分迁移吞异常，可能造成“假成功”
+
+文件：
+- [AppDatabase.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/AppDatabase.kt:0:0-0:0)
+
+例如早期迁移里存在：
+
+```kotlin
+catch (e: Exception) {
+    Log.e(...)
+}
+```
+
+但**没有抛出异常**。
+
+问题：
+
+- Room 会认为迁移过程完成
+- 但实际表结构可能已经部分失败
+- 后面可能在运行期才暴露出“神秘数据库问题”
+
+你在后面的 `9->10`、`10->11`、`11->12` 已经开始 `throw e`，这说明你自己也意识到了问题。  
+但前面版本迁移风格并不一致。
+
+建议：
+
+- 所有迁移失败都应该明确失败
+- 不要仅记录日志后继续
+
+---
+
+## 7. 存在较多 `!!` 强制非空，容易在边界状态崩溃
+
+主要文件：
+- [AppNavigationScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/AppNavigationScreen.kt:0:0-0:0)
+- [MainTabScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/MainTabScreen.kt:0:0-0:0)
+- [TodoScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/TodoScreen.kt:0:0-0:0)
+- 其他组件
+
+例子很多：
+
+- `currentMember!!`
+- `selectedTodo!!`
+- `creator!!`
+- `showDeleteConfirmation!!.name`
+- `backupProgress!!`
+
+问题：
+
+- 这些在“正常流程”下也许没问题
+- 但只要遇到：
+  - 状态恢复
+  - 异步加载时机变化
+  - 导航参数异常
+  - 数据被删除后页面还保留引用
+- 就可能直接 NPE
+
+建议：
+
+- 使用显式分支保护
+- 让 UI 在空状态下显示占位/关闭弹层，而不是假定永远非空
+
+---
+
+## 8. [TodoViewModel.refreshTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:184:4-189:5) 会重复收集 Flow，存在重复订阅风险
+
+文件：
+- [app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:0:0-0:0)
+
+问题：
+
+- [loadAllTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:86:4-105:5) 内部 `collect`
+- `init` 时已经调用一次
+- [refreshTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:184:4-189:5) 又再次调用 [loadAllTodos()](cci:1://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:86:4-105:5)
+- 如果没有取消旧任务，就会产生重复 collector
+
+风险：
+
+- 重复刷新
+- 状态多次回调
+- 内存/协程泄漏式增长
+- 日后更难排查 UI 重组异常
+
+建议：
+
+- 持有加载 Job
+- 刷新前取消旧收集
+- 或直接把 repository flow `stateIn` 成 VM 内的唯一状态源
+
+---
+
+## 9. [ChatApplication](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ChatApplication.kt:15:0-58:1) 使用 `GlobalScope`
+
+文件：
+- [app/src/main/java/com/selves/xnn/ChatApplication.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ChatApplication.kt:0:0-0:0)
+
+问题：
+
+```kotlin
+GlobalScope.launch(Dispatchers.IO) {
+    setupCoilImageLoader()
+}
+```
+
+这是典型不推荐写法。
+
+风险：
+
+- 生命周期不可控
+- 启动过程状态不可追踪
+- 如果初始化异常，难治理
+- 后期若加入更多 App 初始化任务，会变得混乱
+
+建议：
+
+- 用明确的 `CoroutineScope(SupervisorJob() + Dispatchers.IO)`
+- 或直接同步初始化一个轻量版 ImageLoader
+- 不建议继续扩展 `GlobalScope`
+
+---
+
+# 三、中等问题
+
+## 10. [MainActivity](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:37:0-115:1) 主题和语言配置方式偏“手工”，状态收集写法不够优雅
+
+文件：
+- [MainActivity.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/MainActivity.kt:0:0-0:0)
+
+现在写法：
+
+- `remember + mutableStateOf`
+- 两个 `LaunchedEffect(Unit)` 分别 `collect`
+
+问题：
+
+- 能跑，但不够 Compose 化
+- 更标准的方式通常是把 flow 转成 state，而不是手写常驻 collect
+
+影响：
+
+- 可读性一般
+- 后续加入更多偏好项时会越来越散
+
+---
+
+## 11. 存在包结构不统一问题
+
+目录同时存在：
+
+- [ui/viewmodels](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels:0:0-0:0)
+- [viewmodel](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel:0:0-0:0)
+
+这说明项目的结构规则已经开始松动。
+
+影响：
+
+- 新代码放置位置不统一
+- 团队协作时检索成本上升
+- 架构边界越来越模糊
+
+建议：
+
+- 统一 ViewModel 所在目录
+- 统一命名与包层级
+
+---
+
+## 12. [settings.gradle.kts](cci:7://file:///d:/project/selves/settings.gradle.kts:0:0-0:0) 仍保留默认项目名
+
+文件：
+- [settings.gradle.kts](cci:7://file:///d:/project/selves/settings.gradle.kts:0:0-0:0)
+
+```kotlin
+rootProject.name = "My Application"
+```
+
+这明显是初始化模板残留。
+
+影响：
+
+- 不影响运行
+- 但影响工程专业度、一致性、CI 标识、IDE 展示
+
+建议：
+
+- 改成真实项目名 `Selves`
+
+---
+
+## 13. 依赖版本管理不统一
+
+文件：
+- [gradle/libs.versions.toml](cci:7://file:///d:/project/selves/gradle/libs.versions.toml:0:0-0:0)
+- [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0)
+
+问题：
+
+- 你有 [libs.versions.toml](cci:7://file:///d:/project/selves/gradle/libs.versions.toml:0:0-0:0)
+- 但 [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0) 又手写了大量版本常量
+- 甚至 Compose BOM 版本前后不一致：
+  - [libs.versions.toml](cci:7://file:///d:/project/selves/gradle/libs.versions.toml:0:0-0:0): `2024.09.00`
+  - [app/build.gradle.kts](cci:7://file:///d:/project/selves/app/build.gradle.kts:0:0-0:0): `2024.12.01`
+  - [androidTest](cci:9://file:///d:/project/selves/app/src/androidTest:0:0-0:0): `2023.08.00`
+
+这会导致：
+
+- 版本来源分裂
+- 测试/主代码依赖不一致
+- 升级更难
+
+建议：
+
+- 全量收敛到 version catalog
+- 测试与主模块 BOM 保持一致
+
+---
+
+## 14. `SettingsScreen` 中权限相关逻辑存在“准备了但没真正接好”的迹象
+
+文件：
+- [SettingsScreen.kt](cci:7://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/screens/SettingsScreen.kt:0:0-0:0)
+
+你创建了：
+
+- `RequestMultiplePermissions()` launcher
+
+但结果回调基本没处理，且当前设置页实际备份功能又依赖 SAF，不是真正需要这些重权限。
+
+说明：
+
+- 这块设计还没有完全收敛
+- 有“功能预埋”但未成型的问题
+
+---
+
+## 15. 测试几乎等于没有
+
+文件：
+- [ExampleUnitTest.kt](cci:7://file:///d:/project/selves/app/src/test/java/com/selves/xnn/ExampleUnitTest.kt:0:0-0:0)
+- [ExampleInstrumentedTest.kt](cci:7://file:///d:/project/selves/app/src/androidTest/java/com/selves/xnn/ExampleInstrumentedTest.kt:0:0-0:0)
+
+目前只有模板测试。
+
+这对你的项目来说已经不够了，尤其你已经有：
+
+- Room 迁移
+- 备份导入导出
+- DataStore 偏好
+- 多个 ViewModel
+- 后台定位服务
+
+缺少测试意味着：
+
+- 每次改动都靠手测
+- 数据迁移/导入最容易回归出错
+- 架构越大越难控
+
+---
+
+# 四、优点与值得保留的部分
+
+## 1. 技术选型整体正确
+
+你选了：
+
+- Kotlin
+- Jetpack Compose
+- Room
+- Hilt
+- DataStore
+
+对于本地优先的 Android 应用，这是合理的路线。
+
+---
+
+## 2. 功能域划分已经初步形成
+
+从目录和仓库类来看，你已经有：
+
+- [repository](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/repository:0:0-0:0)
+- [dao](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/dao:0:0-0:0)
+- [entity](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/entity:0:0-0:0)
+- `ui/screens`
+- [viewmodel](cci:9://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel:0:0-0:0)
+
+虽然还不够统一，但基础分层已经建立起来了，不是“全塞 Activity”的项目。
+
+---
+
+## 3. 对数据安全有一定意识
+
+比如：
+
+- Room 去掉了 destructive migration
+- 备份导入用了事务保护思路
+- 本地化存储思路明确
+
+说明你的方向是对的，只是实现细节还需要更稳。
+
+---
+
+## 4. 一些性能意识是有的
+
+例如：
+
+- 启动加载中有并行处理
+- 图片预加载
+- 前后台状态记录
+- 前台服务用于定位
+
+说明你已经开始考虑用户体验与性能，不是只顾功能堆砌。
+
+---
+
+# 五、我建议你优先修的 5 件事
+
+## P0
+
+- **拆分 [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1)**
+- **去掉 `killProcess()`**
+- **移除不必要的高危权限**
+
+## P1
+
+- **修正 [BackupService](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:134:0-875:1) 中事务 + `runBlocking` 的实现**
+- **统一 Room 迁移策略，开启 schema 导出**
+
+## P2
+
+- **清理 `!!`**
+- **修复 [TodoViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:19:0-202:1) 重复收集**
+- **统一依赖版本管理**
+- **补核心测试**
+
+---
+
+# 六、建议补的测试
+
+## 必补
+
+- **[数据库迁移测试]**
+  - `1 -> 12`
+  - `10 -> 11`
+  - `11 -> 12`
+
+- **[备份导入导出测试]**
+  - 空备份
+  - 缺字段备份
+  - 大量消息备份
+  - 图片恢复路径
+
+- **[ViewModel 状态测试]**
+  - [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1) 启动加载流程
+  - [SettingsViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/SettingsViewModel.kt:19:0-285:1) 语言/主题设置
+  - [TodoViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/viewmodel/TodoViewModel.kt:19:0-202:1) 刷新行为
+
+- **[服务行为测试]**
+  - 定位服务启动/停止
+  - 自动重启调度条件判断
+
+---
+
+# 七、综合评分
+
+按当前仓库状态，我会这样评估：
+
+- **功能完成度**：8/10
+- **架构健康度**：5.5/10
+- **稳定性风险控制**：5/10
+- **可维护性**：5/10
+- **上线合规性（权限角度）**：4/10
+- **测试完备度**：1/10
+
+总体就是：
+
+**这是一个“已经做出很多功能”的项目，但还不是一个“足够稳、足够易维护”的项目。**
+
+---
+
+# 八、如果你愿意，我建议下一步这样做
+
+我可以继续直接帮你做下面任意一种：
+
+- **方案A：输出一份“问题整改清单”**
+  - 按 `P0/P1/P2`
+  - 每项包含改法、影响范围、预计工作量
+
+- **方案B：我直接开始重构最危险的部分**
+  - 先拆 [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1)
+  - 或先修 [BackupService](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/data/BackupService.kt:134:0-875:1)
+  - 或先清理权限与语言切换
+
+- **方案C：我继续做第二轮更深入审查**
+  - 逐文件给出更细的 review
+  - 包含更多具体行级问题
+
+# 完成状态
+
+- **已完成**：项目级静态代码审查与风险分级报告
+- **未执行**：`gradlew lint / test / assemble` 等实际构建验证  
+- **下一步建议**：优先处理 [MainViewModel](cci:2://file:///d:/project/selves/app/src/main/java/com/selves/xnn/ui/viewmodels/MainViewModel.kt:49:0-1232:1)、备份事务、权限策略、语言重启逻辑

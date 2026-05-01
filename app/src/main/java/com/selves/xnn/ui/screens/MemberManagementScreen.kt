@@ -26,6 +26,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
@@ -54,6 +56,8 @@ fun MemberManagementScreen(
     var showSearchBar by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<String?>(null) }
+    var selectedMember by remember { mutableStateOf<Member?>(null) }
+    val bottomSheetState = rememberModalBottomSheetState()
     
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -148,7 +152,8 @@ fun MemberManagementScreen(
                                 member = member,
                                 isCurrentMember = member.id == currentMember.id,
                                 onDeleteMember = { showDeleteConfirmation = member },
-                                onEditMember = { memberToEdit = member }
+                                onEditMember = { memberToEdit = member },
+                                onMemberClick = { selectedMember = member }
                             )
                         }
                     }
@@ -162,7 +167,8 @@ fun MemberManagementScreen(
                             member = member,
                             isCurrentMember = member.id == currentMember.id,
                             onDeleteMember = { showDeleteConfirmation = member },
-                            onEditMember = { memberToEdit = member }
+                            onEditMember = { memberToEdit = member },
+                            onMemberClick = { selectedMember = member }
                         )
                     }
                     
@@ -211,6 +217,56 @@ fun MemberManagementScreen(
         }
     }
     
+    // 成员资料底部面板
+    selectedMember?.let { member ->
+        ModalBottomSheet(
+            onDismissRequest = { selectedMember = null },
+            sheetState = bottomSheetState
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AvatarImage(
+                    avatarUrl = member.avatarUrl,
+                    contentDescription = null,
+                    size = 80.dp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = member.name,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (member.bio.isBlank()) "暂无简介" else member.bio,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (member.bio.isBlank())
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                OutlinedButton(
+                    onClick = {
+                        memberToEdit = member
+                        selectedMember = null
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("编辑资料")
+                }
+            }
+        }
+    }
+
     // 删除确认对话框
     if (showDeleteConfirmation != null) {
         AlertDialog(
@@ -249,8 +305,8 @@ fun MemberManagementScreen(
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl ->
-                mainViewModel.createMember(name, avatarUrl, shouldSetAsCurrent = false)
+            onConfirm = { name, avatarUrl, bio ->
+                mainViewModel.createMember(name, avatarUrl, bio, shouldSetAsCurrent = false)
                 showCreateMemberDialog = false
             }
         )
@@ -262,8 +318,8 @@ fun MemberManagementScreen(
             member = member,
             existingMemberNames = members.map { it.name },
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl ->
-                mainViewModel.updateMember(member.id, name, avatarUrl)
+            onConfirm = { name, avatarUrl, bio ->
+                mainViewModel.updateMember(member.id, name, avatarUrl, bio)
                 memberToEdit = null
             }
         )
@@ -366,14 +422,15 @@ fun MemberItem(
     member: Member,
     isCurrentMember: Boolean,
     onDeleteMember: () -> Unit,
-    onEditMember: (Member) -> Unit
+    onEditMember: (Member) -> Unit,
+    onMemberClick: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
     
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* 可以添加点击事件 */ }
+            .clickable { onMemberClick() }
             .padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -415,9 +472,11 @@ fun MemberItem(
             }
             
             Text(
-                text = "ID: ${member.id.take(8)}...",
+                text = if (member.bio.isBlank()) "暂无简介" else member.bio,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
         

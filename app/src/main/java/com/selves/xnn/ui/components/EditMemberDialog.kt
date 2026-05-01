@@ -44,9 +44,10 @@ fun EditMemberDialog(
     member: Member,
     existingMemberNames: List<String>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String?) -> Unit
+    onConfirm: (String, String?, String) -> Unit
 ) {
     var memberName by remember { mutableStateOf(member.name) }
+    var memberBio by remember { mutableStateOf(member.bio) }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
     var currentAvatarUrl by remember { mutableStateOf(member.avatarUrl) }
     var showError by remember { mutableStateOf(false) }
@@ -88,7 +89,7 @@ fun EditMemberDialog(
                     }
                     
                     // 使用保存后的头像路径
-                    onConfirm(memberName, savedAvatarPath)
+                    onConfirm(memberName, savedAvatarPath, memberBio)
                 }
             }
         }
@@ -189,6 +190,18 @@ fun EditMemberDialog(
                                 false
                             }
                         }
+                )
+
+                // 简介输入框
+                OutlinedTextField(
+                    value = memberBio,
+                    onValueChange = { memberBio = it },
+                    label = { Text("简介") },
+                    placeholder = { Text("介绍一下这位成员...") },
+                    maxLines = 4,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 )
 
                 // 按钮区域

@@ -12,5 +12,6 @@ data class MemberEntity(
     val id: String,
     val name: String,
     val avatarUrl: String?,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val bio: String = ""
 ) : Parcelable 

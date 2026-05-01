@@ -24,14 +24,16 @@ object Mappers {
         id = id,
         name = name,
         avatarUrl = avatarUrl,
-        isDeleted = isDeleted
+        isDeleted = isDeleted,
+        bio = bio
     )
 
     fun Member.toEntity(): MemberEntity = MemberEntity(
         id = id,
         name = name,
         avatarUrl = avatarUrl,
-        isDeleted = isDeleted
+        isDeleted = isDeleted,
+        bio = bio
     )
 
     suspend fun ChatGroupEntity.toDomain(memberDao: MemberDao): ChatGroup {
