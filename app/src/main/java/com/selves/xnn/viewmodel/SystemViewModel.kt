@@ -84,13 +84,14 @@ class SystemViewModel @Inject constructor(
     /**
      * 创建系统
      */
-    fun createSystem(name: String, avatarUrl: String?) {
+    fun createSystem(name: String, avatarUrl: String?, description: String = "") {
         viewModelScope.launch(exceptionHandler) {
             try {
                 val system = System(
                     id = UUID.randomUUID().toString(),
                     name = name,
                     avatarUrl = avatarUrl,
+                    description = description,
                     createdAt = java.lang.System.currentTimeMillis(),
                     updatedAt = java.lang.System.currentTimeMillis()
                 )

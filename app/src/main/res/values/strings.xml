@@ -77,6 +77,19 @@
     <string name="member_management">成员管理</string>
     <string name="member_quick_switch">快捷切换成员</string>
     <string name="member_quick_switch_desc">在投票和聊天界面显示快捷成员切换</string>
+    <string name="member_groups">分组</string>
+    <string name="member_add_group">添加分组</string>
+    <string name="member_group_input_hint">输入分组名称</string>
+    <string name="member_all_groups">全部</string>
+    <string name="member_no_group">无分组</string>
+    <string name="member_filter_by_group">按分组筛选</string>
+    <string name="label_member_groups">分组标签</string>
+    <string name="placeholder_member_group">例如：主要人格、保护者...</string>
+    <string name="member_existing_groups">已有分组（点击添加）</string>
+    <string name="member_create_new_group">新建分组</string>
+    <string name="member_view_by_letter">按字母</string>
+    <string name="member_view_by_group">按分组</string>
+    <string name="member_view_mode">视图模式</string>
     
     <!-- 聊天 -->
     <string name="chat_title">聊天</string>
@@ -552,6 +565,7 @@
     <string name="label_member_bio">简介</string>
     <string name="label_member_pronouns">代词</string>
     <string name="label_system_name">系统名称</string>
+    <string name="label_system_description">系统简介</string>
     <string name="label_group_name">群聊名称</string>
     <string name="label_title">标题</string>
     <string name="label_description_optional">描述（可选）</string>
@@ -562,6 +576,7 @@
     <string name="placeholder_member_bio">介绍一下这位成员...</string>
     <string name="placeholder_member_pronouns">例如：他/她/more</string>
     <string name="placeholder_system_name">请输入系统名称</string>
+    <string name="placeholder_system_description">介绍一下这个系统...</string>
     <string name="placeholder_share_thoughts">分享你的想法...</string>
     <string name="placeholder_search_members">搜索成员...</string>
     <string name="placeholder_select_avatar">点击选择头像</string>
@@ -592,6 +607,7 @@
     
     <!-- 其他 -->
     <string name="dynamic_not_found">动态不存在或已被删除</string>
+    <string name="system_description_empty">还没有系统简介</string>
     <string name="cd_navigation">导航</string>
     
     <!-- 内容描述 - 新增 -->

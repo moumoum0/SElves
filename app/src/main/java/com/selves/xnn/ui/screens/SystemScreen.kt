@@ -6,6 +6,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
@@ -17,10 +24,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -136,6 +145,12 @@ fun SystemScreen(
 fun SystemInfoCard(
     system: System
 ) {
+    var isDescriptionVisible by remember { mutableStateOf(false) }
+    val titleScale by animateFloatAsState(
+        targetValue = if (isDescriptionVisible) 0.9f else 1f,
+        label = "system_title_scale"
+    )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -147,10 +162,10 @@ fun SystemInfoCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .animateContentSize()
                 .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = if (isDescriptionVisible) Alignment.Top else Alignment.CenterVertically
         ) {
-            // 系统头像
             SystemAvatarImage(
                 avatarUrl = system.avatarUrl,
                 contentDescription = stringResource(R.string.cd_system_avatar),
@@ -159,13 +174,35 @@ fun SystemInfoCard(
             
             Spacer(modifier = Modifier.width(16.dp))
             
-            // 系统名称
-            Text(
-                text = system.name,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = system.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .scale(titleScale)
+                        .clickable { isDescriptionVisible = !isDescriptionVisible }
+                )
+
+                AnimatedVisibility(
+                    visible = isDescriptionVisible,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Text(
+                        text = system.description.ifBlank { stringResource(R.string.system_description_empty) },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        textAlign = TextAlign.Start
+                    )
+                }
+            }
         }
     }
 }

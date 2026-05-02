@@ -99,14 +99,16 @@ fun MainTabScreen(
     }
 
     if (showCreateMemberDialog) {
+        val existingGroups = remember(members) { members.flatMap { it.groups }.distinct().sorted() }
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
+            existingGroups = existingGroups,
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl, bio, pronouns ->
+            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
                 // 立即关闭对话框，防止多次点击
                 showCreateMemberDialog = false
                 // 创建成员
-                viewModel.createMember(name, avatarUrl, bio, pronouns)
+                viewModel.createMember(name, avatarUrl, bio, pronouns, groups)
             }
         )
     }

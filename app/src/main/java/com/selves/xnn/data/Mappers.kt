@@ -26,7 +26,8 @@ object Mappers {
         avatarUrl = avatarUrl,
         isDeleted = isDeleted,
         bio = bio,
-        pronouns = pronouns
+        pronouns = pronouns,
+        groups = groups
     )
 
     fun Member.toEntity(): MemberEntity = MemberEntity(
@@ -35,7 +36,8 @@ object Mappers {
         avatarUrl = avatarUrl,
         isDeleted = isDeleted,
         bio = bio,
-        pronouns = pronouns
+        pronouns = pronouns,
+        groups = groups
     )
 
     suspend fun ChatGroupEntity.toDomain(memberDao: MemberDao): ChatGroup {
@@ -126,6 +128,7 @@ object Mappers {
         id = id,
         name = name,
         avatarUrl = avatarUrl,
+        description = description,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -134,6 +137,7 @@ object Mappers {
         id = id,
         name = name,
         avatarUrl = avatarUrl,
+        description = description,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

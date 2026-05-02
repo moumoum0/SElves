@@ -416,15 +416,22 @@ class MainViewModel @Inject constructor(
     }
     
     // 创建成员
-    fun createMember(name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", shouldSetAsCurrent: Boolean = true) {
+    fun createMember(name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", groups: List<String> = emptyList(), shouldSetAsCurrent: Boolean = true) {
         val memberId = UUID.randomUUID().toString()
+        
+        // 规范化分组：去除首尾空格、过滤空值、去重
+        val normalizedGroups = groups
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
         
         val member = Member(
             id = memberId,
             name = name,
             avatarUrl = avatarUrl,
             bio = bio,
-            pronouns = pronouns
+            pronouns = pronouns,
+            groups = normalizedGroups
         )
         
         // 使用单一协程进行所有操作，避免并发问题
@@ -454,7 +461,7 @@ class MainViewModel @Inject constructor(
     }
     
     // 更新成员信息
-    fun updateMember(memberId: String, name: String, avatarUrl: String?, bio: String = "", pronouns: String = "") {
+    fun updateMember(memberId: String, name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", groups: List<String> = emptyList()) {
         
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
@@ -462,12 +469,19 @@ class MainViewModel @Inject constructor(
                 val existingMember = memberRepository.getMemberById(memberId)
                 
                 if (existingMember != null) {
+                    // 规范化分组：去除首尾空格、过滤空值、去重
+                    val normalizedGroups = groups
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() }
+                        .distinct()
+                    
                     // 创建更新后的成员对象
                     val updatedMember = existingMember.copy(
                         name = name,
                         avatarUrl = avatarUrl ?: existingMember.avatarUrl,
                         bio = bio,
-                        pronouns = pronouns
+                        pronouns = pronouns,
+                        groups = normalizedGroups
                     )
                     
                     // 保存到数据库
@@ -993,13 +1007,14 @@ class MainViewModel @Inject constructor(
     /**
      * 创建系统
      */
-    fun createSystem(name: String, avatarUrl: String?) {
+    fun createSystem(name: String, avatarUrl: String?, description: String = "") {
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
                 val system = com.selves.xnn.model.System(
                     id = UUID.randomUUID().toString(),
                     name = name,
                     avatarUrl = avatarUrl,
+                    description = description,
                     createdAt = java.lang.System.currentTimeMillis(),
                     updatedAt = java.lang.System.currentTimeMillis()
                 )

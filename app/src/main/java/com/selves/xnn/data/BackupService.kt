@@ -256,6 +256,19 @@ class BackupService @Inject constructor(
                 root.add(PREFERENCES_FIELD, prefObj)
             }
 
+            // 为旧备份的成员数据补充 groups 字段
+            if (root.has("members") && root.get("members").isJsonArray) {
+                val membersArray = root.getAsJsonArray("members")
+                membersArray.forEach { memberElement ->
+                    if (memberElement.isJsonObject) {
+                        val memberObj = memberElement.asJsonObject
+                        if (!memberObj.has("groups")) {
+                            memberObj.addProperty("groups", "")
+                        }
+                    }
+                }
+            }
+
             root.toString()
         } catch (e: Exception) {
             Log.w(TAG, "升级旧版本备份JSON失败，使用原始JSON: ${e.message}")

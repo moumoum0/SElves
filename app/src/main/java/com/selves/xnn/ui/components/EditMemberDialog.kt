@@ -12,8 +12,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -38,17 +42,21 @@ import com.selves.xnn.ui.components.AvatarImage
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageView
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditMemberDialog(
     member: Member,
     existingMemberNames: List<String>,
+    existingGroups: List<String> = emptyList(),
     onDismiss: () -> Unit,
-    onConfirm: (String, String?, String, String) -> Unit
+    onConfirm: (String, String?, String, String, List<String>) -> Unit
 ) {
     var memberName by remember { mutableStateOf(member.name) }
     var memberBio by remember { mutableStateOf(member.bio) }
     var memberPronouns by remember { mutableStateOf(member.pronouns) }
+    var memberGroups by remember { mutableStateOf(member.groups) }
+    var showNewGroupDialog by remember { mutableStateOf(false) }
+    var newGroupInput by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
     var currentAvatarUrl by remember { mutableStateOf(member.avatarUrl) }
     var showError by remember { mutableStateOf(false) }
@@ -90,7 +98,7 @@ fun EditMemberDialog(
                     }
                     
                     // 使用保存后的头像路径
-                    onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns)
+                    onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns, memberGroups)
                 }
             }
         }
@@ -217,6 +225,73 @@ fun EditMemberDialog(
                         .padding(bottom = 16.dp)
                 )
 
+                // 已选分组标签
+                if (memberGroups.isNotEmpty()) {
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        memberGroups.forEach { group ->
+                            AssistChip(
+                                onClick = { },
+                                label = { Text(group) },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = stringResource(R.string.cd_delete),
+                                        modifier = Modifier
+                                            .size(18.dp)
+                                            .clickable {
+                                                memberGroups = memberGroups.filter { it != group }
+                                            }
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // 分组选择区域
+                val availableGroups = existingGroups.filter { it !in memberGroups }
+                Text(
+                    text = stringResource(R.string.member_existing_groups),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    availableGroups.forEach { group ->
+                        SuggestionChip(
+                            onClick = {
+                                if (group !in memberGroups) {
+                                    memberGroups = memberGroups + group
+                                }
+                            },
+                            label = { Text(group) }
+                        )
+                    }
+                    SuggestionChip(
+                        onClick = { showNewGroupDialog = true },
+                        label = { Text(stringResource(R.string.member_create_new_group)) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                }
+
                 // 按钮区域
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -232,5 +307,49 @@ fun EditMemberDialog(
                 }
             }
         }
+    }
+
+    if (showNewGroupDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showNewGroupDialog = false
+                newGroupInput = ""
+            },
+            title = { Text(stringResource(R.string.member_create_new_group)) },
+            text = {
+                OutlinedTextField(
+                    value = newGroupInput,
+                    onValueChange = { newGroupInput = it.replace("\n", "") },
+                    label = { Text(stringResource(R.string.label_member_groups)) },
+                    placeholder = { Text(stringResource(R.string.placeholder_member_group)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = newGroupInput.trim()
+                        if (trimmed.isNotEmpty() && trimmed !in memberGroups) {
+                            memberGroups = memberGroups + trimmed
+                        }
+                        showNewGroupDialog = false
+                        newGroupInput = ""
+                    }
+                ) {
+                    Text(stringResource(R.string.btn_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showNewGroupDialog = false
+                        newGroupInput = ""
+                    }
+                ) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
     }
 } 

@@ -47,6 +47,7 @@ fun SystemEditDialog(
     val error by systemViewModel.error.collectAsState()
     
     var systemName by remember { mutableStateOf("") }
+    var systemDescription by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
     var currentAvatarUrl by remember { mutableStateOf<String?>(null) }
     var showError by remember { mutableStateOf(false) }
@@ -59,6 +60,7 @@ fun SystemEditDialog(
     LaunchedEffect(currentSystem) {
         currentSystem?.let { system ->
             systemName = system.name
+            systemDescription = system.description
             currentAvatarUrl = system.avatarUrl
         }
     }
@@ -95,7 +97,8 @@ fun SystemEditDialog(
                         // 更新系统
                         val updatedSystem = system.copy(
                             name = systemName.trim(),
-                            avatarUrl = savedAvatarPath
+                            avatarUrl = savedAvatarPath,
+                            description = systemDescription.trim()
                         )
                         systemViewModel.updateSystem(updatedSystem)
                         onConfirm()
@@ -210,6 +213,17 @@ fun SystemEditDialog(
                                     false
                                 }
                             }
+                    )
+
+                    OutlinedTextField(
+                        value = systemDescription,
+                        onValueChange = { systemDescription = it },
+                        label = { Text(stringResource(R.string.label_system_description)) },
+                        placeholder = { Text(stringResource(R.string.placeholder_system_description)) },
+                        maxLines = 4,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
                     )
 
                     // 按钮区域

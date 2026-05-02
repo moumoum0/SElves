@@ -8,6 +8,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -42,7 +44,7 @@ import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.util.PinyinUtils
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun MemberManagementScreen(
     members: List<Member>,
@@ -57,20 +59,40 @@ fun MemberManagementScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<String?>(null) }
     var selectedMember by remember { mutableStateOf<Member?>(null) }
+    var selectedGroupFilter by remember { mutableStateOf<String?>(null) }
+    var viewMode by remember { mutableStateOf(MemberViewMode.BY_LETTER) }
+    var showViewModeMenu by remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState()
     
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     
-    // 根据搜索条件过滤成员（支持拼音搜索）
-    val filteredMembers = remember(members, searchQuery) {
-        if (searchQuery.isBlank()) {
-            members
-        } else {
-            members.filter { member ->
+    // 所有分组标签（从成员中提取）
+    val allGroups = remember(members) {
+        members.flatMap { it.groups }.distinct().sorted()
+    }
+    
+    // 根据搜索和分组条件过滤成员（支持拼音搜索）
+    val filteredMembers = remember(members, searchQuery, selectedGroupFilter) {
+        var result = members
+        
+        // 分组筛选
+        if (selectedGroupFilter != null) {
+            result = if (selectedGroupFilter == "__NO_GROUP__") {
+                result.filter { it.groups.isEmpty() }
+            } else {
+                result.filter { selectedGroupFilter in it.groups }
+            }
+        }
+        
+        // 搜索过滤
+        if (searchQuery.isNotBlank()) {
+            result = result.filter { member ->
                 PinyinUtils.matchesKeyword(member.name, searchQuery)
             }
         }
+        
+        result
     }
     
     // 按首字母分组成员（支持拼音排序）
@@ -101,17 +123,131 @@ fun MemberManagementScreen(
     
     Scaffold(
         topBar = {
-            MemberManagementTopBar(
-                showSearchBar = showSearchBar,
-                searchQuery = searchQuery,
-                onBackClick = onNavigateBack,
-                onSearchClick = { showSearchBar = !showSearchBar },
-                onSearchChange = { searchQuery = it },
-                onSearchClose = { 
-                    showSearchBar = false
-                    searchQuery = ""
+            Column {
+                MemberManagementTopBar(
+                    showSearchBar = showSearchBar,
+                    searchQuery = searchQuery,
+                    onBackClick = onNavigateBack,
+                    onSearchClick = { showSearchBar = !showSearchBar },
+                    onSearchChange = { searchQuery = it },
+                    onSearchClose = {
+                        showSearchBar = false
+                        searchQuery = ""
+                    }
+                )
+                // 视图模式选择器（位于搜索栏下方）
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 3.dp
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box {
+                                AssistChip(
+                                    onClick = { showViewModeMenu = !showViewModeMenu },
+                                    label = {
+                                        Text(
+                                            text = when (viewMode) {
+                                                MemberViewMode.BY_LETTER -> stringResource(R.string.member_view_by_letter)
+                                                MemberViewMode.BY_GROUP -> stringResource(R.string.member_view_by_group)
+                                            }
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = stringResource(R.string.member_view_mode),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                )
+                                DropdownMenu(
+                                    expanded = showViewModeMenu,
+                                    onDismissRequest = { showViewModeMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.member_view_by_letter)) },
+                                        onClick = {
+                                            viewMode = MemberViewMode.BY_LETTER
+                                            selectedGroupFilter = null
+                                            showViewModeMenu = false
+                                        },
+                                        leadingIcon = {
+                                            if (viewMode == MemberViewMode.BY_LETTER) {
+                                                Icon(Icons.Default.Check, contentDescription = null)
+                                            }
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.member_view_by_group)) },
+                                        onClick = {
+                                            viewMode = MemberViewMode.BY_GROUP
+                                            showViewModeMenu = false
+                                        },
+                                        enabled = allGroups.isNotEmpty(),
+                                        leadingIcon = {
+                                            if (viewMode == MemberViewMode.BY_GROUP) {
+                                                Icon(Icons.Default.Check, contentDescription = null)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                        HorizontalDivider()
+                    }
                 }
-            )
+                // 分组筛选区域（仅在按分组模式下显示）
+                if (viewMode == MemberViewMode.BY_GROUP && allGroups.isNotEmpty()) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 3.dp
+                    ) {
+                        Column {
+                            FlowRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 全部标签
+                                FilterChip(
+                                    selected = selectedGroupFilter == null,
+                                    onClick = { selectedGroupFilter = null },
+                                    label = { Text(stringResource(R.string.member_all_groups)) }
+                                )
+                                
+                                // 无分组标签
+                                FilterChip(
+                                    selected = selectedGroupFilter == "__NO_GROUP__",
+                                    onClick = { 
+                                        selectedGroupFilter = if (selectedGroupFilter == "__NO_GROUP__") null else "__NO_GROUP__"
+                                    },
+                                    label = { Text(stringResource(R.string.member_no_group)) }
+                                )
+                                
+                                // 各个分组标签
+                                allGroups.forEach { group ->
+                                    FilterChip(
+                                        selected = selectedGroupFilter == group,
+                                        onClick = { 
+                                            selectedGroupFilter = if (selectedGroupFilter == group) null else group
+                                        },
+                                        label = { Text(group) }
+                                    )
+                                }
+                            }
+                            HorizontalDivider()
+                        }
+                    }
+                }
+            }
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -135,8 +271,8 @@ fun MemberManagementScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // 如果没有搜索，显示分组列表
-                if (searchQuery.isBlank()) {
+                // 按字母分组模式且没有搜索
+                if (viewMode == MemberViewMode.BY_LETTER && searchQuery.isBlank()) {
                     groupedMembers.forEach { (letter, membersInGroup) ->
                         // 分组标题
                         item(key = "header_$letter") {
@@ -158,7 +294,7 @@ fun MemberManagementScreen(
                         }
                     }
                 } else {
-                    // 搜索模式，显示过滤后的扁平列表
+                    // 按分组模式或搜索模式，显示过滤后的扁平列表
                     items(
                         items = filteredMembers,
                         key = { member -> member.id }
@@ -192,8 +328,8 @@ fun MemberManagementScreen(
                 }
             }
             
-            // 字母表索引栏（仅在非搜索模式下显示）
-            if (searchQuery.isBlank() && availableLetters.isNotEmpty()) {
+            // 字母表索引栏（仅在按字母模式且非搜索模式下显示）
+            if (viewMode == MemberViewMode.BY_LETTER && searchQuery.isBlank() && availableLetters.isNotEmpty()) {
                 AlphabetIndexBar(
                     availableLetters = availableLetters,
                     selectedLetter = selectedLetter,
@@ -260,6 +396,24 @@ fun MemberManagementScreen(
                         textAlign = TextAlign.Center
                     )
                 }
+                
+                // 分组标签
+                if (member.groups.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        member.groups.forEach { group ->
+                            AssistChip(
+                                onClick = { },
+                                label = { Text(group) }
+                            )
+                        }
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(24.dp))
                 OutlinedButton(
                     onClick = {
@@ -313,9 +467,10 @@ fun MemberManagementScreen(
     if (showCreateMemberDialog) {
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
+            existingGroups = allGroups,
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl, bio, pronouns ->
-                mainViewModel.createMember(name, avatarUrl, bio, pronouns, shouldSetAsCurrent = false)
+            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
+                mainViewModel.createMember(name, avatarUrl, bio, pronouns, groups, shouldSetAsCurrent = false)
                 showCreateMemberDialog = false
             }
         )
@@ -326,9 +481,10 @@ fun MemberManagementScreen(
         EditMemberDialog(
             member = member,
             existingMemberNames = members.map { it.name },
+            existingGroups = allGroups,
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl, bio, pronouns ->
-                mainViewModel.updateMember(member.id, name, avatarUrl, bio, pronouns)
+            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
+                mainViewModel.updateMember(member.id, name, avatarUrl, bio, pronouns, groups)
                 memberToEdit = null
             }
         )
@@ -426,6 +582,7 @@ fun MemberManagementTopBar(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MemberItem(
     member: Member,
@@ -554,4 +711,9 @@ private fun GroupHeader(letter: String) {
             modifier = Modifier.padding(start = 4.dp)
         )
     }
+}
+
+enum class MemberViewMode {
+    BY_LETTER,  // 按字母分组
+    BY_GROUP    // 按分组筛选
 } 

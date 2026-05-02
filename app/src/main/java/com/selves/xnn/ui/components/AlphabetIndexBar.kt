@@ -60,7 +60,7 @@ fun AlphabetIndexBar(
     Box {
         Column(
             modifier = modifier
-                .height(400.dp) // 固定高度，避免被FloatingActionButton遮挡
+                .fillMaxHeight()
                 .width(24.dp)
                 .onGloballyPositioned { coordinates ->
                     columnHeight = coordinates.size.height

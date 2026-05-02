@@ -34,6 +34,7 @@ fun MemberManagementDialog(
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
     var memberToEdit by remember { mutableStateOf<Member?>(null) }
+    val allExistingGroups = remember(members) { members.flatMap { it.groups }.distinct().sorted() }
     
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -158,9 +159,10 @@ fun MemberManagementDialog(
         EditMemberDialog(
             member = member,
             existingMemberNames = members.map { it.name },
+            existingGroups = allExistingGroups,
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl, bio, pronouns ->
-                onEditMember(member.copy(name = name, avatarUrl = avatarUrl, bio = bio, pronouns = pronouns))
+            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
+                onEditMember(member.copy(name = name, avatarUrl = avatarUrl, bio = bio, pronouns = pronouns, groups = groups))
                 memberToEdit = null
             }
         )

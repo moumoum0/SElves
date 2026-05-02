@@ -50,7 +50,7 @@ import android.util.Log
         OnlineStatusEntity::class,
         LocationRecordEntity::class
     ],
-    version = 14,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -441,6 +441,30 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    database.execSQL("ALTER TABLE systems ADD COLUMN description TEXT NOT NULL DEFAULT ''")
+                    Log.d("AppDatabase", "数据库迁移 14->15 完成：systems表已添加description字段")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移 14->15 失败: ${e.message}", e)
+                    throw e
+                }
+            }
+        }
+
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    database.execSQL("ALTER TABLE members ADD COLUMN groups TEXT NOT NULL DEFAULT ''")
+                    Log.d("AppDatabase", "数据库迁移 15->16 完成：members表已添加groups字段")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移 15->16 失败: ${e.message}", e)
+                    throw e
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -448,7 +472,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
                 // 移除 .fallbackToDestructiveMigration() 以防止数据丢失
                 .build()
                 INSTANCE = instance
