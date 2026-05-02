@@ -326,6 +326,25 @@
     <string name="home_module_vote_create">Tap to create poll</string>
     <string name="home_module_vote_more">View more</string>
     <string name="home_module_vote_hide">Hide</string>
+    <!-- Member Diary -->
+    <string name="home_module_diary">Member Diary</string>
+    <string name="home_module_diary_empty">No diary entries</string>
+    <string name="home_module_diary_create">Tap to write a diary</string>
+    <string name="home_module_diary_more">View more</string>
+    <string name="home_module_diary_hide">Hide</string>
+    <string name="diary_screen_title">%1$s\'s Diary</string>
+    <string name="diary_create">New Entry</string>
+    <string name="diary_edit">Edit Entry</string>
+    <string name="diary_delete">Delete Entry</string>
+    <string name="diary_delete_confirm">Delete this diary entry?</string>
+    <string name="diary_title_label">Title (optional)</string>
+    <string name="diary_title_hint">Enter a title</string>
+    <string name="diary_content_label">Content</string>
+    <string name="diary_content_hint">Write your story today…</string>
+    <string name="diary_content_empty">Please enter diary content</string>
+    <string name="diary_empty">No diary entries yet</string>
+    <string name="diary_empty_hint">Tap the button below to create one</string>
+    <string name="diary_time_created">%1$s</string>
     <string name="dynamic_title_empty">No title</string>
     <string name="dynamic_author">Author: %1$s</string>
     <string name="todo_priority_normal">Normal</string>

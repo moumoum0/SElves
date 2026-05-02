@@ -16,6 +16,7 @@ import com.selves.xnn.data.dao.VoteDao
 import com.selves.xnn.data.dao.SystemDao
 import com.selves.xnn.data.dao.OnlineStatusDao
 import com.selves.xnn.data.dao.LocationRecordDao
+import com.selves.xnn.data.dao.MemberDiaryDao
 import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.DynamicRepository
 import com.selves.xnn.data.repository.MemberRepository
@@ -27,6 +28,7 @@ import com.selves.xnn.data.repository.VoteRepository
 import com.selves.xnn.data.repository.SystemRepository
 import com.selves.xnn.data.repository.OnlineStatusRepository
 import com.selves.xnn.data.repository.LocationRecordRepository
+import com.selves.xnn.data.repository.MemberDiaryRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -113,6 +115,12 @@ object DatabaseModule {
 
     @Provides
     @Singleton
+    fun provideMemberDiaryDao(database: AppDatabase): MemberDiaryDao {
+        return database.memberDiaryDao()
+    }
+
+    @Provides
+    @Singleton
     fun provideMemberRepository(database: AppDatabase): MemberRepository {
         return MemberRepository(database)
     }
@@ -175,6 +183,12 @@ object DatabaseModule {
     @Singleton
     fun provideLocationRecordRepository(locationRecordDao: LocationRecordDao): LocationRecordRepository {
         return LocationRecordRepository(locationRecordDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMemberDiaryRepository(memberDiaryDao: MemberDiaryDao): MemberDiaryRepository {
+        return MemberDiaryRepository(memberDiaryDao)
     }
 
     @Provides

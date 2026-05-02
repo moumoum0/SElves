@@ -246,6 +246,11 @@ fun AppNavigationScreen(
                             launchSingleTop = true
                         }
                     },
+                    onNavigateToDiary = {
+                        navController.navigate("diary") {
+                            launchSingleTop = true
+                        }
+                    },
                     onNavigateToSettings = {
                         navController.navigate("settings") {
                             launchSingleTop = true
@@ -530,6 +535,24 @@ fun AppNavigationScreen(
                 )
             }
             
+            // 成员日记界面（作为独立全屏页面）
+            composable(
+                route = "diary",
+                enterTransition = { slideInFromRight },
+                exitTransition = { slideOutToLeft },
+                popEnterTransition = { slideInFromLeft },
+                popExitTransition = { slideOutToRight }
+            ) {
+                if (currentMember != null) {
+                    DiaryScreen(
+                        currentMember = currentMember!!,
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+
             // 轨迹记录界面（作为独立全屏页面）
             composable(
                 route = "location",

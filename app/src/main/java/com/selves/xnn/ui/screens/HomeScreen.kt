@@ -41,8 +41,10 @@ import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.viewmodel.TodoViewModel
 import com.selves.xnn.viewmodel.DynamicViewModel
 import com.selves.xnn.viewmodel.VoteViewModel
+import com.selves.xnn.viewmodel.DiaryViewModel
 import com.selves.xnn.viewmodel.LocationTrackingViewModel
 import com.selves.xnn.viewmodel.LocationTrackingUiState
+import com.selves.xnn.model.MemberDiary
 import com.selves.xnn.model.TrackingStatus
 import com.selves.xnn.model.TrackingStats
 import com.selves.xnn.model.HomeLayoutConfig
@@ -59,6 +61,7 @@ fun HomeScreen(
     onNavigateToDynamic: () -> Unit,
     onNavigateToVote: () -> Unit,
     onNavigateToLocation: () -> Unit = {},
+    onNavigateToDiary: () -> Unit = {},
     viewModel: MainViewModel
 ) {
     HomeMainScreen(
@@ -68,6 +71,7 @@ fun HomeScreen(
         onNavigateToDynamic = onNavigateToDynamic,
         onNavigateToVote = onNavigateToVote,
         onNavigateToLocation = onNavigateToLocation,
+        onNavigateToDiary = onNavigateToDiary,
         viewModel = viewModel
     )
 }
@@ -80,11 +84,13 @@ fun HomeMainScreen(
     onNavigateToDynamic: () -> Unit,
     onNavigateToVote: () -> Unit,
     onNavigateToLocation: () -> Unit = {},
+    onNavigateToDiary: () -> Unit = {},
     viewModel: MainViewModel,
     todoViewModel: TodoViewModel = hiltViewModel(),
     dynamicViewModel: DynamicViewModel = hiltViewModel(),
     voteViewModel: VoteViewModel = hiltViewModel(),
-    locationTrackingViewModel: LocationTrackingViewModel = hiltViewModel()
+    locationTrackingViewModel: LocationTrackingViewModel = hiltViewModel(),
+    diaryViewModel: DiaryViewModel = hiltViewModel()
 ) {
     // 设置当前成员（用于创建待办事项时记录创建者）
     LaunchedEffect(currentMember?.id) {
@@ -92,6 +98,7 @@ fun HomeMainScreen(
             todoViewModel.setCurrentMember(memberId)
             dynamicViewModel.setCurrentUser(memberId)
             voteViewModel.setCurrentUser(memberId)
+            diaryViewModel.setCurrentMember(memberId)
         }
     }
     
@@ -108,6 +115,9 @@ fun HomeMainScreen(
     // 观察轨迹记录数据
     val trackingUiState by locationTrackingViewModel.uiState.collectAsState()
     val trackingStats by locationTrackingViewModel.trackingStats.collectAsState()
+
+    // 观察日记预览数据
+    val recentDiaries by diaryViewModel.recentDiaries.collectAsState()
     
     // 设置轨迹记录的当前成员
     LaunchedEffect(currentMember?.id) {
@@ -306,6 +316,7 @@ fun HomeMainScreen(
                         onNavigateToDynamic = onNavigateToDynamic,
                         onNavigateToVote = onNavigateToVote,
                         onNavigateToLocation = onNavigateToLocation,
+                        onNavigateToDiary = onNavigateToDiary,
                         functionModules = homeLayoutConfig.functionModules,
                         isEditMode = isEditMode,
                         onEditClick = { showFunctionModuleEditDialog = true },
@@ -352,6 +363,14 @@ fun HomeMainScreen(
                         isEditMode = isEditMode,
                         onEditClick = {
                             viewModel.toggleModuleVisibility(HomeModuleType.VOTE)
+                        }
+                    )
+                    HomeModuleType.DIARY -> DiarySection(
+                        recentDiaries = recentDiaries,
+                        onNavigateToDiary = onNavigateToDiary,
+                        isEditMode = isEditMode,
+                        onEditClick = {
+                            viewModel.toggleModuleVisibility(HomeModuleType.DIARY)
                         }
                     )
                 }
@@ -418,6 +437,7 @@ fun FunctionModulesSection(
     onNavigateToDynamic: () -> Unit = {},
     onNavigateToVote: () -> Unit = {},
     onNavigateToLocation: () -> Unit = {},
+    onNavigateToDiary: () -> Unit = {},
     functionModules: List<FunctionModuleConfig> = FunctionModuleConfig.defaultList(),
     isEditMode: Boolean = false,
     onEditClick: () -> Unit = {},
@@ -472,6 +492,7 @@ fun FunctionModulesSection(
                         "Timeline" -> Icons.Default.Timeline
                         "Poll" -> Icons.Default.Poll
                         "LocationOn" -> Icons.Default.LocationOn
+                        "Book" -> Icons.Default.Book
                         else -> Icons.Default.Assignment
                     }
                     FunctionModuleItem(
@@ -483,6 +504,7 @@ fun FunctionModulesSection(
                                 "dynamic" -> onNavigateToDynamic()
                                 "vote" -> onNavigateToVote()
                                 "location" -> onNavigateToLocation()
+                                "diary" -> onNavigateToDiary()
                             }
                         },
                         isEditMode = isEditMode,
@@ -1237,6 +1259,7 @@ fun HomeLayoutEditDialog(
                                     HomeModuleType.TODO -> stringResource(R.string.home_module_todo)
                                     HomeModuleType.DYNAMIC -> stringResource(R.string.home_module_dynamic)
                                     HomeModuleType.VOTE -> stringResource(R.string.home_module_vote)
+                                    HomeModuleType.DIARY -> stringResource(R.string.home_module_diary)
                                 }
                             )
                             Switch(
@@ -1323,4 +1346,132 @@ fun FunctionModuleEditDialog(
             }
         }
     )
+}
+
+@Composable
+fun DiarySection(
+    recentDiaries: List<com.selves.xnn.model.MemberDiary> = emptyList(),
+    onNavigateToDiary: () -> Unit = {},
+    isEditMode: Boolean = false,
+    onEditClick: () -> Unit = {}
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isEditMode) {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            }
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.home_module_diary),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                if (isEditMode) {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.home_module_diary_hide),
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                } else {
+                    IconButton(onClick = onNavigateToDiary) {
+                        Icon(
+                            Icons.Default.ChevronRight,
+                            contentDescription = stringResource(R.string.home_module_diary_more),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            }
+
+            if (!isEditMode) {
+                if (recentDiaries.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Book,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = stringResource(R.string.home_module_diary_empty),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 15.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = stringResource(R.string.home_module_diary_create),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            fontSize = 13.sp
+                        )
+                    }
+                } else {
+                    recentDiaries.forEach { diary ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            if (diary.title.isNotBlank()) {
+                                Text(
+                                    text = diary.title,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                            }
+                            Text(
+                                text = diary.content,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                maxLines = 2,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = com.selves.xnn.util.TimeFormatter.formatTimestamp(diary.createdAt),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        HorizontalDivider()
+                    }
+                    if (recentDiaries.size >= 2) {
+                        Text(
+                            text = stringResource(R.string.home_module_diary_more),
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .clickable { onNavigateToDiary() }
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

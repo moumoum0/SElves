@@ -5,6 +5,7 @@ import com.selves.xnn.data.entity.ChatGroupEntity
 import com.selves.xnn.data.entity.MessageEntity
 import com.selves.xnn.data.entity.MemberEntity
 import com.selves.xnn.data.entity.MemberGroupEntity
+import com.selves.xnn.data.entity.MemberDiaryEntity
 import com.selves.xnn.data.entity.TodoEntity
 import com.selves.xnn.data.entity.SystemEntity
 import com.selves.xnn.model.ChatGroup
@@ -14,6 +15,7 @@ import com.selves.xnn.model.MemberGroup
 import com.selves.xnn.model.MessageType
 import com.selves.xnn.model.Todo
 import com.selves.xnn.model.TodoPriority
+import com.selves.xnn.model.MemberDiary
 import com.selves.xnn.model.System
 import kotlinx.coroutines.flow.first
 
@@ -152,6 +154,25 @@ object Mappers {
         name = name,
         avatarUrl = avatarUrl,
         description = description,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+    // 成员日记映射
+    fun MemberDiaryEntity.toDomain(): MemberDiary = MemberDiary(
+        id = id,
+        memberId = memberId,
+        title = title,
+        content = content,
+        createdAt = createdAt,
+        updatedAt = updatedAt
+    )
+
+    fun MemberDiary.toEntity(): MemberDiaryEntity = MemberDiaryEntity(
+        id = id,
+        memberId = memberId,
+        title = title,
+        content = content,
         createdAt = createdAt,
         updatedAt = updatedAt
     )

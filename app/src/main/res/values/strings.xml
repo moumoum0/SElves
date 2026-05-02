@@ -333,6 +333,25 @@
     <string name="home_module_vote_create">点击创建投票</string>
     <string name="home_module_vote_more">查看更多</string>
     <string name="home_module_vote_hide">隐藏</string>
+    <!-- 成员日记 -->
+    <string name="home_module_diary">成员日记</string>
+    <string name="home_module_diary_empty">暂无日记</string>
+    <string name="home_module_diary_create">点击新建日记</string>
+    <string name="home_module_diary_more">查看更多</string>
+    <string name="home_module_diary_hide">隐藏</string>
+    <string name="diary_screen_title">%1$s 的日记</string>
+    <string name="diary_create">新建日记</string>
+    <string name="diary_edit">编辑日记</string>
+    <string name="diary_delete">删除日记</string>
+    <string name="diary_delete_confirm">确定要删除这篇日记吗？</string>
+    <string name="diary_title_label">标题（可选）</string>
+    <string name="diary_title_hint">输入日记标题</string>
+    <string name="diary_content_label">内容</string>
+    <string name="diary_content_hint">写下今天的故事…</string>
+    <string name="diary_content_empty">请输入日记内容</string>
+    <string name="diary_empty">还没有日记</string>
+    <string name="diary_empty_hint">点击右下角按钮新建日记</string>
+    <string name="diary_time_created">%1$s</string>
     <string name="dynamic_title_empty">无标题</string>
     <string name="dynamic_author">作者: %1$s</string>
     <string name="todo_priority_normal">普通</string>

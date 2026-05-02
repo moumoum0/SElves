@@ -48,6 +48,7 @@ fun MainTabScreen(
     onNavigateToMemberManagement: () -> Unit,
     onNavigateToOnlineStats: () -> Unit,
     onNavigateToLocation: () -> Unit,
+    onNavigateToDiary: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToChat: (String) -> Unit
 ) {
@@ -206,6 +207,7 @@ fun MainTabScreen(
                         onNavigateToDynamic = onNavigateToDynamic,
                         onNavigateToVote = onNavigateToVote,
                         onNavigateToLocation = onNavigateToLocation,
+                        onNavigateToDiary = onNavigateToDiary,
                         viewModel = viewModel
                     )
                 }

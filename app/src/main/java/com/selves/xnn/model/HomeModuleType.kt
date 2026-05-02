@@ -8,5 +8,6 @@ enum class HomeModuleType {
     LOCATION_TRACKING,
     TODO,
     DYNAMIC,
-    VOTE
+    VOTE,
+    DIARY
 }
