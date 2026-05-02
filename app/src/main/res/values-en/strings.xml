@@ -25,7 +25,7 @@
     <!-- Welcome Guide -->
     <string name="guide_welcome_title">Hello</string>
     <string name="guide_welcome_subtitle">Welcome to selves</string>
-    <string name="guide_welcome_description">A communication tool designed for plural systems</string>
+    <string name="guide_welcome_description">For plural systems</string>
     <string name="guide_choose_title">Choose Your Path</string>
     <string name="guide_option_new_title">Start Fresh</string>
     <string name="guide_option_new_subtitle">Create your system and first member</string>
@@ -40,9 +40,9 @@
     <string name="guide_feature_add_members">Add more members</string>
     <string name="guide_feature_edit_system">Modify system information</string>
     <string name="guide_feature_backup">Backup and restore data</string>
-    <string name="guide_feature_customize">Customize appearance and features</string>
+    <string name="guide_feature_customize">Customize look &amp; features</string>
     <string name="guide_note_can_modify">You can modify these later</string>
-    <string name="guide_note_add_more_later">You can add more members in settings later</string>
+    <string name="guide_note_add_more_later">Add more members in settings later</string>
     <string name="guide_note_you_can_always">You can always</string>
     <string name="guide_btn_enter_app">Enter App</string>
     <string name="guide_importing_backup">Importing Backup</string>
@@ -76,7 +76,7 @@
     <string name="member_current">Current Member</string>
     <string name="member_management">Member Management</string>
     <string name="member_quick_switch">Quick Switch</string>
-    <string name="member_quick_switch_desc">Show quick member switch in polls and chat</string>
+    <string name="member_quick_switch_desc">Quick switch in polls &amp; chat</string>
     <string name="member_groups">Groups</string>
     <string name="member_add_group">Add Group</string>
     <string name="member_group_input_hint">Enter group name</string>
@@ -97,15 +97,15 @@
     <string name="error_member_group_name_exists">Group name already exists</string>
     <string name="group_edit_description">Edit Group Description</string>
     <string name="group_description_label">Group Description</string>
-    <string name="group_description_hint">Describe this group\'s role, purpose, or notes</string>
+    <string name="group_description_hint">Role, purpose, or notes</string>
     <string name="group_description_empty">No group description yet</string>
     <string name="group_parent_label">Parent Group</string>
     <string name="group_parent_none">None (Top-level Group)</string>
     <string name="group_delete">Delete Group</string>
-    <string name="group_delete_confirm">Delete group "%1$s"? Sub-groups will become top-level groups and members will be removed from this group.</string>
+    <string name="group_delete_confirm">Delete group "%1$s"? Sub-groups become top-level; members will be removed.</string>
     <string name="group_members_count">%1$d members</string>
     <string name="member_group_empty">No members in this group yet</string>
-    <string name="member_no_group_description">Members that have not been assigned to any group</string>
+    <string name="member_no_group_description">Ungrouped members</string>
     
     <!-- Chat -->
     <string name="chat_title">Chat</string>
@@ -213,12 +213,12 @@
     <string name="settings_color_default">App Default</string>
     <string name="settings_color_default_desc">Use app default color scheme</string>
     <string name="settings_color_wallpaper">Wallpaper Colors</string>
-    <string name="settings_color_wallpaper_desc">Auto-adjust colors from system wallpaper (Android 12+)</string>
+    <string name="settings_color_wallpaper_desc">Auto from wallpaper (12+)</string>
     <string name="settings_color_cloud_field">Cloud Field</string>
     <string name="settings_color_cloud_field_desc">Cloud Field - Fresh natural green theme</string>
     <string name="settings_data_backup">Data &amp; Backup</string>
     <string name="settings_backup_auto">Scheduled Backup</string>
-    <string name="settings_backup_auto_desc">Set automatic backup frequency and time</string>
+    <string name="settings_backup_auto_desc">Auto backup frequency &amp; time</string>
     <string name="settings_backup_export">Export Backup</string>
     <string name="settings_backup_export_desc">Backup app data to file</string>
     <string name="settings_backup_import">Import Backup</string>
@@ -230,39 +230,39 @@
     <string name="settings_import_success">Backup imported successfully</string>
     <string name="settings_import_failed">Import failed: %1$s</string>
     <string name="settings_import_warning_title">Import Backup Warning</string>
-    <string name="settings_import_warning_message">Importing backup will overwrite all current data. This action cannot be undone. Continue?</string>
+    <string name="settings_import_warning_message">This will overwrite all current data. Cannot be undone. Continue?</string>
     <string name="settings_other">Other</string>
     <string name="settings_about">About</string>
     <string name="settings_about_desc">App information and version</string>
     
     <!-- About -->
     <string name="about_title">About</string>
-    <string name="about_description">A local communication tool designed for plural systems</string>
+    <string name="about_description">Local tool for plurals</string>
     <string name="about_features">Features</string>
     <string name="about_privacy">Privacy</string>
-    <string name="about_privacy_desc">All data is stored locally and never uploaded to any server</string>
+    <string name="about_privacy_desc">All data stored locally only</string>
     <string name="about_app_icon">App Icon</string>
     <string name="about_unknown_version">Unknown</string>
     <string name="about_back">Back</string>
     <string name="about_third_party_title">Third-party Libraries</string>
-    <string name="about_third_party_description">Modern Android UI toolkit for building native user interfaces</string>
-    <string name="about_material3_description">Material Design 3 component library</string>
-    <string name="about_material_icons_description">Material Design extended icon library</string>
-    <string name="about_navigation_description">Compose version of Jetpack Navigation component</string>
-    <string name="about_room_description">SQLite object mapping library for local data storage</string>
-    <string name="about_hilt_description">Dependency injection framework that simplifies dependency management in Android development</string>
-    <string name="about_hilt_navigation_description">Integration library for Hilt and Navigation Compose</string>
-    <string name="about_coil_description">Kotlin coroutine-based Android image loading library</string>
-    <string name="about_datastore_description">Data storage solution that replaces SharedPreferences</string>
-    <string name="about_image_cropper_description">Powerful Android image cropping library</string>
-    <string name="about_accompanist_description">Utility library for controlling system UI</string>
-    <string name="about_gson_description">Google JSON serialization/deserialization library</string>
-    <string name="about_tinypinyin_description">Chinese to Pinyin conversion utility library</string>
-    <string name="about_core_ktx_description">Android core Kotlin extension library</string>
-    <string name="about_lifecycle_description">Kotlin extensions for lifecycle-aware components</string>
-    <string name="about_activity_compose_description">Integration library for Activity and Jetpack Compose</string>
-    <string name="about_appcompat_description">Android backward compatibility support library</string>
-    <string name="about_splash_screen_description">Android 12+ splash screen API compatibility library</string>
+    <string name="about_third_party_description">Native Android UI toolkit</string>
+    <string name="about_material3_description">Material 3 components</string>
+    <string name="about_material_icons_description">Extended Material icons</string>
+    <string name="about_navigation_description">Jetpack Navigation for Compose</string>
+    <string name="about_room_description">SQLite ORM for local storage</string>
+    <string name="about_hilt_description">Dependency injection framework for Android</string>
+    <string name="about_hilt_navigation_description">Hilt + Nav Compose</string>
+    <string name="about_coil_description">Android image loader</string>
+    <string name="about_datastore_description">Replaces SharedPreferences</string>
+    <string name="about_image_cropper_description">Image cropping library</string>
+    <string name="about_accompanist_description">System UI control utilities</string>
+    <string name="about_gson_description">Google JSON serialization library</string>
+    <string name="about_tinypinyin_description">Chinese to Pinyin converter</string>
+    <string name="about_core_ktx_description">Core Kotlin extensions</string>
+    <string name="about_lifecycle_description">Lifecycle-aware component extensions</string>
+    <string name="about_activity_compose_description">Activity + Compose integration</string>
+    <string name="about_appcompat_description">Backward compatibility library</string>
+    <string name="about_splash_screen_description">Android 12+ splash screen</string>
     <string name="about_kotlin_description">Kotlin language and coroutine support</string>
     
     <!-- Home Modules -->
@@ -343,7 +343,7 @@
     <string name="diary_content_hint">Write your story today…</string>
     <string name="diary_content_empty">Please enter diary content</string>
     <string name="diary_empty">No diary entries yet</string>
-    <string name="diary_empty_hint">Tap the button below to create one</string>
+    <string name="diary_empty_hint">Tap below to create one</string>
     <string name="diary_time_created">%1$s</string>
     <string name="dynamic_title_empty">No title</string>
     <string name="dynamic_author">Author: %1$s</string>
@@ -409,7 +409,7 @@
     <string name="error_map_open_failed">Unable to open map application</string>
     
     <!-- Group Chat -->
-    <string name="group_chat_empty">No group chats, tap the button below to create one</string>
+    <string name="group_chat_empty">No group chats. Tap below to create one</string>
     <string name="cd_create_group">Create group chat</string>
     <string name="group_no_message">No messages</string>
     
@@ -417,7 +417,7 @@
     <string name="member_no_match">No matching members found</string>
     
     <!-- Poll Screen -->
-    <string name="vote_create_first">Tap the button below to create your first poll</string>
+    <string name="vote_create_first">Tap below to create your first poll</string>
     <string name="vote_more_options">%1$d more options</string>
     <string name="vote_participants">%1$d participants</string>
     <string name="vote_you_participated">You have voted</string>
@@ -438,7 +438,7 @@
     <!-- To-Do Screen -->
     <string name="todo_screen_title">To-Do</string>
     <string name="todo_empty">No to-dos</string>
-    <string name="todo_create_first">Tap the button below to create your first to-do</string>
+    <string name="todo_create_first">Tap below to create your first to-do</string>
     <string name="todo_pending_count">To-Do (%1$d)</string>
     <string name="todo_completed_count">Completed (%1$d)</string>
     <string name="todo_detail_title">To-Do Details</string>
@@ -491,7 +491,7 @@
     <string name="system_member_management">Member Management</string>
     <string name="system_member_management_subtitle">Manage system members</string>
     <string name="system_online_stats">Online Stats</string>
-    <string name="system_online_stats_subtitle">View member activity and online time</string>
+    <string name="system_online_stats_subtitle">Member activity &amp; online time</string>
     <string name="system_settings_subtitle">App settings and preferences</string>
     <string name="cd_system_avatar">System avatar</string>
     
@@ -520,7 +520,7 @@
     
     <!-- Dynamic -->
     <string name="dynamic_empty">No dynamics</string>
-    <string name="dynamic_create_first">Tap the button below to post your first dynamic</string>
+    <string name="dynamic_create_first">Tap below to post your first activity</string>
     <string name="dynamic_search">Search dynamics...</string>
     <string name="dynamic_search_action">Search</string>
     <string name="dynamic_filter">Filter</string>
@@ -546,7 +546,7 @@
     
     <!-- Dialog Common -->
     <string name="dialog_delete_member">Delete Member</string>
-    <string name="dialog_delete_member_confirm">Are you sure you want to delete member "%1$s"? This action cannot be undone.</string>
+    <string name="dialog_delete_member_confirm">Delete member "%1$s"? Cannot be undone.</string>
     <string name="dialog_group_name">Group Name</string>
     <string name="dialog_group_name_empty">Group name cannot be empty</string>
     <string name="dialog_select_map">Select Map App</string>
@@ -569,7 +569,7 @@
     <string name="group_avatar">Group avatar</string>
     <string name="group_name">Group name</string>
     <string name="group_name_error">Group name cannot be empty</string>
-    <string name="group_dismiss_confirm">Are you sure you want to dismiss group "%1$s"? This action cannot be undone and all chat history will be permanently deleted.</string>
+    <string name="group_dismiss_confirm">Dismiss group "%1$s"? This cannot be undone. All chat history will be deleted.</string>
     <string name="group_dismiss_action">Dismiss</string>
     <string name="change_avatar">Change avatar</string>
     
@@ -620,7 +620,7 @@
     <string name="error_member_name_exists">Name already exists</string>
     <string name="error_group_name_empty">Group name cannot be empty</string>
     <string name="error_title_empty">Title cannot be empty</string>
-    <string name="error_delete_member_confirm">Are you sure you want to delete member \"%1$s\"? This action cannot be undone.</string>
+    <string name="error_delete_member_confirm">Delete member \"%1$s\"? Cannot be undone.</string>
     
     <!-- Dialogs -->
     <string name="dialog_edit_member">Edit Member</string>
@@ -725,7 +725,7 @@
     <string name="backup_import_warning_clear_chat">• Delete all chat history</string>
     <string name="backup_import_warning_clear_todo">• Delete all to-do items</string>
     <string name="backup_import_warning_clear_dynamic">• Delete all posts and polls</string>
-    <string name="backup_import_warning_irreversible">This action is irreversible! It is recommended to back up your current data first.</string>
+    <string name="backup_import_warning_irreversible">Irreversible! Back up your current data first.</string>
     <string name="backup_import_warning_confirm">Are you sure you want to continue?</string>
 
     <!-- Group Chat Member Count -->
