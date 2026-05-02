@@ -90,6 +90,11 @@
     <string name="member_view_by_letter">By Letter</string>
     <string name="member_view_by_group">By Group</string>
     <string name="member_view_mode">View Mode</string>
+    <string name="group_edit_title">Edit Group</string>
+    <string name="group_name_label">Group Name</string>
+    <string name="group_name_hint">e.g. Protector, Introject…</string>
+    <string name="error_member_group_name_empty">Group name cannot be empty</string>
+    <string name="error_member_group_name_exists">Group name already exists</string>
     <string name="group_edit_description">Edit Group Description</string>
     <string name="group_description_label">Group Description</string>
     <string name="group_description_hint">Describe this group\'s role, purpose, or notes</string>

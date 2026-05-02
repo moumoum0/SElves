@@ -48,14 +48,17 @@ fun CreateMemberDialog(
     existingMemberNames: List<String>,
     existingGroups: List<String> = emptyList(),
     onDismiss: () -> Unit,
-    onConfirm: (String, String?, String, String, List<String>) -> Unit
+    onConfirm: (String, String?, String, String, List<String>) -> Unit,
+    onGroupDescriptionsCreated: ((Map<String, String>) -> Unit)? = null
 ) {
     var memberName by remember { mutableStateOf("") }
     var memberBio by remember { mutableStateOf("") }
     var memberPronouns by remember { mutableStateOf("") }
     var memberGroups by remember { mutableStateOf<List<String>>(emptyList()) }
+    var groupDescriptions by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var showNewGroupDialog by remember { mutableStateOf(false) }
     var newGroupInput by remember { mutableStateOf("") }
+    var newGroupDescription by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
     var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -90,6 +93,9 @@ fun CreateMemberDialog(
                     
                     // 使用保存后的头像路径
                     onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns, memberGroups)
+                    if (groupDescriptions.isNotEmpty()) {
+                        onGroupDescriptionsCreated?.invoke(groupDescriptions)
+                    }
                 }
             }
         }
@@ -292,46 +298,84 @@ fun CreateMemberDialog(
     }
 
     if (showNewGroupDialog) {
-        AlertDialog(
+        Dialog(
             onDismissRequest = {
                 showNewGroupDialog = false
                 newGroupInput = ""
-            },
-            title = { Text(stringResource(R.string.member_create_new_group)) },
-            text = {
-                OutlinedTextField(
-                    value = newGroupInput,
-                    onValueChange = { newGroupInput = it.replace("\n", "") },
-                    label = { Text(stringResource(R.string.label_member_groups)) },
-                    placeholder = { Text(stringResource(R.string.placeholder_member_group)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val trimmed = newGroupInput.trim()
-                        if (trimmed.isNotEmpty() && trimmed !in memberGroups) {
-                            memberGroups = memberGroups + trimmed
+                newGroupDescription = ""
+            }
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.member_create_new_group),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = newGroupInput,
+                        onValueChange = { newGroupInput = it.replace("\n", "") },
+                        label = { Text(stringResource(R.string.group_name_label)) },
+                        placeholder = { Text(stringResource(R.string.group_name_hint)) },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = newGroupDescription,
+                        onValueChange = { newGroupDescription = it },
+                        label = { Text(stringResource(R.string.group_description_label)) },
+                        placeholder = { Text(stringResource(R.string.group_description_hint)) },
+                        maxLines = 4,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(
+                            onClick = {
+                                showNewGroupDialog = false
+                                newGroupInput = ""
+                                newGroupDescription = ""
+                            }
+                        ) {
+                            Text(stringResource(R.string.btn_cancel))
                         }
-                        showNewGroupDialog = false
-                        newGroupInput = ""
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                val trimmed = newGroupInput.trim()
+                                if (trimmed.isNotEmpty() && trimmed !in memberGroups) {
+                                    memberGroups = memberGroups + trimmed
+                                    if (newGroupDescription.isNotBlank()) {
+                                        groupDescriptions = groupDescriptions + (trimmed to newGroupDescription.trim())
+                                    }
+                                }
+                                showNewGroupDialog = false
+                                newGroupInput = ""
+                                newGroupDescription = ""
+                            }
+                        ) {
+                            Text(stringResource(R.string.btn_confirm))
+                        }
                     }
-                ) {
-                    Text(stringResource(R.string.btn_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showNewGroupDialog = false
-                        newGroupInput = ""
-                    }
-                ) {
-                    Text(stringResource(R.string.btn_cancel))
                 }
             }
-        )
+        }
     }
 } 

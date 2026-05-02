@@ -549,6 +549,29 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateMemberGroup(oldName: String, newName: String, description: String) {
+        val normalizedOld = oldName.trim()
+        val normalizedNew = newName.trim()
+        if (normalizedNew.isEmpty()) return
+
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            try {
+                memberGroupRepository.upsertGroup(MemberGroup(name = normalizedNew, description = description.trim()))
+                if (normalizedOld != normalizedNew) {
+                    _allMembers.value
+                        .filter { normalizedOld in it.groups }
+                        .forEach { member ->
+                            val updatedGroups = member.groups.map { if (it == normalizedOld) normalizedNew else it }
+                            memberRepository.saveMember(member.copy(groups = updatedGroups))
+                        }
+                    memberGroupRepository.deleteGroup(normalizedOld)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "更新成员分组失败: ${e.message}", e)
+            }
+        }
+    }
     
     private fun normalizeGroupNames(groups: List<String>): List<String> {
         return groups

@@ -90,6 +90,11 @@
     <string name="member_view_by_letter">按字母</string>
     <string name="member_view_by_group">按分组</string>
     <string name="member_view_mode">视图模式</string>
+    <string name="group_edit_title">编辑分组</string>
+    <string name="group_name_label">分组名称</string>
+    <string name="group_name_hint">例如：保护者、内向人格…</string>
+    <string name="error_member_group_name_empty">分组名不能为空</string>
+    <string name="error_member_group_name_exists">分组名已存在</string>
     <string name="group_edit_description">编辑分组简介</string>
     <string name="group_description_label">分组简介</string>
     <string name="group_description_hint">输入这个分组的说明、定位或备注</string>

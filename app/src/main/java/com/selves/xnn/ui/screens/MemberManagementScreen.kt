@@ -6,7 +6,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
@@ -42,7 +44,7 @@ import com.selves.xnn.ui.components.AlphabetIndexBar
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.CreateMemberDialog
 import com.selves.xnn.ui.components.EditMemberDialog
-import com.selves.xnn.ui.components.GroupDescriptionEditDialog
+import com.selves.xnn.ui.components.GroupEditDialog
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.util.PinyinUtils
 import kotlinx.coroutines.launch
@@ -473,6 +475,11 @@ fun MemberManagementScreen(
             onConfirm = { name, avatarUrl, bio, pronouns, groups ->
                 mainViewModel.createMember(name, avatarUrl, bio, pronouns, groups, shouldSetAsCurrent = false)
                 showCreateMemberDialog = false
+            },
+            onGroupDescriptionsCreated = { descriptions ->
+                descriptions.forEach { (groupName, desc) ->
+                    mainViewModel.updateMemberGroupDescription(groupName, desc)
+                }
             }
         )
     }
@@ -492,11 +499,12 @@ fun MemberManagementScreen(
     }
 
     groupToEdit?.let { group ->
-        GroupDescriptionEditDialog(
+        GroupEditDialog(
             group = group,
+            existingGroupNames = allGroups.filter { it != group.name },
             onDismiss = { groupToEdit = null },
-            onConfirm = { description ->
-                mainViewModel.updateMemberGroupDescription(group.name, description)
+            onConfirm = { newName, description ->
+                mainViewModel.updateMemberGroup(group.name, newName, description)
                 groupToEdit = null
             }
         )
@@ -785,6 +793,7 @@ private fun GroupFolderSection(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun GroupFolderHeader(
     section: MemberGroupSection,
@@ -792,58 +801,80 @@ private fun GroupFolderHeader(
     onClick: () -> Unit,
     onEditDescription: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     val description = when {
         section.isUngrouped -> stringResource(R.string.member_no_group_description)
         section.group.description.isBlank() -> ""
         else -> section.group.description
     }
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color.Transparent,
-        shape = RoundedCornerShape(14.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.Transparent,
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Icon(
-                imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
-                contentDescription = null,
-                tint = Color.Black,
-                modifier = Modifier.padding(start = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
-
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = { if (!section.isUngrouped) showMenu = true }
+                    )
+                    .padding(vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (section.isUngrouped) stringResource(R.string.member_no_group) else section.group.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = Color.Black,
+                    modifier = Modifier.padding(start = 4.dp)
                 )
 
-                if (description.isNotBlank()) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
 
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = description,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black.copy(alpha = 0.55f),
+                        text = if (section.isUngrouped) stringResource(R.string.member_no_group) else section.group.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f)
+                        overflow = TextOverflow.Ellipsis
                     )
+
+                    if (description.isNotBlank()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = description,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Black.copy(alpha = 0.55f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
+            }
+        }
+
+        if (!section.isUngrouped) {
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.group_edit_title)) },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                    onClick = {
+                        showMenu = false
+                        onEditDescription()
+                    }
+                )
             }
         }
     }
