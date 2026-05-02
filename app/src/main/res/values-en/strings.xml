@@ -345,6 +345,18 @@
     <string name="diary_empty">No diary entries yet</string>
     <string name="diary_empty_hint">Tap below to create one</string>
     <string name="diary_time_created">%1$s</string>
+    <!-- SimplyPlural Import -->
+    <string name="sp_import_title">Import from SimplyPlural</string>
+    <string name="sp_import_option_title">Import from SimplyPlural</string>
+    <string name="sp_import_option_subtitle">Restore data from a SimplyPlural JSON export</string>
+    <string name="sp_import_settings_title">Import from SimplyPlural</string>
+    <string name="sp_import_settings_subtitle">Import a SimplyPlural JSON export file</string>
+    <string name="sp_import_mode_title">Choose Import Mode</string>
+    <string name="sp_import_mode_message">Overwrite: clear existing data then import (recommended for first use)\nMerge: keep existing data and append imported content</string>
+    <string name="sp_import_mode_overwrite">Overwrite</string>
+    <string name="sp_import_mode_merge">Merge</string>
+    <string name="sp_import_success">Import successful: %1$d members imported</string>
+    <string name="sp_import_failed">Import failed: %1$s</string>
     <string name="dynamic_title_empty">No title</string>
     <string name="dynamic_author">Author: %1$s</string>
     <string name="todo_priority_normal">Normal</string>

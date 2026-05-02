@@ -7,6 +7,10 @@ import androidx.lifecycle.viewModelScope
 import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.BackupResult
+import com.selves.xnn.data.SimplyPluralImportService
+import com.selves.xnn.data.ImportMode
+import com.selves.xnn.data.SpImportResult
+import kotlinx.coroutines.Dispatchers
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +25,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val memberPreferences: MemberPreferences,
     private val backupService: BackupService,
+    private val spImportService: SimplyPluralImportService,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
     
@@ -282,5 +287,79 @@ class SettingsViewModel @Inject constructor(
      */
     fun clearBackupMessage() {
         _backupMessage.value = null
+    }
+
+    // ==================== SimplyPlural 导入 ====================
+
+    private val _spImportInProgress = MutableStateFlow(false)
+    val spImportInProgress: StateFlow<Boolean> = _spImportInProgress.asStateFlow()
+
+    private val _spImportProgress = MutableStateFlow<Float?>(null)
+    val spImportProgress: StateFlow<Float?> = _spImportProgress.asStateFlow()
+
+    private val _spImportProgressMessage = MutableStateFlow("")
+    val spImportProgressMessage: StateFlow<String> = _spImportProgressMessage.asStateFlow()
+
+    private val _spImportMessage = MutableStateFlow<String?>(null)
+    val spImportMessage: StateFlow<String?> = _spImportMessage.asStateFlow()
+
+    private val _showSpModeDialog = MutableStateFlow(false)
+    val showSpModeDialog: StateFlow<Boolean> = _showSpModeDialog.asStateFlow()
+
+    private var pendingSpImportUri: Uri? = null
+    private var pendingSpMode: ImportMode = ImportMode.OVERWRITE
+
+    fun showSpImportDialog(uri: Uri) {
+        pendingSpImportUri = uri
+        _showSpModeDialog.value = true
+    }
+
+    fun confirmSpImport(mode: ImportMode) {
+        _showSpModeDialog.value = false
+        val uri = pendingSpImportUri ?: return
+        pendingSpImportUri = null
+        pendingSpMode = mode
+        importFromSP(uri, mode)
+    }
+
+    fun dismissSpImportDialog() {
+        _showSpModeDialog.value = false
+        pendingSpImportUri = null
+    }
+
+    fun clearSpImportMessage() {
+        _spImportMessage.value = null
+    }
+
+    private fun importFromSP(uri: Uri, mode: ImportMode) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _spImportInProgress.value = true
+            _spImportProgress.value = 0f
+            _spImportMessage.value = null
+            try {
+                val result = spImportService.importFromUri(uri, mode) { progress, message ->
+                    _spImportProgress.value = progress
+                    _spImportProgressMessage.value = message
+                }
+                when (result) {
+                    is SpImportResult.Success ->
+                        _spImportMessage.value = context.getString(
+                            com.selves.xnn.R.string.sp_import_success,
+                            result.memberCount
+                        )
+                    is SpImportResult.Error ->
+                        _spImportMessage.value = context.getString(
+                            com.selves.xnn.R.string.sp_import_failed, result.message
+                        )
+                }
+            } catch (e: Exception) {
+                _spImportMessage.value = context.getString(
+                    com.selves.xnn.R.string.sp_import_failed, e.message ?: ""
+                )
+            } finally {
+                _spImportInProgress.value = false
+                _spImportProgress.value = null
+            }
+        }
     }
 } 

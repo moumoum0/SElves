@@ -3,6 +3,7 @@ package com.selves.xnn.data.di
 import android.content.Context
 import com.selves.xnn.data.AppDatabase
 import com.selves.xnn.data.BackupService
+import com.selves.xnn.data.SimplyPluralImportService
 import com.selves.xnn.data.Converters
 import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.data.dao.ChatGroupDao
@@ -195,6 +196,15 @@ object DatabaseModule {
     @Singleton
     fun provideMemberPreferences(@ApplicationContext context: Context): MemberPreferences {
         return MemberPreferences(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSimplyPluralImportService(
+        @ApplicationContext context: Context,
+        database: AppDatabase
+    ): SimplyPluralImportService {
+        return SimplyPluralImportService(context, database)
     }
 
     @Provides

@@ -117,6 +117,11 @@ fun AppNavigationScreen(
         val showImportWarningDialog by viewModel.showImportWarningDialog.collectAsState()
         val backupImportSuccess by viewModel.backupImportSuccess.collectAsState()
         val backupErrorMessage by viewModel.backupErrorMessage.collectAsState()
+        val spImportInProgress by viewModel.spImportInProgress.collectAsState()
+        val spImportProgress by viewModel.spImportProgress.collectAsState()
+        val spImportProgressMessage by viewModel.spImportProgressMessage.collectAsState()
+        val spImportSuccess by viewModel.spImportSuccess.collectAsState()
+        val spImportError by viewModel.spImportError.collectAsState()
         
         WelcomeGuideScreen(
             onCreateSystem = { name, avatarUrl ->
@@ -145,6 +150,17 @@ fun AppNavigationScreen(
             backupErrorMessage = backupErrorMessage,
             onDismissError = {
                 viewModel.clearBackupError()
+            },
+            onImportFromSP = { uri, mode ->
+                viewModel.importFromSimplyPlural(uri, mode)
+            },
+            spImportInProgress = spImportInProgress,
+            spImportProgress = spImportProgress,
+            spImportProgressMessage = spImportProgressMessage,
+            spImportSuccess = spImportSuccess,
+            spImportErrorMessage = spImportError,
+            onDismissSpError = {
+                viewModel.dismissSpImportError()
             }
         )
     } else {

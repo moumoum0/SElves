@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
+import com.selves.xnn.data.ImportMode
 import com.selves.xnn.ui.components.CreateMemberForm
 import com.selves.xnn.ui.components.CreateSystemForm
 import com.selves.xnn.ui.components.BackupProgressDialog
@@ -58,6 +60,13 @@ fun WelcomeGuideScreen(
     backupProgress: Float? = null,
     backupProgressMessage: String = "",
     showImportWarningDialog: Boolean = false,
+    onImportFromSP: (android.net.Uri, ImportMode) -> Unit = { _, _ -> },
+    spImportInProgress: Boolean = false,
+    spImportProgress: Float? = null,
+    spImportProgressMessage: String = "",
+    spImportSuccess: Boolean = false,
+    spImportErrorMessage: String? = null,
+    onDismissSpError: () -> Unit = {},
     onConfirmImport: () -> Unit = {},
     onCancelImport: () -> Unit = {},
     backupImportSuccess: Boolean = false,
@@ -73,6 +82,10 @@ fun WelcomeGuideScreen(
     // 成员信息状态
     var memberName by remember { mutableStateOf("") }
     var memberAvatarUrl by remember { mutableStateOf("") }
+
+    // SP 导入对话框状态
+    var showSpModeDialog by remember { mutableStateOf(false) }
+    var pendingSpMode by remember { mutableStateOf(ImportMode.OVERWRITE) }
     
     // 文件选择器
     val backupFileLauncher = rememberLauncherForActivityResult(
@@ -80,10 +93,22 @@ fun WelcomeGuideScreen(
     ) { uri ->
         uri?.let { onImportBackup(it) }
     }
+
+    val spFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { onImportFromSP(it, pendingSpMode) }
+    }
     
     // 监听备份导入成功，直接跳转到完成步骤
     LaunchedEffect(backupImportSuccess) {
         if (backupImportSuccess) {
+            currentStep = GuideStep.COMPLETE
+        }
+    }
+
+    LaunchedEffect(spImportSuccess) {
+        if (spImportSuccess) {
             currentStep = GuideStep.COMPLETE
         }
     }
@@ -118,7 +143,8 @@ fun WelcomeGuideScreen(
                         GuideStep.WELCOME -> WelcomeStepContent()
                         GuideStep.IMPORT_OR_CREATE -> ImportOrCreateStepContent(
                             onSelectImport = { backupFileLauncher.launch("*/*") },
-                            onSelectCreate = { currentStep = GuideStep.CREATE_SYSTEM }
+                            onSelectCreate = { currentStep = GuideStep.CREATE_SYSTEM },
+                            onSelectImportSP = { showSpModeDialog = true }
                         )
                         GuideStep.CREATE_SYSTEM -> CreateSystemStepContent(
                             name = systemName,
@@ -181,6 +207,14 @@ fun WelcomeGuideScreen(
         message = backupProgressMessage,
         progress = backupProgress
     )
+
+    // SP 导入进度对话框
+    BackupProgressDialog(
+        isVisible = spImportInProgress,
+        title = stringResource(R.string.sp_import_title),
+        message = spImportProgressMessage,
+        progress = spImportProgress
+    )
     
     // 导入警告对话框
     ImportBackupWarningDialog(
@@ -188,6 +222,43 @@ fun WelcomeGuideScreen(
         onConfirm = onConfirmImport,
         onDismiss = onCancelImport
     )
+    
+    // SP 导入模式选择对话框
+    if (showSpModeDialog) {
+        AlertDialog(
+            onDismissRequest = { showSpModeDialog = false },
+            title = { Text(stringResource(R.string.sp_import_mode_title)) },
+            text = { Text(stringResource(R.string.sp_import_mode_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    pendingSpMode = ImportMode.OVERWRITE
+                    showSpModeDialog = false
+                    spFileLauncher.launch("*/*")
+                }) { Text(stringResource(R.string.sp_import_mode_overwrite)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingSpMode = ImportMode.MERGE
+                    showSpModeDialog = false
+                    spFileLauncher.launch("*/*")
+                }) { Text(stringResource(R.string.sp_import_mode_merge)) }
+            }
+        )
+    }
+
+    // SP 错误对话框
+    if (spImportErrorMessage != null) {
+        AlertDialog(
+            onDismissRequest = onDismissSpError,
+            title = { Text(stringResource(R.string.guide_import_failed)) },
+            text = { Text(spImportErrorMessage) },
+            confirmButton = {
+                TextButton(onClick = onDismissSpError) {
+                    Text(stringResource(R.string.btn_confirm))
+                }
+            }
+        )
+    }
     
     // 错误消息对话框
     if (backupErrorMessage != null) {
@@ -444,7 +515,8 @@ private fun WelcomeStepContent() {
 @Composable
 private fun ImportOrCreateStepContent(
     onSelectImport: () -> Unit,
-    onSelectCreate: () -> Unit
+    onSelectCreate: () -> Unit,
+    onSelectImportSP: () -> Unit = {}
 ) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { visible = true }
@@ -505,6 +577,17 @@ private fun ImportOrCreateStepContent(
             subtitle = stringResource(R.string.guide_option_import_subtitle),
             isPrimary = false,
             onClick = onSelectImport
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 从 SimplyPlural 导入
+        GuideOptionCard(
+            icon = Icons.Default.FileDownload,
+            title = stringResource(R.string.sp_import_option_title),
+            subtitle = stringResource(R.string.sp_import_option_subtitle),
+            isPrimary = false,
+            onClick = onSelectImportSP
         )
         
         Spacer(modifier = Modifier.height(32.dp))

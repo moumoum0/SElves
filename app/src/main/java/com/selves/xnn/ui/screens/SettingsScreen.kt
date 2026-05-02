@@ -36,6 +36,7 @@ import com.selves.xnn.ui.components.ThemeModeDialog
 import com.selves.xnn.ui.components.ColorSchemeDialog
 import com.selves.xnn.ui.components.BackupProgressDialog
 import com.selves.xnn.ui.components.ImportBackupWarningDialog
+import com.selves.xnn.data.ImportMode
 import com.selves.xnn.ui.components.LanguageDialog
 import com.selves.xnn.model.getDisplayName
 import androidx.compose.ui.res.stringResource
@@ -66,6 +67,11 @@ fun SettingsScreen(
     val showImportWarningDialog by viewModel.showImportWarningDialog.collectAsState()
     val backupProgress by viewModel.backupProgress.collectAsState()
     val backupProgressMessage by viewModel.backupProgressMessage.collectAsState()
+    val spImportInProgress by viewModel.spImportInProgress.collectAsState()
+    val spImportProgress by viewModel.spImportProgress.collectAsState()
+    val spImportProgressMessage by viewModel.spImportProgressMessage.collectAsState()
+    val spImportMessage by viewModel.spImportMessage.collectAsState()
+    val showSpModeDialog by viewModel.showSpModeDialog.collectAsState()
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -86,6 +92,13 @@ fun SettingsScreen(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let { viewModel.showImportWarning(it) }
+    }
+
+    // 文件选择器 - 从 SP 导入
+    val spImportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.showSpImportDialog(it) }
     }
     
     // 显示备份消息
@@ -212,6 +225,18 @@ fun SettingsScreen(
                     }
                 )
             }
+
+            item {
+                SettingsItemWithProgress(
+                    icon = Icons.Default.FileDownload,
+                    title = stringResource(R.string.sp_import_settings_title),
+                    subtitle = stringResource(R.string.sp_import_settings_subtitle),
+                    isLoading = spImportInProgress,
+                    onClick = {
+                        spImportLauncher.launch(arrayOf("application/json", "application/octet-stream", "*/*"))
+                    }
+                )
+            }
             
             // 其他分组
             item {
@@ -273,6 +298,47 @@ fun SettingsScreen(
             onConfirm = { viewModel.confirmImportBackup() },
             onDismiss = { viewModel.cancelImportBackup() }
         )
+
+        // SP 导入进度对话框
+        BackupProgressDialog(
+            isVisible = spImportInProgress,
+            title = stringResource(R.string.sp_import_title),
+            message = spImportProgressMessage,
+            progress = spImportProgress
+        )
+
+        // SP 导入模式选择对话框
+        if (showSpModeDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissSpImportDialog() },
+                title = { Text(stringResource(R.string.sp_import_mode_title)) },
+                text = { Text(stringResource(R.string.sp_import_mode_message)) },
+                confirmButton = {
+                    Button(onClick = { viewModel.confirmSpImport(ImportMode.OVERWRITE) }) {
+                        Text(stringResource(R.string.sp_import_mode_overwrite))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.confirmSpImport(ImportMode.MERGE) }) {
+                        Text(stringResource(R.string.sp_import_mode_merge))
+                    }
+                }
+            )
+        }
+
+        // SP 导入结果对话框
+        spImportMessage?.let { msg ->
+            AlertDialog(
+                onDismissRequest = { viewModel.clearSpImportMessage() },
+                title = { Text(stringResource(R.string.sp_import_title)) },
+                text = { Text(msg) },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.clearSpImportMessage() }) {
+                        Text(stringResource(R.string.btn_confirm))
+                    }
+                }
+            )
+        }
         
         // 备份消息Snackbar
         backupMessage?.let { message ->

@@ -352,6 +352,18 @@
     <string name="diary_empty">还没有日记</string>
     <string name="diary_empty_hint">点击右下角按钮新建日记</string>
     <string name="diary_time_created">%1$s</string>
+    <!-- SimplyPlural 导入 -->
+    <string name="sp_import_title">从 SimplyPlural 导入</string>
+    <string name="sp_import_option_title">从 SimplyPlural 导入</string>
+    <string name="sp_import_option_subtitle">从 SimplyPlural 导出的 JSON 文件恢复数据</string>
+    <string name="sp_import_settings_title">从 SimplyPlural 导入</string>
+    <string name="sp_import_settings_subtitle">导入 SimplyPlural 导出的 JSON 文件</string>
+    <string name="sp_import_mode_title">选择导入模式</string>
+    <string name="sp_import_mode_message">覆盖：清除现有数据后导入（推荐首次使用）\n合并：保留现有数据，追加导入内容</string>
+    <string name="sp_import_mode_overwrite">覆盖导入</string>
+    <string name="sp_import_mode_merge">合并导入</string>
+    <string name="sp_import_success">导入成功：共导入 %1$d 个成员</string>
+    <string name="sp_import_failed">导入失败：%1$s</string>
     <string name="dynamic_title_empty">无标题</string>
     <string name="dynamic_author">作者: %1$s</string>
     <string name="todo_priority_normal">普通</string>

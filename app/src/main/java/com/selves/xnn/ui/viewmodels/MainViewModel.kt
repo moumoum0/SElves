@@ -16,6 +16,9 @@ import com.selves.xnn.data.repository.OnlineStatusRepository
 import com.selves.xnn.data.entity.OnlineStatusEntity
 import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.BackupResult
+import com.selves.xnn.data.SimplyPluralImportService
+import com.selves.xnn.data.ImportMode
+import com.selves.xnn.data.SpImportResult
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Message
 import com.selves.xnn.model.MessageType
@@ -60,7 +63,8 @@ class MainViewModel @Inject constructor(
     private val memberPreferences: MemberPreferences,
     private val systemRepository: SystemRepository,
     private val onlineStatusRepository: OnlineStatusRepository,
-    private val backupService: com.selves.xnn.data.BackupService
+    private val backupService: com.selves.xnn.data.BackupService,
+    private val spImportService: SimplyPluralImportService
 ) : ViewModel() {
     
     private val TAG = "MainViewModel"
@@ -114,6 +118,22 @@ class MainViewModel @Inject constructor(
     
     // 存储待导入的URI，等用户确认后使用
     private var pendingImportUri: Uri? = null
+
+    // SP 导入状态
+    private val _spImportInProgress = MutableStateFlow(false)
+    val spImportInProgress: StateFlow<Boolean> = _spImportInProgress.asStateFlow()
+
+    private val _spImportProgress = MutableStateFlow<Float?>(null)
+    val spImportProgress: StateFlow<Float?> = _spImportProgress.asStateFlow()
+
+    private val _spImportProgressMessage = MutableStateFlow("")
+    val spImportProgressMessage: StateFlow<String> = _spImportProgressMessage.asStateFlow()
+
+    private val _spImportSuccess = MutableStateFlow(false)
+    val spImportSuccess: StateFlow<Boolean> = _spImportSuccess.asStateFlow()
+
+    private val _spImportError = MutableStateFlow<String?>(null)
+    val spImportError: StateFlow<String?> = _spImportError.asStateFlow()
     
     // 首页布局配置
     private val _homeLayoutConfig = MutableStateFlow(HomeLayoutConfig(functionModules = FunctionModuleConfig.defaultList()))
@@ -1217,6 +1237,7 @@ class MainViewModel @Inject constructor(
                         // 重置加载状态并重新加载数据
                         membersLoaded = false
                         currentMemberLoaded = false
+                        memberGroupsLoaded = false
                         groupsLoaded = false
                         messagesLoaded = false
                         imagesPreloaded = false
@@ -1271,6 +1292,62 @@ class MainViewModel @Inject constructor(
         }
     }
     
+    // ==================== SimplyPlural 导入 ====================
+
+    fun importFromSimplyPlural(uri: Uri, mode: ImportMode) {
+        if (_spImportInProgress.value) return
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            _spImportInProgress.value = true
+            _spImportProgress.value = 0f
+            _spImportError.value = null
+            try {
+                val result = spImportService.importFromUri(uri, mode) { progress, message ->
+                    _spImportProgress.value = progress
+                    _spImportProgressMessage.value = message
+                }
+                when (result) {
+                    is SpImportResult.Success -> {
+                        _spImportProgress.value = 1.0f
+                        kotlinx.coroutines.delay(400)
+                        _spImportSuccess.value = true
+                        _hasSystem.value = true
+                        _needsGuide.value = false
+                        membersLoaded = false
+                        currentMemberLoaded = false
+                        memberGroupsLoaded = false
+                        groupsLoaded = false
+                        messagesLoaded = false
+                        imagesPreloaded = false
+                        isLoadingInProgress = false
+                        _members.value = emptyList()
+                        _allMembers.value = emptyList()
+                        _currentMember.value = null
+                        _groups.value = emptyList()
+                        _messages.value = emptyMap()
+                        _unreadCounts.value = emptyMap()
+                        loadedMessageGroups.clear()
+                        setDefaultCurrentMemberAfterImport()
+                        startUnifiedLoading(skipSystemCheck = true)
+                        Log.d(TAG, "SP 导入成功：${result.memberCount} 个成员")
+                    }
+                    is SpImportResult.Error -> {
+                        _spImportError.value = result.message
+                        Log.e(TAG, "SP 导入失败: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                _spImportError.value = e.message ?: "未知错误"
+                Log.e(TAG, "SP 导入异常: ${e.message}", e)
+            } finally {
+                _spImportInProgress.value = false
+                _spImportProgress.value = null
+            }
+        }
+    }
+
+    fun dismissSpImportSuccess() { _spImportSuccess.value = false }
+    fun dismissSpImportError() { _spImportError.value = null }
+
     // ==================== 首页编辑模式相关方法 ====================
     
     /**
