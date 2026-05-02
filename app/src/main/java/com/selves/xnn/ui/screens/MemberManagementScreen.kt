@@ -201,8 +201,7 @@ fun MemberManagementScreen(
                 )
                 // 视图模式选择器（位于搜索栏下方）
                 Surface(
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 3.dp
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Column {
                         Row(
