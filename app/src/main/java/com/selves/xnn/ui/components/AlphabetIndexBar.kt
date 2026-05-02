@@ -126,14 +126,14 @@ private fun AlphabetIndexItem(
     onClick: () -> Unit
 ) {
     val textColor = when {
-        isSelected -> MaterialTheme.colorScheme.primary
-        isAvailable -> MaterialTheme.colorScheme.onSurface
-        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        isSelected -> Color.Black
+        isAvailable -> Color.Black
+        else -> Color.Black.copy(alpha = 0.3f)
     }
     
     val backgroundColor = when {
-        isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-        isDragging && isAvailable -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+        isSelected -> Color.Black.copy(alpha = 0.12f)
+        isDragging && isAvailable -> Color.Black.copy(alpha = 0.06f)
         else -> Color.Transparent
     }
     
@@ -156,7 +156,7 @@ private fun AlphabetIndexItem(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = textColor,
             textAlign = TextAlign.Center
-                )
+        )
     }
 }
 
@@ -169,18 +169,14 @@ private fun LetterIndicator(
         modifier = modifier
             .size(40.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary),
+            .background(Color.Black),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = letter,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
+            color = Color.White
         )
     }
 }
-
- 
-  
- 

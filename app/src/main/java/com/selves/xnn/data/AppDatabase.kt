@@ -10,6 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.selves.xnn.data.dao.ChatGroupDao
 import com.selves.xnn.data.dao.DynamicDao
 import com.selves.xnn.data.dao.MemberDao
+import com.selves.xnn.data.dao.MemberGroupDao
 import com.selves.xnn.data.dao.MessageDao
 import com.selves.xnn.data.dao.MessageReadStatusDao
 import com.selves.xnn.data.dao.TodoDao
@@ -22,6 +23,7 @@ import com.selves.xnn.data.entity.DynamicEntity
 import com.selves.xnn.data.entity.DynamicCommentEntity
 import com.selves.xnn.data.entity.DynamicLikeEntity
 import com.selves.xnn.data.entity.MemberEntity
+import com.selves.xnn.data.entity.MemberGroupEntity
 import com.selves.xnn.data.entity.MessageEntity
 import com.selves.xnn.data.entity.MessageReadStatusEntity
 import com.selves.xnn.data.entity.TodoEntity
@@ -36,6 +38,7 @@ import android.util.Log
 @Database(
     entities = [
         MemberEntity::class,
+        MemberGroupEntity::class,
         ChatGroupEntity::class,
         MessageEntity::class,
         MessageReadStatusEntity::class,
@@ -50,12 +53,13 @@ import android.util.Log
         OnlineStatusEntity::class,
         LocationRecordEntity::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun memberDao(): MemberDao
+    abstract fun memberGroupDao(): MemberGroupDao
     abstract fun chatGroupDao(): ChatGroupDao
     abstract fun messageDao(): MessageDao
     abstract fun messageReadStatusDao(): MessageReadStatusDao
@@ -465,6 +469,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    database.execSQL(
+                        "CREATE TABLE IF NOT EXISTS member_groups (" +
+                                "name TEXT NOT NULL PRIMARY KEY, " +
+                                "description TEXT NOT NULL DEFAULT '')"
+                    )
+                    Log.d("AppDatabase", "数据库迁移 16->17 完成：member_groups表已创建")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移 16->17 失败: ${e.message}", e)
+                    throw e
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -472,7 +492,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
                 // 移除 .fallbackToDestructiveMigration() 以防止数据丢失
                 .build()
                 INSTANCE = instance
@@ -480,4 +500,4 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
     }
-} 
+}

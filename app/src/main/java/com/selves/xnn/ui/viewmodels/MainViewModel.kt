@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.data.repository.ChatGroupRepository
+import com.selves.xnn.data.repository.MemberGroupRepository
 import com.selves.xnn.data.repository.MessageRepository
 import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
@@ -19,6 +20,7 @@ import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Message
 import com.selves.xnn.model.MessageType
 import com.selves.xnn.model.Member
+import com.selves.xnn.model.MemberGroup
 import com.selves.xnn.model.HomeLayoutConfig
 import com.selves.xnn.model.HomeModuleType
 import com.selves.xnn.model.FunctionModuleConfig
@@ -51,6 +53,7 @@ data class LoadingState(
 class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val memberRepository: MemberRepository,
+    private val memberGroupRepository: MemberGroupRepository,
     private val chatGroupRepository: ChatGroupRepository,
     private val messageRepository: MessageRepository,
     private val messageReadStatusRepository: MessageReadStatusRepository,
@@ -73,6 +76,10 @@ class MainViewModel @Inject constructor(
     // 所有成员（包括已删除成员）用于消息显示
     private val _allMembers = MutableStateFlow<List<Member>>(emptyList())
     val allMembers: StateFlow<List<Member>> = _allMembers.asStateFlow()
+    
+    // 成员分组
+    private val _memberGroups = MutableStateFlow<List<MemberGroup>>(emptyList())
+    val memberGroups: StateFlow<List<MemberGroup>> = _memberGroups.asStateFlow()
     
     // 群组
     private val _groups = MutableStateFlow<List<ChatGroup>>(emptyList())
@@ -145,6 +152,7 @@ class MainViewModel @Inject constructor(
     // 加载阶段跟踪
     private var membersLoaded = false
     private var currentMemberLoaded = false
+    private var memberGroupsLoaded = false
     private var groupsLoaded = false
     private var messagesLoaded = false
     private var imagesPreloaded = false
@@ -205,8 +213,13 @@ class MainViewModel @Inject constructor(
                 // 等待基础数据加载完成
                 awaitAll(membersJob, currentMemberJob)
                 
+                // 同步成员分组与分组元数据
+                val memberGroupsJob = async(Dispatchers.IO) { loadMemberGroups() }
+                val syncMemberGroupsJob = async(Dispatchers.IO) { syncExistingMemberGroups() }
+                
                 // 加载群组数据
-                loadGroups()
+                val groupsJob = async(Dispatchers.IO) { loadGroups() }
+                awaitAll(memberGroupsJob, syncMemberGroupsJob, groupsJob)
                 
                 // 并行：消息加载 + 头像预加载同时进行
                 val messagesJob = async(Dispatchers.IO) { loadInitialMessages() }
@@ -241,8 +254,6 @@ class MainViewModel @Inject constructor(
         }
     }
     
-
-    
     /**
      * 完成加载
      */
@@ -253,8 +264,6 @@ class MainViewModel @Inject constructor(
         isLoadingInProgress = false
         Log.d(TAG, "应用加载完成")
     }
-    
-
     
     /**
      * 加载初始消息数据（等待所有群组消息首次加载完成后再返回）
@@ -372,6 +381,33 @@ class MainViewModel @Inject constructor(
         membersLoaded = true
     }
     
+    private suspend fun loadMemberGroups() {
+        val memberGroupsDeferred = CompletableDeferred<Unit>()
+        
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            memberGroupRepository.getAllGroups()
+                .collect { groups ->
+                    _memberGroups.value = groups
+                    if (!memberGroupsLoaded) {
+                        memberGroupsDeferred.complete(Unit)
+                    }
+                }
+        }
+        
+        memberGroupsDeferred.await()
+        memberGroupsLoaded = true
+    }
+    
+    private suspend fun syncExistingMemberGroups() {
+        val existingGroups = _allMembers.value
+            .flatMap { it.groups }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+        
+        memberGroupRepository.ensureGroupsExist(existingGroups)
+    }
+    
     private suspend fun loadGroups() {
         try {
             val currentMember = _currentMember.value
@@ -419,11 +455,7 @@ class MainViewModel @Inject constructor(
     fun createMember(name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", groups: List<String> = emptyList(), shouldSetAsCurrent: Boolean = true) {
         val memberId = UUID.randomUUID().toString()
         
-        // 规范化分组：去除首尾空格、过滤空值、去重
-        val normalizedGroups = groups
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .distinct()
+        val normalizedGroups = normalizeGroupNames(groups)
         
         val member = Member(
             id = memberId,
@@ -437,6 +469,7 @@ class MainViewModel @Inject constructor(
         // 使用单一协程进行所有操作，避免并发问题
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
+                memberGroupRepository.ensureGroupsExist(normalizedGroups)
                 memberRepository.saveMember(member)
                 
                 if (shouldSetAsCurrent) {
@@ -469,11 +502,7 @@ class MainViewModel @Inject constructor(
                 val existingMember = memberRepository.getMemberById(memberId)
                 
                 if (existingMember != null) {
-                    // 规范化分组：去除首尾空格、过滤空值、去重
-                    val normalizedGroups = groups
-                        .map { it.trim() }
-                        .filter { it.isNotEmpty() }
-                        .distinct()
+                    val normalizedGroups = normalizeGroupNames(groups)
                     
                     // 创建更新后的成员对象
                     val updatedMember = existingMember.copy(
@@ -485,6 +514,7 @@ class MainViewModel @Inject constructor(
                     )
                     
                     // 保存到数据库
+                    memberGroupRepository.ensureGroupsExist(normalizedGroups)
                     memberRepository.saveMember(updatedMember)
                     
                     // 如果是当前成员，更新当前成员信息
@@ -498,6 +528,33 @@ class MainViewModel @Inject constructor(
                 Log.e(TAG, "更新成员失败: ${e.message}", e)
             }
         }
+    }
+    
+    fun updateMemberGroupDescription(name: String, description: String) {
+        val normalizedName = name.trim()
+        if (normalizedName.isEmpty()) {
+            return
+        }
+        
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            try {
+                memberGroupRepository.upsertGroup(
+                    MemberGroup(
+                        name = normalizedName,
+                        description = description.trim()
+                    )
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "更新成员分组简介失败: ${e.message}", e)
+            }
+        }
+    }
+    
+    private fun normalizeGroupNames(groups: List<String>): List<String> {
+        return groups
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
     }
     
     // 设置当前成员

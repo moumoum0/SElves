@@ -90,6 +90,13 @@
     <string name="member_view_by_letter">By Letter</string>
     <string name="member_view_by_group">By Group</string>
     <string name="member_view_mode">View Mode</string>
+    <string name="group_edit_description">Edit Group Description</string>
+    <string name="group_description_label">Group Description</string>
+    <string name="group_description_hint">Describe this group\'s role, purpose, or notes</string>
+    <string name="group_description_empty">No group description yet</string>
+    <string name="group_members_count">%1$d members</string>
+    <string name="member_group_empty">No members in this group yet</string>
+    <string name="member_no_group_description">Members that have not been assigned to any group</string>
     
     <!-- Chat -->
     <string name="chat_title">Chat</string>

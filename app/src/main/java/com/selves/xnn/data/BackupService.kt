@@ -101,6 +101,7 @@ data class BackupData(
     val version: Int = BACKUP_VERSION,
     val timestamp: Long = System.currentTimeMillis(),
     val members: List<MemberEntity> = emptyList(),
+    val memberGroups: List<MemberGroupEntity> = emptyList(),
     val chatGroups: List<ChatGroupEntity> = emptyList(),
     val messages: List<MessageEntity> = emptyList(),
     val messageReadStatus: List<MessageReadStatusEntity> = emptyList(),
@@ -116,7 +117,7 @@ data class BackupData(
     val preferences: PreferencesBackupData = PreferencesBackupData()
 ) {
     companion object {
-        const val BACKUP_VERSION = 2  // 增加版本号，因为添加了新字段
+        const val BACKUP_VERSION = 3  // 增加版本号，因为添加了新字段
         // 如果后续需要扩展其他静态常量，可在此处添加
     }
 }
@@ -157,6 +158,7 @@ class BackupService @Inject constructor(
         // 兼容旧版本备份所需的字段常量
         private val REQUIRED_ARRAY_FIELDS = listOf(
             "members",
+            "memberGroups",
             "chatGroups",
             "messages",
             "messageReadStatus",
@@ -319,6 +321,7 @@ class BackupService @Inject constructor(
                                             Log.d(TAG, "  - 版本: ${backupData.version}")
                                             Log.d(TAG, "  - 时间戳: ${backupData.timestamp}")
                                             Log.d(TAG, "  - 成员数: ${backupData.members.size}")
+                                            Log.d(TAG, "  - 成员分组数: ${backupData.memberGroups.size}")
                                             Log.d(TAG, "  - 群组数: ${backupData.chatGroups.size}")
                                             Log.d(TAG, "  - 消息数: ${backupData.messages.size}")
                                             Log.d(TAG, "  - 动态数: ${backupData.dynamics.size}")
@@ -409,6 +412,7 @@ class BackupService @Inject constructor(
         Log.d(TAG, "收集用户偏好设置完成: currentMemberId=${preferences.currentMemberId}")
         
         val members = database.memberDao().getAllMembersSync()
+        val memberGroups = database.memberGroupDao().getAllGroupsSync()
         val chatGroups = database.chatGroupDao().getAllGroupsSync()
         val messages = database.messageDao().getAllMessagesSync()
         val messageReadStatus = database.messageReadStatusDao().getAllReadStatusSync()
@@ -424,6 +428,7 @@ class BackupService @Inject constructor(
         
         Log.d(TAG, "数据收集统计:")
         Log.d(TAG, "  - 成员: ${members.size}")
+        Log.d(TAG, "  - 成员分组: ${memberGroups.size}")
         Log.d(TAG, "  - 群组: ${chatGroups.size}")
         Log.d(TAG, "  - 消息: ${messages.size}")
         Log.d(TAG, "  - 已读状态: ${messageReadStatus.size}")
@@ -451,6 +456,7 @@ class BackupService @Inject constructor(
         
         return BackupData(
             members = members,
+            memberGroups = memberGroups,
             chatGroups = chatGroups,
             messages = messages,
             messageReadStatus = messageReadStatus,
@@ -721,6 +727,11 @@ class BackupService @Inject constructor(
                         database.memberDao().insertMember(member)
                     }
                     
+                    Log.d(TAG, "导入 ${backupData.memberGroups.size} 个成员分组")
+                    backupData.memberGroups.forEach { group ->
+                        database.memberGroupDao().upsertGroup(group)
+                    }
+                    
                     Log.d(TAG, "导入 ${backupData.chatGroups.size} 个群组")
                     backupData.chatGroups.forEach { group ->
                         database.chatGroupDao().insertGroup(group)
@@ -884,6 +895,7 @@ class BackupService @Inject constructor(
         database.messageDao().deleteAll()
         database.chatGroupDao().deleteAll()
         database.systemDao().deleteAll()
+        database.memberGroupDao().deleteAll()
         database.memberDao().deleteAll()
     }
-} 
+}

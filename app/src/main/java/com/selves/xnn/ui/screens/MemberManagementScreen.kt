@@ -10,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,25 +20,29 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.selves.xnn.R
 import com.selves.xnn.model.Member
+import com.selves.xnn.model.MemberGroup
 import com.selves.xnn.ui.components.AlphabetIndexBar
 import com.selves.xnn.ui.components.AvatarImage
 import com.selves.xnn.ui.components.CreateMemberDialog
 import com.selves.xnn.ui.components.EditMemberDialog
+import com.selves.xnn.ui.components.GroupDescriptionEditDialog
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.util.PinyinUtils
 import kotlinx.coroutines.launch
@@ -55,59 +58,59 @@ fun MemberManagementScreen(
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
     var showCreateMemberDialog by remember { mutableStateOf(false) }
     var memberToEdit by remember { mutableStateOf<Member?>(null) }
+    var groupToEdit by remember { mutableStateOf<MemberGroup?>(null) }
     var showSearchBar by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<String?>(null) }
     var selectedMember by remember { mutableStateOf<Member?>(null) }
-    var selectedGroupFilter by remember { mutableStateOf<String?>(null) }
     var viewMode by remember { mutableStateOf(MemberViewMode.BY_LETTER) }
     var showViewModeMenu by remember { mutableStateOf(false) }
     val bottomSheetState = rememberModalBottomSheetState()
+    val memberGroups by mainViewModel.memberGroups.collectAsState()
+    val expandedGroups = remember { mutableStateMapOf<String, Boolean>() }
     
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     
-    // 所有分组标签（从成员中提取）
-    val allGroups = remember(members) {
-        members.flatMap { it.groups }.distinct().sorted()
+    val memberSorter = remember {
+        Comparator<Member> { a, b ->
+            val pinyinA = PinyinUtils.getPinyin(a.name)
+            val pinyinB = PinyinUtils.getPinyin(b.name)
+            pinyinA.compareTo(pinyinB)
+        }
+    }
+
+    val allGroups = remember(members, memberGroups) {
+        (members.flatMap { it.groups } + memberGroups.map { it.name })
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .sortedBy { PinyinUtils.getPinyin(it) }
+    }
+
+    val memberGroupsByName = remember(memberGroups) {
+        memberGroups.associateBy { it.name }
     }
     
-    // 根据搜索和分组条件过滤成员（支持拼音搜索）
-    val filteredMembers = remember(members, searchQuery, selectedGroupFilter) {
+    val filteredMembers = remember(members, searchQuery) {
         var result = members
-        
-        // 分组筛选
-        if (selectedGroupFilter != null) {
-            result = if (selectedGroupFilter == "__NO_GROUP__") {
-                result.filter { it.groups.isEmpty() }
-            } else {
-                result.filter { selectedGroupFilter in it.groups }
-            }
-        }
-        
-        // 搜索过滤
+
         if (searchQuery.isNotBlank()) {
             result = result.filter { member ->
                 PinyinUtils.matchesKeyword(member.name, searchQuery)
             }
         }
-        
+
         result
     }
     
-    // 按首字母分组成员（支持拼音排序）
-    val groupedMembers = remember(filteredMembers) {
+    val groupedMembers = remember(filteredMembers, memberSorter) {
         filteredMembers
-            .sortedWith { a, b ->
-                val pinyinA = PinyinUtils.getPinyin(a.name)
-                val pinyinB = PinyinUtils.getPinyin(b.name)
-                pinyinA.compareTo(pinyinB)
-            }
+            .sortedWith(memberSorter)
             .groupBy { member ->
                 PinyinUtils.getFirstLetter(member.name)
             }
             .toSortedMap { a, b ->
-                // 确保 # 排在最后
                 when {
                     a == "#" && b != "#" -> 1
                     a != "#" && b == "#" -> -1
@@ -116,9 +119,41 @@ fun MemberManagementScreen(
             }
     }
     
-    // 获取所有可用的字母（包含#但排序时#在最后）
     val availableLetters = remember(groupedMembers) {
         groupedMembers.keys.toList()
+    }
+
+    val groupedSections = remember(allGroups, filteredMembers, memberGroupsByName, searchQuery, memberSorter) {
+        allGroups.mapNotNull { groupName ->
+            val membersInGroup = filteredMembers
+                .filter { groupName in it.groups }
+                .sortedWith(memberSorter)
+            val group = memberGroupsByName[groupName] ?: MemberGroup(name = groupName)
+            if (searchQuery.isBlank() || membersInGroup.isNotEmpty() || PinyinUtils.matchesKeyword(groupName, searchQuery) || group.description.contains(searchQuery, ignoreCase = true)) {
+                MemberGroupSection(
+                    group = group,
+                    members = membersInGroup,
+                    isUngrouped = false
+                )
+            } else {
+                null
+            }
+        }
+    }
+
+    val ungroupedSection = remember(filteredMembers, searchQuery, memberSorter) {
+        val ungroupedMembers = filteredMembers
+            .filter { it.groups.isEmpty() }
+            .sortedWith(memberSorter)
+        if (ungroupedMembers.isNotEmpty() || (searchQuery.isBlank() && members.any { it.groups.isEmpty() })) {
+            MemberGroupSection(
+                group = MemberGroup(name = "__NO_GROUP__"),
+                members = ungroupedMembers,
+                isUngrouped = true
+            )
+        } else {
+            null
+        }
     }
     
     Scaffold(
@@ -174,7 +209,6 @@ fun MemberManagementScreen(
                                         text = { Text(stringResource(R.string.member_view_by_letter)) },
                                         onClick = {
                                             viewMode = MemberViewMode.BY_LETTER
-                                            selectedGroupFilter = null
                                             showViewModeMenu = false
                                         },
                                         leadingIcon = {
@@ -189,7 +223,7 @@ fun MemberManagementScreen(
                                             viewMode = MemberViewMode.BY_GROUP
                                             showViewModeMenu = false
                                         },
-                                        enabled = allGroups.isNotEmpty(),
+                                        enabled = allGroups.isNotEmpty() || members.any { it.groups.isEmpty() },
                                         leadingIcon = {
                                             if (viewMode == MemberViewMode.BY_GROUP) {
                                                 Icon(Icons.Default.Check, contentDescription = null)
@@ -200,51 +234,6 @@ fun MemberManagementScreen(
                             }
                         }
                         HorizontalDivider()
-                    }
-                }
-                // 分组筛选区域（仅在按分组模式下显示）
-                if (viewMode == MemberViewMode.BY_GROUP && allGroups.isNotEmpty()) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 3.dp
-                    ) {
-                        Column {
-                            FlowRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                // 全部标签
-                                FilterChip(
-                                    selected = selectedGroupFilter == null,
-                                    onClick = { selectedGroupFilter = null },
-                                    label = { Text(stringResource(R.string.member_all_groups)) }
-                                )
-                                
-                                // 无分组标签
-                                FilterChip(
-                                    selected = selectedGroupFilter == "__NO_GROUP__",
-                                    onClick = { 
-                                        selectedGroupFilter = if (selectedGroupFilter == "__NO_GROUP__") null else "__NO_GROUP__"
-                                    },
-                                    label = { Text(stringResource(R.string.member_no_group)) }
-                                )
-                                
-                                // 各个分组标签
-                                allGroups.forEach { group ->
-                                    FilterChip(
-                                        selected = selectedGroupFilter == group,
-                                        onClick = { 
-                                            selectedGroupFilter = if (selectedGroupFilter == group) null else group
-                                        },
-                                        label = { Text(group) }
-                                    )
-                                }
-                            }
-                            HorizontalDivider()
-                        }
                     }
                 }
             }
@@ -294,22 +283,34 @@ fun MemberManagementScreen(
                         }
                     }
                 } else {
-                    // 按分组模式或搜索模式，显示过滤后的扁平列表
-                    items(
-                        items = filteredMembers,
-                        key = { member -> member.id }
-                    ) { member ->
-                        MemberItem(
-                            member = member,
-                            isCurrentMember = member.id == currentMember.id,
-                            onDeleteMember = { showDeleteConfirmation = member },
-                            onEditMember = { memberToEdit = member },
-                            onMemberClick = { selectedMember = member }
-                        )
+                    val treeSections = buildList {
+                        addAll(groupedSections)
+                        ungroupedSection?.let { add(it) }
                     }
-                    
-                    // 如果搜索无结果，显示提示
-                    if (filteredMembers.isEmpty()) {
+
+                    if (treeSections.isNotEmpty()) {
+                        items(
+                            items = treeSections,
+                            key = { section -> section.key }
+                        ) { section ->
+                            GroupFolderSection(
+                                section = section,
+                                isExpanded = expandedGroups[section.key] ?: false,
+                                onToggleExpanded = {
+                                    expandedGroups[section.key] = !(expandedGroups[section.key] ?: false)
+                                },
+                                onEditDescription = {
+                                    if (!section.isUngrouped) {
+                                        groupToEdit = section.group
+                                    }
+                                },
+                                currentMemberId = currentMember.id,
+                                onDeleteMember = { showDeleteConfirmation = it },
+                                onEditMember = { memberToEdit = it },
+                                onMemberClick = { selectedMember = it }
+                            )
+                        }
+                    } else {
                         item {
                             Box(
                                 modifier = Modifier
@@ -486,6 +487,17 @@ fun MemberManagementScreen(
             onConfirm = { name, avatarUrl, bio, pronouns, groups ->
                 mainViewModel.updateMember(member.id, name, avatarUrl, bio, pronouns, groups)
                 memberToEdit = null
+            }
+        )
+    }
+
+    groupToEdit?.let { group ->
+        GroupDescriptionEditDialog(
+            group = group,
+            onDismiss = { groupToEdit = null },
+            onConfirm = { description ->
+                mainViewModel.updateMemberGroupDescription(group.name, description)
+                groupToEdit = null
             }
         )
     }
@@ -707,13 +719,137 @@ private fun GroupHeader(letter: String) {
             text = letter,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = Color.Black,
             modifier = Modifier.padding(start = 4.dp)
         )
+    }
+}
+
+private data class MemberGroupSection(
+    val group: MemberGroup,
+    val members: List<Member>,
+    val isUngrouped: Boolean
+) {
+    val key: String = if (isUngrouped) "ungrouped" else group.name
+}
+
+@Composable
+private fun GroupFolderSection(
+    section: MemberGroupSection,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    onEditDescription: () -> Unit,
+    currentMemberId: String,
+    onDeleteMember: (Member) -> Unit,
+    onEditMember: (Member) -> Unit,
+    onMemberClick: (Member) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        GroupFolderHeader(
+            section = section,
+            isExpanded = isExpanded,
+            onClick = onToggleExpanded,
+            onEditDescription = onEditDescription
+        )
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, top = 4.dp)
+            ) {
+                if (section.members.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.member_group_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
+                    )
+                } else {
+                    section.members.forEach { member ->
+                        MemberItem(
+                            member = member,
+                            isCurrentMember = member.id == currentMemberId,
+                            onDeleteMember = { onDeleteMember(member) },
+                            onEditMember = onEditMember,
+                            onMemberClick = { onMemberClick(member) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupFolderHeader(
+    section: MemberGroupSection,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    onEditDescription: () -> Unit
+) {
+    val description = when {
+        section.isUngrouped -> stringResource(R.string.member_no_group_description)
+        section.group.description.isBlank() -> ""
+        else -> section.group.description
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.Transparent,
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                contentDescription = null,
+                tint = Color.Black,
+                modifier = Modifier.padding(start = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (section.isUngrouped) stringResource(R.string.member_no_group) else section.group.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (description.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Black.copy(alpha = 0.55f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
     }
 }
 
 enum class MemberViewMode {
     BY_LETTER,  // 按字母分组
     BY_GROUP    // 按分组筛选
-} 
+}

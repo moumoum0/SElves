@@ -8,6 +8,7 @@ import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.data.dao.ChatGroupDao
 import com.selves.xnn.data.dao.DynamicDao
 import com.selves.xnn.data.dao.MemberDao
+import com.selves.xnn.data.dao.MemberGroupDao
 import com.selves.xnn.data.dao.MessageDao
 import com.selves.xnn.data.dao.MessageReadStatusDao
 import com.selves.xnn.data.dao.TodoDao
@@ -18,6 +19,7 @@ import com.selves.xnn.data.dao.LocationRecordDao
 import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.DynamicRepository
 import com.selves.xnn.data.repository.MemberRepository
+import com.selves.xnn.data.repository.MemberGroupRepository
 import com.selves.xnn.data.repository.MessageRepository
 import com.selves.xnn.data.repository.MessageReadStatusRepository
 import com.selves.xnn.data.repository.TodoRepository
@@ -47,6 +49,12 @@ object DatabaseModule {
     @Singleton
     fun provideMemberDao(database: AppDatabase): MemberDao {
         return database.memberDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideMemberGroupDao(database: AppDatabase): MemberGroupDao {
+        return database.memberGroupDao()
     }
 
     @Provides
@@ -107,6 +115,12 @@ object DatabaseModule {
     @Singleton
     fun provideMemberRepository(database: AppDatabase): MemberRepository {
         return MemberRepository(database)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMemberGroupRepository(memberGroupDao: MemberGroupDao): MemberGroupRepository {
+        return MemberGroupRepository(memberGroupDao)
     }
 
     @Provides
