@@ -61,6 +61,7 @@ fun MemberManagementScreen(
     var showCreateMemberDialog by remember { mutableStateOf(false) }
     var memberToEdit by remember { mutableStateOf<Member?>(null) }
     var groupToEdit by remember { mutableStateOf<MemberGroup?>(null) }
+    var groupToDelete by remember { mutableStateOf<MemberGroup?>(null) }
     var showSearchBar by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedLetter by remember { mutableStateOf<String?>(null) }
@@ -93,7 +94,7 @@ fun MemberManagementScreen(
     val memberGroupsByName = remember(memberGroups) {
         memberGroups.associateBy { it.name }
     }
-    
+
     val filteredMembers = remember(members, searchQuery) {
         var result = members
 
@@ -156,6 +157,32 @@ fun MemberManagementScreen(
         } else {
             null
         }
+    }
+
+    val membersByGroup = remember(filteredMembers, memberSorter) {
+        val map = mutableMapOf<String, MutableList<Member>>()
+        filteredMembers.forEach { member ->
+            member.groups.forEach { groupName ->
+                map.getOrPut(groupName) { mutableListOf() }.add(member)
+            }
+        }
+        map.mapValues { (_, list) -> list.sortedWith(memberSorter) }
+    }
+
+    val rootTreeNodes = remember(memberGroups, membersByGroup) {
+        fun buildNodes(parentName: String?): List<GroupTreeNode> {
+            return memberGroups
+                .filter { it.parentName == parentName }
+                .sortedBy { PinyinUtils.getPinyin(it.name) }
+                .map { group ->
+                    GroupTreeNode(
+                        group = group,
+                        members = membersByGroup[group.name] ?: emptyList(),
+                        children = buildNodes(group.name)
+                    )
+                }
+        }
+        buildNodes(null)
     }
     
     Scaffold(
@@ -284,15 +311,65 @@ fun MemberManagementScreen(
                             )
                         }
                     }
+                } else if (viewMode == MemberViewMode.BY_GROUP && searchQuery.isBlank()) {
+                    if (rootTreeNodes.isNotEmpty() || ungroupedSection != null) {
+                        items(
+                            items = rootTreeNodes,
+                            key = { node -> node.key }
+                        ) { node ->
+                            GroupTreeNodeSection(
+                                node = node,
+                                depth = 0,
+                                expandedGroups = expandedGroups,
+                                currentMemberId = currentMember.id,
+                                onEditGroup = { groupToEdit = it },
+                                onDeleteGroup = { groupToDelete = it },
+                                onDeleteMember = { showDeleteConfirmation = it },
+                                onEditMember = { memberToEdit = it },
+                                onMemberClick = { selectedMember = it }
+                            )
+                        }
+                        ungroupedSection?.let { section ->
+                            item(key = "ungrouped") {
+                                GroupFolderSection(
+                                    section = section,
+                                    isExpanded = expandedGroups[section.key] ?: false,
+                                    onToggleExpanded = {
+                                        expandedGroups[section.key] = !(expandedGroups[section.key] ?: false)
+                                    },
+                                    onEditDescription = {},
+                                    onDeleteGroup = {},
+                                    currentMemberId = currentMember.id,
+                                    onDeleteMember = { showDeleteConfirmation = it },
+                                    onEditMember = { memberToEdit = it },
+                                    onMemberClick = { selectedMember = it }
+                                )
+                            }
+                        }
+                    } else {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.member_no_match),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 } else {
-                    val treeSections = buildList {
+                    val flatSections = buildList {
                         addAll(groupedSections)
                         ungroupedSection?.let { add(it) }
                     }
-
-                    if (treeSections.isNotEmpty()) {
+                    if (flatSections.isNotEmpty()) {
                         items(
-                            items = treeSections,
+                            items = flatSections,
                             key = { section -> section.key }
                         ) { section ->
                             GroupFolderSection(
@@ -302,9 +379,10 @@ fun MemberManagementScreen(
                                     expandedGroups[section.key] = !(expandedGroups[section.key] ?: false)
                                 },
                                 onEditDescription = {
-                                    if (!section.isUngrouped) {
-                                        groupToEdit = section.group
-                                    }
+                                    if (!section.isUngrouped) groupToEdit = section.group
+                                },
+                                onDeleteGroup = {
+                                    if (!section.isUngrouped) groupToDelete = section.group
                                 },
                                 currentMemberId = currentMember.id,
                                 onDeleteMember = { showDeleteConfirmation = it },
@@ -502,10 +580,37 @@ fun MemberManagementScreen(
         GroupEditDialog(
             group = group,
             existingGroupNames = allGroups.filter { it != group.name },
+            allMemberGroups = memberGroups,
             onDismiss = { groupToEdit = null },
-            onConfirm = { newName, description ->
-                mainViewModel.updateMemberGroup(group.name, newName, description)
+            onConfirm = { newName, description, parentName ->
+                mainViewModel.updateMemberGroup(group.name, newName, description, parentName)
                 groupToEdit = null
+            }
+        )
+    }
+
+    groupToDelete?.let { group ->
+        AlertDialog(
+            onDismissRequest = { groupToDelete = null },
+            title = { Text(stringResource(R.string.group_delete)) },
+            text = { Text(stringResource(R.string.group_delete_confirm, group.name)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        mainViewModel.deleteMemberGroup(group.name)
+                        groupToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.btn_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { groupToDelete = null }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
             }
         )
     }
@@ -741,12 +846,21 @@ private data class MemberGroupSection(
     val key: String = if (isUngrouped) "ungrouped" else group.name
 }
 
+private data class GroupTreeNode(
+    val group: MemberGroup,
+    val members: List<Member>,
+    val children: List<GroupTreeNode>
+) {
+    val key: String = group.name
+}
+
 @Composable
 private fun GroupFolderSection(
     section: MemberGroupSection,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
     onEditDescription: () -> Unit,
+    onDeleteGroup: () -> Unit,
     currentMemberId: String,
     onDeleteMember: (Member) -> Unit,
     onEditMember: (Member) -> Unit,
@@ -761,7 +875,8 @@ private fun GroupFolderSection(
             section = section,
             isExpanded = isExpanded,
             onClick = onToggleExpanded,
-            onEditDescription = onEditDescription
+            onEditDescription = onEditDescription,
+            onDeleteGroup = onDeleteGroup
         )
 
         AnimatedVisibility(visible = isExpanded) {
@@ -799,7 +914,8 @@ private fun GroupFolderHeader(
     section: MemberGroupSection,
     isExpanded: Boolean,
     onClick: () -> Unit,
-    onEditDescription: () -> Unit
+    onEditDescription: () -> Unit,
+    onDeleteGroup: () -> Unit = {}
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val description = when {
@@ -875,6 +991,168 @@ private fun GroupFolderHeader(
                         onEditDescription()
                     }
                 )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(R.string.group_delete),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        showMenu = false
+                        onDeleteGroup()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun GroupTreeNodeSection(
+    node: GroupTreeNode,
+    depth: Int,
+    expandedGroups: MutableMap<String, Boolean>,
+    currentMemberId: String,
+    onEditGroup: (MemberGroup) -> Unit,
+    onDeleteGroup: (MemberGroup) -> Unit,
+    onDeleteMember: (Member) -> Unit,
+    onEditMember: (Member) -> Unit,
+    onMemberClick: (Member) -> Unit
+) {
+    val isExpanded = expandedGroups[node.key] ?: false
+    val startPad = (depth * 20).dp
+    var showMenu by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.Transparent,
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = { expandedGroups[node.key] = !isExpanded },
+                            onLongClick = { showMenu = true }
+                        )
+                        .padding(start = startPad)
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = node.group.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (node.group.description.isNotBlank()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = node.group.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Black.copy(alpha = 0.55f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+            }
+
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.group_edit_title)) },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                    onClick = {
+                        showMenu = false
+                        onEditGroup(node.group)
+                    }
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(R.string.group_delete),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        showMenu = false
+                        onDeleteGroup(node.group)
+                    }
+                )
+            }
+        }
+
+        AnimatedVisibility(visible = isExpanded) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                node.children.forEach { child ->
+                    GroupTreeNodeSection(
+                        node = child,
+                        depth = depth + 1,
+                        expandedGroups = expandedGroups,
+                        currentMemberId = currentMemberId,
+                        onEditGroup = onEditGroup,
+                        onDeleteGroup = onDeleteGroup,
+                        onDeleteMember = onDeleteMember,
+                        onEditMember = onEditMember,
+                        onMemberClick = onMemberClick
+                    )
+                }
+                if (node.children.isEmpty() && node.members.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.member_group_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = startPad + 28.dp, top = 8.dp, bottom = 8.dp)
+                    )
+                } else {
+                    node.members.forEach { member ->
+                        Box(modifier = Modifier.padding(start = startPad + 20.dp)) {
+                            MemberItem(
+                                member = member,
+                                isCurrentMember = member.id == currentMemberId,
+                                onDeleteMember = { onDeleteMember(member) },
+                                onEditMember = onEditMember,
+                                onMemberClick = { onMemberClick(member) }
+                            )
+                        }
+                    }
+                }
             }
         }
     }

@@ -99,6 +99,10 @@
     <string name="group_description_label">分组简介</string>
     <string name="group_description_hint">输入这个分组的说明、定位或备注</string>
     <string name="group_description_empty">暂无分组简介</string>
+    <string name="group_parent_label">父分组</string>
+    <string name="group_parent_none">无（顶级分组）</string>
+    <string name="group_delete">删除分组</string>
+    <string name="group_delete_confirm">确定要删除分组「%1$s」吗？子分组将变为顶级分组，成员将被移出此分组。</string>
     <string name="group_members_count">%1$d 人</string>
     <string name="member_group_empty">当前分组下暂无成员</string>
     <string name="member_no_group_description">尚未归类到任何分组的成员</string>

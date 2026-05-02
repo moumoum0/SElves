@@ -538,10 +538,12 @@ class MainViewModel @Inject constructor(
         
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
+                val existing = _memberGroups.value.find { it.name == normalizedName }
                 memberGroupRepository.upsertGroup(
                     MemberGroup(
                         name = normalizedName,
-                        description = description.trim()
+                        description = description.trim(),
+                        parentName = existing?.parentName
                     )
                 )
             } catch (e: Exception) {
@@ -550,14 +552,14 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun updateMemberGroup(oldName: String, newName: String, description: String) {
+    fun updateMemberGroup(oldName: String, newName: String, description: String, parentName: String? = null) {
         val normalizedOld = oldName.trim()
         val normalizedNew = newName.trim()
         if (normalizedNew.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
-                memberGroupRepository.upsertGroup(MemberGroup(name = normalizedNew, description = description.trim()))
+                memberGroupRepository.upsertGroup(MemberGroup(name = normalizedNew, description = description.trim(), parentName = parentName))
                 if (normalizedOld != normalizedNew) {
                     _allMembers.value
                         .filter { normalizedOld in it.groups }
@@ -565,10 +567,32 @@ class MainViewModel @Inject constructor(
                             val updatedGroups = member.groups.map { if (it == normalizedOld) normalizedNew else it }
                             memberRepository.saveMember(member.copy(groups = updatedGroups))
                         }
+                    memberGroupRepository.updateChildrenParent(normalizedOld, normalizedNew)
                     memberGroupRepository.deleteGroup(normalizedOld)
+                } else {
+                    memberGroupRepository.updateChildrenParent(normalizedOld, normalizedNew)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "更新成员分组失败: ${e.message}", e)
+            }
+        }
+    }
+
+    fun deleteMemberGroup(name: String) {
+        val normalizedName = name.trim()
+        if (normalizedName.isEmpty()) return
+
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            try {
+                _allMembers.value
+                    .filter { normalizedName in it.groups }
+                    .forEach { member ->
+                        memberRepository.saveMember(member.copy(groups = member.groups.filter { it != normalizedName }))
+                    }
+                memberGroupRepository.updateChildrenParent(normalizedName, null)
+                memberGroupRepository.deleteGroup(normalizedName)
+            } catch (e: Exception) {
+                Log.e(TAG, "删除成员分组失败: ${e.message}", e)
             }
         }
     }

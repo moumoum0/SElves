@@ -21,6 +21,12 @@ interface MemberGroupDao {
     @Query("SELECT * FROM member_groups ORDER BY name COLLATE NOCASE ASC")
     suspend fun getAllGroupsSync(): List<MemberGroupEntity>
 
+    @Query("SELECT * FROM member_groups WHERE parentName = :parentName ORDER BY name COLLATE NOCASE ASC")
+    suspend fun getDirectChildrenSync(parentName: String): List<MemberGroupEntity>
+
+    @Query("UPDATE member_groups SET parentName = :newParentName WHERE parentName = :oldParentName")
+    suspend fun updateChildrenParent(oldParentName: String, newParentName: String?)
+
     @Query("DELETE FROM member_groups WHERE name = :name")
     suspend fun deleteGroupByName(name: String)
 

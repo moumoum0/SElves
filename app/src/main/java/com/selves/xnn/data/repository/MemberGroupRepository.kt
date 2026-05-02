@@ -39,6 +39,22 @@ class MemberGroupRepository @Inject constructor(
             }
     }
 
+    suspend fun updateChildrenParent(oldParentName: String, newParentName: String?) {
+        memberGroupDao.updateChildrenParent(oldParentName, newParentName)
+    }
+
+    suspend fun getDescendantNames(name: String): Set<String> {
+        val result = mutableSetOf<String>()
+        suspend fun collect(parentName: String) {
+            memberGroupDao.getDirectChildrenSync(parentName).forEach { child ->
+                result.add(child.name)
+                collect(child.name)
+            }
+        }
+        collect(name)
+        return result
+    }
+
     suspend fun deleteGroup(name: String) {
         memberGroupDao.deleteGroupByName(name)
     }

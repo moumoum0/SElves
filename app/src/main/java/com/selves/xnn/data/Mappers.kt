@@ -44,12 +44,14 @@ object Mappers {
 
     fun MemberGroupEntity.toDomain(): MemberGroup = MemberGroup(
         name = name,
-        description = description
+        description = description,
+        parentName = parentName
     )
 
     fun MemberGroup.toEntity(): MemberGroupEntity = MemberGroupEntity(
         name = name,
-        description = description
+        description = description,
+        parentName = parentName
     )
 
     suspend fun ChatGroupEntity.toDomain(memberDao: MemberDao): ChatGroup {

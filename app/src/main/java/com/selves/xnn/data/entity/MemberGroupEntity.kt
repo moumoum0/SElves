@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class MemberGroupEntity(
     @PrimaryKey
     val name: String,
-    val description: String = ""
+    val description: String = "",
+    val parentName: String? = null
 )
