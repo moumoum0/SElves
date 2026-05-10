@@ -91,6 +91,7 @@ fun ChatScreen(
     onRemoveMembers: (List<Member>) -> Unit = {},
     onUpdateGroupInfo: (String, String?) -> Unit = { _, _ -> },  // 修改为支持名称和头像
     onDeleteGroup: () -> Unit = {},
+    onTransferOwnership: (com.selves.xnn.model.Member) -> Unit = {},
     onNavigateBack: () -> Unit = {},
     onMemberSelected: (Member) -> Unit = {}
 ) {
@@ -262,7 +263,8 @@ fun ChatScreen(
             onAddMembers = onAddMembers,
             onRemoveMembers = onRemoveMembers,
             onUpdateGroupInfo = onUpdateGroupInfo,
-            onDeleteGroup = onDeleteGroup
+            onDeleteGroup = onDeleteGroup,
+            onTransferOwnership = onTransferOwnership
         )
     }
 }

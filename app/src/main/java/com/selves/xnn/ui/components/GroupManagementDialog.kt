@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GroupAdd
 import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,14 +43,17 @@ fun GroupManagementDialog(
     onAddMembers: (List<Member>) -> Unit,
     onRemoveMembers: (List<Member>) -> Unit,
     onUpdateGroupInfo: (String, String?) -> Unit,  // 修改为支持名称和头像
-    onDeleteGroup: () -> Unit
+    onDeleteGroup: () -> Unit,
+    onTransferOwnership: (Member) -> Unit = {}
 ) {
     var showAddMemberDialog by remember { mutableStateOf(false) }
     var showRemoveMemberDialog by remember { mutableStateOf(false) }
     var showEditInfoDialog by remember { mutableStateOf(false) }  // 重命名变量
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
-    
+    var showTransferOwnershipDialog by remember { mutableStateOf(false) }
+
     val isOwner = group.ownerId == currentMember.id
+    val ownerMember = group.members.find { it.id == group.ownerId }
 
     if (showAddMemberDialog) {
         AddMemberDialog(
@@ -97,6 +101,18 @@ fun GroupManagementDialog(
         )
     }
 
+    if (showTransferOwnershipDialog) {
+        TransferOwnershipDialog(
+            group = group,
+            currentMember = currentMember,
+            onDismiss = { showTransferOwnershipDialog = false },
+            onConfirm = { newOwner ->
+                showTransferOwnershipDialog = false
+                onTransferOwnership(newOwner)
+            }
+        )
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             modifier = Modifier
@@ -113,6 +129,17 @@ fun GroupManagementDialog(
                 Text(
                     text = stringResource(R.string.group_management),
                     style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // 当前群主展示
+                Text(
+                    text = stringResource(
+                        R.string.group_owner_label,
+                        ownerMember?.name ?: stringResource(R.string.group_no_owner)
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
@@ -139,6 +166,15 @@ fun GroupManagementDialog(
                         title = stringResource(R.string.group_edit_info),
                         subtitle = stringResource(R.string.group_edit_info_desc),
                         onClick = { showEditInfoDialog = true }
+                    )
+                }
+
+                if (isOwner) {
+                    ManagementOption(
+                        icon = Icons.Default.SwapHoriz,
+                        title = stringResource(R.string.group_transfer_ownership),
+                        subtitle = stringResource(R.string.group_transfer_ownership_desc),
+                        onClick = { showTransferOwnershipDialog = true }
                     )
                 }
 
@@ -651,4 +687,121 @@ fun DeleteGroupConfirmDialog(
             }
         }
     )
+}
+
+@Composable
+fun TransferOwnershipDialog(
+    group: ChatGroup,
+    currentMember: Member,
+    onDismiss: () -> Unit,
+    onConfirm: (Member) -> Unit
+) {
+    val transferableMembers = group.members.filter { it.id != currentMember.id }
+    var selectedMember by remember { mutableStateOf<Member?>(null) }
+    var showConfirm by remember { mutableStateOf(false) }
+
+    if (showConfirm && selectedMember != null) {
+        AlertDialog(
+            onDismissRequest = { showConfirm = false },
+            title = { Text(stringResource(R.string.group_transfer_ownership_title)) },
+            text = { Text(stringResource(R.string.group_transfer_ownership_confirm, selectedMember!!.name)) },
+            confirmButton = {
+                Button(onClick = { onConfirm(selectedMember!!) }) {
+                    Text(stringResource(R.string.group_transfer_ownership_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirm = false }) {
+                    Text(stringResource(R.string.btn_cancel))
+                }
+            }
+        )
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = stringResource(R.string.group_transfer_ownership_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                if (transferableMembers.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.group_no_members_to_remove),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = false)
+                            .heightIn(max = 300.dp)
+                    ) {
+                        items(transferableMembers) { member ->
+                            val isSelected = selectedMember?.id == member.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = isSelected,
+                                        onClick = { selectedMember = member }
+                                    )
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = null
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                AvatarImage(
+                                    avatarUrl = member.avatarUrl,
+                                    contentDescription = member.name,
+                                    size = 40.dp
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = member.name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.btn_cancel))
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = { showConfirm = true },
+                        enabled = selectedMember != null
+                    ) {
+                        Text(stringResource(R.string.group_transfer_ownership_action))
+                    }
+                }
+            }
+        }
+    }
 }
