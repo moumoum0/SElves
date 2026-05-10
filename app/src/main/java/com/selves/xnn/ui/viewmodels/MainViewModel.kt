@@ -1082,6 +1082,24 @@ class MainViewModel @Inject constructor(
         }
     }
     
+    // 转让群主
+    fun transferGroupOwnership(groupId: String, newOwnerId: String) {
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            try {
+                val currentGroups = _groups.value.toMutableList()
+                val groupIndex = currentGroups.indexOfFirst { it.id == groupId }
+                if (groupIndex != -1) {
+                    val updatedGroup = currentGroups[groupIndex].copy(ownerId = newOwnerId)
+                    currentGroups[groupIndex] = updatedGroup
+                    _groups.value = currentGroups
+                    chatGroupRepository.updateGroup(updatedGroup)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "转让群主失败: ${e.message}", e)
+            }
+        }
+    }
+
     // 解散群聊
     fun deleteGroup(groupId: String) {
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {

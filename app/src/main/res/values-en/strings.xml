@@ -231,6 +231,15 @@
     <string name="settings_import_failed">Import failed: %1$s</string>
     <string name="settings_import_warning_title">Import Backup Warning</string>
     <string name="settings_import_warning_message">This will overwrite all current data. Cannot be undone. Continue?</string>
+    <!-- Web Access -->
+    <string name="settings_web_access">Web Access</string>
+    <string name="settings_web_access_toggle">Enable Web Access</string>
+    <string name="settings_web_access_toggle_desc">Access Selves data from a LAN browser</string>
+    <string name="settings_web_access_url">Access URL</string>
+    <string name="settings_web_access_qr">Scan QR code for quick access</string>
+    <string name="settings_web_access_tip">Make sure your device is on the same network</string>
+    <string name="settings_web_access_copied">URL copied</string>
+
     <string name="settings_other">Other</string>
     <string name="settings_about">About</string>
     <string name="settings_about_desc">App information and version</string>
@@ -583,6 +592,13 @@
     <string name="group_name_error">Group name cannot be empty</string>
     <string name="group_dismiss_confirm">Dismiss group "%1$s"? This cannot be undone. All chat history will be deleted.</string>
     <string name="group_dismiss_action">Dismiss</string>
+    <string name="group_owner_label">Owner: %1$s</string>
+    <string name="group_no_owner">None</string>
+    <string name="group_transfer_ownership">Transfer Ownership</string>
+    <string name="group_transfer_ownership_desc">Transfer ownership to another member</string>
+    <string name="group_transfer_ownership_title">Transfer Ownership</string>
+    <string name="group_transfer_ownership_confirm">Transfer ownership to "%1$s"?</string>
+    <string name="group_transfer_ownership_action">Transfer</string>
     <string name="change_avatar">Change avatar</string>
     
     <!-- Online Stats -->

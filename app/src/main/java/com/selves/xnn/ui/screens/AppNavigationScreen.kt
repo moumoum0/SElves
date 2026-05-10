@@ -482,6 +482,9 @@ fun AppNavigationScreen(
                             viewModel.deleteGroup(groupId)
                             navController.popBackStack()
                         },
+                        onTransferOwnership = { newOwner ->
+                            viewModel.transferGroupOwnership(groupId, newOwner.id)
+                        },
                         onNavigateBack = {
                             navController.popBackStack()
                         },
