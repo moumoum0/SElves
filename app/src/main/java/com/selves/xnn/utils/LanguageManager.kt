@@ -2,6 +2,7 @@ package com.selves.xnn.utils
 
 import android.content.Context
 import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.Build
 import com.selves.xnn.R
 import java.util.*
@@ -27,14 +28,10 @@ object LanguageManager {
      */
     private fun getSystemLocale(): Locale {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val systemLocales = Configuration().locales
-            if (systemLocales.isEmpty) {
-                Locale.getDefault()
-            } else {
-                systemLocales[0]
-            }
+            Resources.getSystem().configuration.locales[0]
         } else {
-            Locale.getDefault()
+            @Suppress("DEPRECATION")
+            Resources.getSystem().configuration.locale
         }
     }
     
