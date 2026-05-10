@@ -114,6 +114,7 @@ data class BackupData(
     val voteRecords: List<VoteRecordEntity> = emptyList(),
     val systems: List<SystemEntity> = emptyList(),
     val onlineStatus: List<OnlineStatusEntity> = emptyList(),
+    val memberDiaries: List<MemberDiaryEntity> = emptyList(),
     val preferences: PreferencesBackupData = PreferencesBackupData()
 ) {
     companion object {
@@ -170,7 +171,8 @@ class BackupService @Inject constructor(
             "voteOptions",
             "voteRecords",
             "systems",
-            "onlineStatus"
+            "onlineStatus",
+            "memberDiaries"
         )
         private const val PREFERENCES_FIELD = "preferences"
     }
@@ -425,6 +427,7 @@ class BackupService @Inject constructor(
         val voteRecords = database.voteDao().getAllVoteRecordsSync()
         val systems = database.systemDao().getAllSystemsSync()
         val onlineStatus = database.onlineStatusDao().getAllOnlineStatusSync()
+        val memberDiaries = database.memberDiaryDao().getAllDiariesSync()
         
         Log.d(TAG, "数据收集统计:")
         Log.d(TAG, "  - 成员: ${members.size}")
@@ -441,6 +444,7 @@ class BackupService @Inject constructor(
         Log.d(TAG, "  - 投票记录: ${voteRecords.size}")
         Log.d(TAG, "  - 系统: ${systems.size}")
         Log.d(TAG, "  - 在线状态: ${onlineStatus.size}")
+        Log.d(TAG, "  - 成员日记: ${memberDiaries.size}")
         
         // 检查LocalDateTime字段
         dynamics.forEach { dynamic ->
@@ -469,6 +473,7 @@ class BackupService @Inject constructor(
             voteRecords = voteRecords,
             systems = systems,
             onlineStatus = onlineStatus,
+            memberDiaries = memberDiaries,
             preferences = preferences
         )
     }
@@ -793,6 +798,11 @@ class BackupService @Inject constructor(
                     backupData.onlineStatus.forEach { status ->
                         database.onlineStatusDao().insertOnlineStatus(status)
                     }
+
+                    Log.d(TAG, "导入 ${backupData.memberDiaries.size} 个成员日记")
+                    backupData.memberDiaries.forEach { diary ->
+                        database.memberDiaryDao().upsertDiary(diary)
+                    }
                     
                     // 同步所有用户信息，确保数据一致性
                     Log.d(TAG, "开始同步用户信息，确保数据一致性...")
@@ -895,6 +905,7 @@ class BackupService @Inject constructor(
         database.messageDao().deleteAll()
         database.chatGroupDao().deleteAll()
         database.systemDao().deleteAll()
+        database.memberDiaryDao().deleteAll()
         database.memberGroupDao().deleteAll()
         database.memberDao().deleteAll()
     }
