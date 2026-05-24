@@ -1,19 +1,27 @@
 package com.selves.xnn.ui.screens
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
@@ -22,15 +30,21 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import com.selves.xnn.ui.viewmodels.SettingsViewModel
 import com.selves.xnn.ui.components.ThemeModeDialog
 import com.selves.xnn.ui.components.ColorSchemeDialog
@@ -61,6 +75,8 @@ fun SettingsScreen(
     val showColorSchemeDialog by viewModel.showColorSchemeDialog.collectAsState()
     val language by viewModel.language.collectAsState()
     val showLanguageDialog by viewModel.showLanguageDialog.collectAsState()
+    val webServerEnabled by viewModel.webServerEnabled.collectAsState()
+    val webServerIp by viewModel.webServerIp.collectAsState()
     val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
     val backupMessage by viewModel.backupMessage.collectAsState()
     val showBackupProgressDialog by viewModel.showBackupProgressDialog.collectAsState()
@@ -238,6 +254,31 @@ fun SettingsScreen(
                 )
             }
             
+            // Web 访问分组
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsGroupTitle(title = stringResource(R.string.settings_web_access))
+            }
+
+            item {
+                SettingsSwitchItem(
+                    icon = Icons.Default.Wifi,
+                    title = stringResource(R.string.settings_web_access_toggle),
+                    subtitle = stringResource(R.string.settings_web_access_toggle_desc),
+                    checked = webServerEnabled,
+                    onCheckedChange = { viewModel.setWebServerEnabled(it) }
+                )
+            }
+
+            if (webServerEnabled) {
+                item {
+                    WebAccessInfoCard(
+                        url = viewModel.webServerUrl,
+                        context = context
+                    )
+                }
+            }
+
             // 其他分组
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -516,4 +557,99 @@ fun SettingsItemWithProgress(
             )
         }
     }
-} 
+}
+
+@Composable
+private fun WebAccessInfoCard(
+    url: String,
+    context: Context
+) {
+    val qrBitmap = remember(url) { generateQrCodeBitmap(url, 240) }
+    val copiedText = stringResource(R.string.settings_web_access_copied)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_web_access_url),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = url,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                IconButton(onClick = {
+                    val clipboard = context.getSystemService(ClipboardManager::class.java)
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Selves URL", url))
+                    Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = stringResource(R.string.settings_web_access_url),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            if (qrBitmap != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.settings_web_access_qr),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Image(
+                    bitmap = qrBitmap.asImageBitmap(),
+                    contentDescription = stringResource(R.string.settings_web_access_qr),
+                    modifier = Modifier
+                        .size(180.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.settings_web_access_tip),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun generateQrCodeBitmap(text: String, size: Int): Bitmap? {
+    return try {
+        val writer = QRCodeWriter()
+        val bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, size, size)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
+        for (x in 0 until size) {
+            for (y in 0 until size) {
+                bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+            }
+        }
+        bitmap
+    } catch (e: Exception) {
+        null
+    }
+}

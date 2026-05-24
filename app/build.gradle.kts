@@ -124,6 +124,8 @@ android {
             excludes += "DebugProbesKt.bin"
             excludes += "/kotlin/**"
             excludes += "/*.properties"
+            excludes += "META-INF/INDEX.LIST"
+            excludes += "META-INF/io.netty.versions.properties"
         }
     }
 }
@@ -177,6 +179,21 @@ dependencies {
     
     // TinyPinyin for Chinese pinyin conversion
     implementation(libs.tinypinyin)
+    
+    // Ktor embedded server (Web 访问功能)
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.cio)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.gson)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.status.pages)
+    
+    // ZXing for QR code generation
+    implementation(libs.zxing.core)
+    
+    // SLF4J no-op to suppress Ktor logging warnings on Android
+    implementation(libs.slf4j.nop)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.selves.xnn.data.entity.ChatGroupEntity
+import com.selves.xnn.data.entity.MemberDiaryEntity
 import com.selves.xnn.data.entity.MemberEntity
 import com.selves.xnn.data.entity.MemberGroupEntity
 import com.selves.xnn.data.entity.MessageEntity
@@ -32,7 +33,7 @@ enum class ImportMode {
 }
 
 sealed class SpImportResult {
-    data class Success(val memberCount: Int, val groupCount: Int, val messageCount: Int) : SpImportResult()
+    data class Success(val memberCount: Int, val groupCount: Int, val messageCount: Int, val diaryCount: Int = 0) : SpImportResult()
     data class Error(val message: String) : SpImportResult()
 }
 
@@ -74,6 +75,7 @@ class SimplyPluralImportService @Inject constructor(
             Log.d(TAG, "  channels: ${root.getAsJsonArray("channels")?.size() ?: 0} 条")
             Log.d(TAG, "  chatMessages: ${root.getAsJsonArray("chatMessages")?.size() ?: 0} 条")
             Log.d(TAG, "  polls: ${root.getAsJsonArray("polls")?.size() ?: 0} 条")
+            Log.d(TAG, "  notes: ${root.getAsJsonArray("notes")?.size() ?: 0} 条")
 
             if (mode == ImportMode.OVERWRITE) {
                 onProgress(0.15f, "清除现有数据…")
@@ -94,6 +96,10 @@ class SimplyPluralImportService @Inject constructor(
             val memberIdMap = importMembers(root)
             val memberCount = memberIdMap.size
             Log.i(TAG, "成员导入完成: $memberCount 个")
+
+            onProgress(0.38f, "导入日记…")
+            val diaryCount = importNotes(root, memberIdMap)
+            Log.i(TAG, "日记导入完成: $diaryCount 条")
 
             onProgress(0.45f, "导入分组…")
             Log.i(TAG, "[5/8] 导入分组")
@@ -121,9 +127,9 @@ class SimplyPluralImportService @Inject constructor(
 
             onProgress(1.0f, "导入完成")
             Log.i(TAG, "======= 导入完成 =======")
-            Log.i(TAG, "  成员: $memberCount  分组: $groupCount  Front历史: $frontCount")
+            Log.i(TAG, "  成员: $memberCount  日记: $diaryCount  分组: $groupCount  Front历史: $frontCount")
             Log.i(TAG, "  频道: $channelCount  消息: $messageCount  投票: $pollCount")
-            SpImportResult.Success(memberCount, groupCount, messageCount)
+            SpImportResult.Success(memberCount, groupCount, messageCount, diaryCount)
         } catch (e: Exception) {
             Log.e(TAG, "导入失败: ${e.message}", e)
             SpImportResult.Error(e.message ?: "未知错误")
@@ -147,6 +153,8 @@ class SimplyPluralImportService @Inject constructor(
         database.chatGroupDao().deleteAll()
         Log.d(TAG, "  删除 onlineStatus…")
         database.onlineStatusDao().deleteAll()
+        Log.d(TAG, "  删除 memberDiaries…")
+        database.memberDiaryDao().deleteAll()
         Log.d(TAG, "  删除 memberGroups…")
         database.memberGroupDao().deleteAll()
         Log.d(TAG, "  删除 members…")
@@ -227,6 +235,40 @@ class SimplyPluralImportService @Inject constructor(
         if (skippedNoId > 0)     Log.w(TAG, "  跳过无ID: $skippedNoId 个")
         if (skippedNoName > 0)   Log.w(TAG, "  跳过无名称: $skippedNoName 个")
         return idMap
+    }
+
+    private suspend fun importNotes(root: JsonObject, memberIdMap: Map<String, String>): Int {
+        val arr = root.getAsJsonArray("notes") ?: run {
+            Log.d(TAG, "  JSON 中无 notes 字段，跳过")
+            return 0
+        }
+        Log.d(TAG, "  原始日记数: ${arr.size()}")
+        var count = 0
+        var skippedUnknownMember = 0
+        for (elem in arr) {
+            if (!elem.isJsonObject) continue
+            val obj = elem.asJsonObject
+            val memberId = obj.getString("member") ?: continue
+            if (memberId !in memberIdMap) { skippedUnknownMember++; continue }
+            val id = obj.getString("_id") ?: obj.getString("id") ?: UUID.randomUUID().toString()
+            val title = obj.getString("title") ?: ""
+            val content = obj.getString("note") ?: obj.getString("content") ?: ""
+            val createdAt = obj.getLong("date") ?: obj.getLong("createdAt") ?: obj.getLong("lastOperationTime") ?: System.currentTimeMillis()
+            val updatedAt = obj.getLong("lastOperationTime") ?: obj.getLong("updatedAt") ?: createdAt
+            database.memberDiaryDao().upsertDiary(
+                MemberDiaryEntity(
+                    id = id,
+                    memberId = memberId,
+                    title = title,
+                    content = content,
+                    createdAt = createdAt,
+                    updatedAt = updatedAt
+                )
+            )
+            count++
+        }
+        if (skippedUnknownMember > 0) Log.w(TAG, "  跳过未知成员日记: $skippedUnknownMember 条")
+        return count
     }
 
     // ──────────────────────────────────────────────────────

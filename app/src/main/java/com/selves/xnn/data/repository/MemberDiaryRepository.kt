@@ -29,6 +29,10 @@ class MemberDiaryRepository @Inject constructor(
         memberDiaryDao.upsertDiary(diary.toEntity())
     }
 
+    suspend fun getAllDiaries(): List<MemberDiary> {
+        return memberDiaryDao.getAllDiariesSync().map { it.toDomain() }
+    }
+
     suspend fun deleteDiary(id: String) {
         memberDiaryDao.deleteDiaryById(id)
     }

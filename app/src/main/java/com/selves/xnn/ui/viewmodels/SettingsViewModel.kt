@@ -10,6 +10,7 @@ import com.selves.xnn.data.BackupResult
 import com.selves.xnn.data.SimplyPluralImportService
 import com.selves.xnn.data.ImportMode
 import com.selves.xnn.data.SpImportResult
+import com.selves.xnn.service.WebServerService
 import kotlinx.coroutines.Dispatchers
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
@@ -102,6 +103,15 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             memberPreferences.language.collect { lang ->
                 _language.value = lang
+            }
+        }
+
+        viewModelScope.launch {
+            memberPreferences.webServerEnabled.collect { enabled ->
+                _webServerEnabled.value = enabled
+                if (enabled) {
+                    _webServerIp.value = WebServerService.getLocalIpAddress()
+                }
             }
         }
     }
@@ -306,8 +316,32 @@ class SettingsViewModel @Inject constructor(
     private val _showSpModeDialog = MutableStateFlow(false)
     val showSpModeDialog: StateFlow<Boolean> = _showSpModeDialog.asStateFlow()
 
+    // ==================== Web 服务器 ====================
+
+    private val _webServerEnabled = MutableStateFlow(false)
+    val webServerEnabled: StateFlow<Boolean> = _webServerEnabled.asStateFlow()
+
+    private val _webServerIp = MutableStateFlow(WebServerService.getLocalIpAddress())
+    val webServerIp: StateFlow<String> = _webServerIp.asStateFlow()
+
+    val webServerUrl: String
+        get() = "http://${_webServerIp.value}:${WebServerService.SERVER_PORT}"
+
     private var pendingSpImportUri: Uri? = null
     private var pendingSpMode: ImportMode = ImportMode.OVERWRITE
+
+    fun setWebServerEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            memberPreferences.saveWebServerEnabled(enabled)
+            _webServerEnabled.value = enabled
+            if (enabled) {
+                _webServerIp.value = WebServerService.getLocalIpAddress()
+                WebServerService.start(context)
+            } else {
+                WebServerService.stop(context)
+            }
+        }
+    }
 
     fun showSpImportDialog(uri: Uri) {
         pendingSpImportUri = uri

@@ -17,6 +17,11 @@
     <!-- 前台服务权限 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    
+    <!-- 网络权限（Web 访问服务需要） -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
     <!-- 精确闹钟权限（Android 12+需要，用于自动重启功能） -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -92,6 +97,13 @@
         <receiver
             android:name=".service.AutoRestartReceiver"
             android:exported="false" />
+
+        <!-- Web 访问服务（嵌入式 Ktor HTTP 服务器） -->
+        <service
+            android:name=".service.WebServerService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
     </application>
 

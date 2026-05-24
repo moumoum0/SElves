@@ -18,3 +18,16 @@
 # 保持行号信息用于调试
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# Ktor embedded server
+-keep class io.ktor.** { *; }
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn io.ktor.**
+-dontwarn kotlinx.coroutines.**
+
+# ZXing QR code
+-keep class com.google.zxing.** { *; }
+-dontwarn com.google.zxing.**
+
+# SLF4J
+-dontwarn org.slf4j.**
