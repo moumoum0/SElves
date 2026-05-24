@@ -364,6 +364,8 @@
     <string name="sp_import_mode_message">Overwrite: clear existing data then import (recommended for first use)\nMerge: keep existing data and append imported content</string>
     <string name="sp_import_mode_overwrite">Overwrite</string>
     <string name="sp_import_mode_merge">Merge</string>
+    <string name="sp_import_owner_title">Choose Group Owner</string>
+    <string name="sp_import_owner_message">Select the member who will become the owner of imported chat groups. This member will also be used as the current member after import.</string>
     <string name="sp_import_success">Import successful: %1$d members imported</string>
     <string name="sp_import_failed">Import failed: %1$s</string>
     <string name="dynamic_title_empty">No title</string>

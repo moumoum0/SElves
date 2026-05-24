@@ -122,6 +122,8 @@ fun AppNavigationScreen(
         val spImportProgressMessage by viewModel.spImportProgressMessage.collectAsState()
         val spImportSuccess by viewModel.spImportSuccess.collectAsState()
         val spImportError by viewModel.spImportError.collectAsState()
+        val showSpOwnerDialog by viewModel.showSpOwnerDialog.collectAsState()
+        val spOwnerCandidates by viewModel.spOwnerCandidates.collectAsState()
         
         WelcomeGuideScreen(
             onCreateSystem = { name, avatarUrl ->
@@ -152,13 +154,21 @@ fun AppNavigationScreen(
                 viewModel.clearBackupError()
             },
             onImportFromSP = { uri, mode ->
-                viewModel.importFromSimplyPlural(uri, mode)
+                viewModel.prepareSimplyPluralImport(uri, mode)
             },
             spImportInProgress = spImportInProgress,
             spImportProgress = spImportProgress,
             spImportProgressMessage = spImportProgressMessage,
             spImportSuccess = spImportSuccess,
             spImportErrorMessage = spImportError,
+            showSpOwnerDialog = showSpOwnerDialog,
+            spOwnerCandidates = spOwnerCandidates,
+            onConfirmSpOwner = {
+                viewModel.confirmSimplyPluralOwner(it)
+            },
+            onCancelSpOwner = {
+                viewModel.cancelSimplyPluralOwnerSelection()
+            },
             onDismissSpError = {
                 viewModel.dismissSpImportError()
             }

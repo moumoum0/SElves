@@ -37,6 +37,11 @@ sealed class SpImportResult {
     data class Error(val message: String) : SpImportResult()
 }
 
+data class SpImportMemberPreview(
+    val id: String,
+    val name: String
+)
+
 @Singleton
 class SimplyPluralImportService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -48,6 +53,7 @@ class SimplyPluralImportService @Inject constructor(
     suspend fun importFromUri(
         uri: Uri,
         mode: ImportMode,
+        selectedOwnerId: String? = null,
         onProgress: suspend (Float, String) -> Unit = { _, _ -> }
     ): SpImportResult = withContext(Dispatchers.IO) {
         try {
@@ -113,7 +119,7 @@ class SimplyPluralImportService @Inject constructor(
 
             onProgress(0.65f, "导入聊天频道…")
             Log.i(TAG, "[7/8] 导入聊天频道 & 消息")
-            val channelCount = importChannels(root, memberIdMap, systemId)
+            val channelCount = importChannels(root, memberIdMap, systemId, selectedOwnerId)
             Log.d(TAG, "频道导入: $channelCount 个")
 
             onProgress(0.75f, "导入聊天消息…")
@@ -133,6 +139,27 @@ class SimplyPluralImportService @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "导入失败: ${e.message}", e)
             SpImportResult.Error(e.message ?: "未知错误")
+        }
+    }
+
+    suspend fun previewMembersFromUri(uri: Uri): List<SpImportMemberPreview> = withContext(Dispatchers.IO) {
+        val jsonBytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: return@withContext emptyList()
+        val root = JsonParser.parseString(jsonBytes.toString(Charsets.UTF_8)).asJsonObject
+        val arr = root.getAsJsonArray("members") ?: return@withContext emptyList()
+        buildList {
+            for (elem in arr) {
+                if (!elem.isJsonObject) continue
+                val obj = elem.asJsonObject
+                val (id, data) = if (obj.has("content") && obj.get("content").isJsonObject) {
+                    (obj.getString("id") ?: obj.getString("_id")) to obj.getAsJsonObject("content")
+                } else {
+                    (obj.getString("_id") ?: obj.getString("id")) to obj
+                }
+                if (id == null || data.getBool("archived") == true) continue
+                val name = data.getString("name") ?: continue
+                add(SpImportMemberPreview(id = id, name = name))
+            }
         }
     }
 
@@ -375,14 +402,15 @@ class SimplyPluralImportService @Inject constructor(
     // 聊天频道 & 消息
     // ──────────────────────────────────────────────────────
 
-    private suspend fun importChannels(root: JsonObject, memberIdMap: Map<String, String>, systemId: String): Int {
+    private suspend fun importChannels(root: JsonObject, memberIdMap: Map<String, String>, systemId: String, selectedOwnerId: String?): Int {
         val arr = root.getAsJsonArray("channels") ?: run {
             Log.d(TAG, "  JSON 中无 channels 字段，跳过")
             return 0
         }
         Log.d(TAG, "  原始频道数: ${arr.size()}")
         val allMemberIds = memberIdMap.keys.joinToString(",")
-        val ownerId = memberIdMap.keys.firstOrNull() ?: systemId
+        val ownerId = if (selectedOwnerId != null && selectedOwnerId in memberIdMap) selectedOwnerId
+        else memberIdMap.keys.firstOrNull() ?: systemId
         var count = 0
         for (elem in arr) {
             val obj = elem.asJsonObject

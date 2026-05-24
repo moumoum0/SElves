@@ -50,6 +50,7 @@ import com.selves.xnn.ui.components.ThemeModeDialog
 import com.selves.xnn.ui.components.ColorSchemeDialog
 import com.selves.xnn.ui.components.BackupProgressDialog
 import com.selves.xnn.ui.components.ImportBackupWarningDialog
+import com.selves.xnn.ui.components.SpOwnerSelectionDialog
 import com.selves.xnn.data.ImportMode
 import com.selves.xnn.ui.components.LanguageDialog
 import com.selves.xnn.model.getDisplayName
@@ -88,6 +89,8 @@ fun SettingsScreen(
     val spImportProgressMessage by viewModel.spImportProgressMessage.collectAsState()
     val spImportMessage by viewModel.spImportMessage.collectAsState()
     val showSpModeDialog by viewModel.showSpModeDialog.collectAsState()
+    val showSpOwnerDialog by viewModel.showSpOwnerDialog.collectAsState()
+    val spOwnerCandidates by viewModel.spOwnerCandidates.collectAsState()
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -364,6 +367,14 @@ fun SettingsScreen(
                         Text(stringResource(R.string.sp_import_mode_merge))
                     }
                 }
+            )
+        }
+
+        if (showSpOwnerDialog) {
+            SpOwnerSelectionDialog(
+                members = spOwnerCandidates,
+                onConfirm = { viewModel.confirmSpOwner(it) },
+                onDismiss = { viewModel.dismissSpImportDialog() }
             )
         }
 
