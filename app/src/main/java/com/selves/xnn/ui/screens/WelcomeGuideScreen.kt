@@ -34,10 +34,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
 import com.selves.xnn.data.ImportMode
+import com.selves.xnn.data.SpImportMemberPreview
 import com.selves.xnn.ui.components.CreateMemberForm
 import com.selves.xnn.ui.components.CreateSystemForm
 import com.selves.xnn.ui.components.BackupProgressDialog
 import com.selves.xnn.ui.components.ImportBackupWarningDialog
+import com.selves.xnn.ui.components.SpOwnerSelectionDialog
 
 /**
  * 引导界面的步骤枚举
@@ -66,6 +68,10 @@ fun WelcomeGuideScreen(
     spImportProgressMessage: String = "",
     spImportSuccess: Boolean = false,
     spImportErrorMessage: String? = null,
+    showSpOwnerDialog: Boolean = false,
+    spOwnerCandidates: List<SpImportMemberPreview> = emptyList(),
+    onConfirmSpOwner: (String) -> Unit = {},
+    onCancelSpOwner: () -> Unit = {},
     onDismissSpError: () -> Unit = {},
     onConfirmImport: () -> Unit = {},
     onCancelImport: () -> Unit = {},
@@ -243,6 +249,14 @@ fun WelcomeGuideScreen(
                     spFileLauncher.launch("*/*")
                 }) { Text(stringResource(R.string.sp_import_mode_merge)) }
             }
+        )
+    }
+
+    if (showSpOwnerDialog) {
+        SpOwnerSelectionDialog(
+            members = spOwnerCandidates,
+            onConfirm = onConfirmSpOwner,
+            onDismiss = onCancelSpOwner
         )
     }
 

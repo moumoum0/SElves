@@ -33,6 +33,9 @@ class MemberPreferences(private val context: Context) {
         private val TRACKING_RECORDING_INTERVAL = intPreferencesKey("tracking_recording_interval")
         private val TRACKING_AUTO_RESTART_DELAY = intPreferencesKey("tracking_auto_restart_delay")
         private val TRACKING_ENABLE_AUTO_START = booleanPreferencesKey("tracking_enable_auto_start")
+        
+        // Web 访问服务
+        private val WEB_SERVER_ENABLED = booleanPreferencesKey("web_server_enabled")
     }
     
     /**
@@ -181,6 +184,21 @@ class MemberPreferences(private val context: Context) {
     suspend fun saveLanguage(language: String) {
         context.dataStore.edit { preferences ->
             preferences[LANGUAGE] = language
+        }
+    }
+    
+    /**
+     * 获取 Web 服务器启用状态
+     */
+    val webServerEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences -> preferences[WEB_SERVER_ENABLED] ?: false }
+    
+    /**
+     * 保存 Web 服务器启用状态
+     */
+    suspend fun saveWebServerEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[WEB_SERVER_ENABLED] = enabled
         }
     }
 }

@@ -371,6 +371,8 @@
     <string name="sp_import_mode_message">覆盖：清除现有数据后导入（推荐首次使用）\n合并：保留现有数据，追加导入内容</string>
     <string name="sp_import_mode_overwrite">覆盖导入</string>
     <string name="sp_import_mode_merge">合并导入</string>
+    <string name="sp_import_owner_title">选择群主</string>
+    <string name="sp_import_owner_message">请选择导入后作为聊天群群主(全部群)的成员，后续可进行修改。该成员也会被设置为导入后的当前成员。</string>
     <string name="sp_import_success">导入成功：共导入 %1$d 个成员</string>
     <string name="sp_import_failed">导入失败：%1$s</string>
     <string name="dynamic_title_empty">无标题</string>

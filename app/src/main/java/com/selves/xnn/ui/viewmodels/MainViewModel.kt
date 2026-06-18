@@ -18,6 +18,7 @@ import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.BackupResult
 import com.selves.xnn.data.SimplyPluralImportService
 import com.selves.xnn.data.ImportMode
+import com.selves.xnn.data.SpImportMemberPreview
 import com.selves.xnn.data.SpImportResult
 import com.selves.xnn.model.ChatGroup
 import com.selves.xnn.model.Message
@@ -134,6 +135,15 @@ class MainViewModel @Inject constructor(
 
     private val _spImportError = MutableStateFlow<String?>(null)
     val spImportError: StateFlow<String?> = _spImportError.asStateFlow()
+
+    private val _showSpOwnerDialog = MutableStateFlow(false)
+    val showSpOwnerDialog: StateFlow<Boolean> = _showSpOwnerDialog.asStateFlow()
+
+    private val _spOwnerCandidates = MutableStateFlow<List<SpImportMemberPreview>>(emptyList())
+    val spOwnerCandidates: StateFlow<List<SpImportMemberPreview>> = _spOwnerCandidates.asStateFlow()
+
+    private var pendingSpImportUri: Uri? = null
+    private var pendingSpMode: ImportMode = ImportMode.OVERWRITE
     
     // 首页布局配置
     private val _homeLayoutConfig = MutableStateFlow(HomeLayoutConfig(functionModules = FunctionModuleConfig.defaultList()))
@@ -1296,11 +1306,11 @@ class MainViewModel @Inject constructor(
     /**
      * 导入备份后设置默认当前成员
      */
-    private suspend fun setDefaultCurrentMemberAfterImport() {
+    private suspend fun setDefaultCurrentMemberAfterImport(preferredMemberId: String? = null) {
         try {
             val allMembers = memberRepository.getAllMembers().first()
             if (allMembers.isNotEmpty()) {
-                val firstMember = allMembers.first()
+                val firstMember = allMembers.firstOrNull { it.id == preferredMemberId } ?: allMembers.first()
                 // 保存为当前成员
                 memberPreferences.saveCurrentMemberId(firstMember.id)
                 Log.d(TAG, "备份导入后设置默认成员: ${firstMember.name}")
@@ -1312,14 +1322,49 @@ class MainViewModel @Inject constructor(
     
     // ==================== SimplyPlural 导入 ====================
 
-    fun importFromSimplyPlural(uri: Uri, mode: ImportMode) {
+    fun prepareSimplyPluralImport(uri: Uri, mode: ImportMode) {
+        pendingSpImportUri = uri
+        pendingSpMode = mode
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            try {
+                val candidates = spImportService.previewMembersFromUri(uri)
+                if (candidates.isEmpty()) {
+                    pendingSpImportUri = null
+                    importFromSimplyPlural(uri, mode, null)
+                } else {
+                    _spOwnerCandidates.value = candidates
+                    _showSpOwnerDialog.value = true
+                }
+            } catch (e: Exception) {
+                pendingSpImportUri = null
+                _spImportError.value = e.message ?: "未知错误"
+                Log.e(TAG, "SP 成员预览失败: ${e.message}", e)
+            }
+        }
+    }
+
+    fun confirmSimplyPluralOwner(ownerId: String) {
+        _showSpOwnerDialog.value = false
+        _spOwnerCandidates.value = emptyList()
+        val uri = pendingSpImportUri ?: return
+        pendingSpImportUri = null
+        importFromSimplyPlural(uri, pendingSpMode, ownerId)
+    }
+
+    fun cancelSimplyPluralOwnerSelection() {
+        _showSpOwnerDialog.value = false
+        _spOwnerCandidates.value = emptyList()
+        pendingSpImportUri = null
+    }
+
+    fun importFromSimplyPlural(uri: Uri, mode: ImportMode, selectedOwnerId: String? = null) {
         if (_spImportInProgress.value) return
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             _spImportInProgress.value = true
             _spImportProgress.value = 0f
             _spImportError.value = null
             try {
-                val result = spImportService.importFromUri(uri, mode) { progress, message ->
+                val result = spImportService.importFromUri(uri, mode, selectedOwnerId) { progress, message ->
                     _spImportProgress.value = progress
                     _spImportProgressMessage.value = message
                 }
@@ -1344,7 +1389,7 @@ class MainViewModel @Inject constructor(
                         _messages.value = emptyMap()
                         _unreadCounts.value = emptyMap()
                         loadedMessageGroups.clear()
-                        setDefaultCurrentMemberAfterImport()
+                        setDefaultCurrentMemberAfterImport(selectedOwnerId)
                         startUnifiedLoading(skipSystemCheck = true)
                         Log.d(TAG, "SP 导入成功：${result.memberCount} 个成员")
                     }
