@@ -84,6 +84,17 @@ export interface Vote {
   hasVoted: boolean;
 }
 
+export interface DynamicComment {
+  id: string;
+  dynamicId: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string | null;
+  createdAt: number;
+  parentCommentId?: string | null;
+}
+
 export interface MemberDiary {
   id: string;
   memberId: string;
@@ -116,6 +127,16 @@ export interface ApiStatus {
   connectedClients: number;
 }
 
+export interface VoteRecord {
+  id: string;
+  voteId: string;
+  optionId: string;
+  userId: string;
+  userName: string;
+  userAvatar: string | null;
+  votedAt: number;
+}
+
 export interface AppData {
   system: SystemInfo;
   members: Member[];
@@ -124,7 +145,9 @@ export interface AppData {
   unreadCounts: Record<string, number>;
   todos: Todo[];
   dynamics: Dynamic[];
+  dynamicComments: DynamicComment[];
   votes: Vote[];
+  voteRecords: VoteRecord[];
   diaries: MemberDiary[];
   tracking: TrackingSummary;
 }

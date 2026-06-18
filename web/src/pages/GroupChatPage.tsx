@@ -1,25 +1,34 @@
+import { useState } from 'react';
 import { MemberHeader } from '../components/MemberHeader';
 import { MemberAvatar } from '../components/MemberAvatar';
+import { CreateGroupDialog } from '../components/CreateGroupDialog';
 import { formatMessageTime, getInitial, groupColorFromName } from '../lib/utils';
 import type { ChatGroup, Member, Message } from '../types/models';
 
 interface GroupChatPageProps {
   currentMember: Member;
+  members: Member[];
   groups: ChatGroup[];
   groupMessages: Record<string, Message[]>;
   unreadCounts: Record<string, number>;
   onMemberSwitch: () => void;
+  onMemberSelected?: (member: Member) => void;
   onOpenGroup: (groupId: string) => void;
+  onCreateGroup?: (name: string, members: Member[]) => void;
 }
 
 export function GroupChatPage({
   currentMember,
+  members,
   groups,
   groupMessages,
   unreadCounts,
   onMemberSwitch,
+  onMemberSelected,
   onOpenGroup,
+  onCreateGroup,
 }: GroupChatPageProps) {
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
   const sortedGroups = [...groups].sort((a, b) => {
     const aLast = (groupMessages[a.id] ?? []).at(-1)?.timestamp ?? a.createdAt;
     const bLast = (groupMessages[b.id] ?? []).at(-1)?.timestamp ?? b.createdAt;
@@ -28,7 +37,12 @@ export function GroupChatPage({
 
   return (
     <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(var(--mdui-color-surface))', position: 'relative' }}>
-      <MemberHeader member={currentMember} onMemberSwitch={onMemberSwitch} />
+      <MemberHeader
+        member={currentMember}
+        members={members}
+        onMemberSwitch={onMemberSwitch}
+        onMemberSelected={onMemberSelected}
+      />
 
       {sortedGroups.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--mdui-color-on-surface))' }}>
@@ -135,7 +149,19 @@ export function GroupChatPage({
         </div>
       )}
 
-      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }}></mdui-fab>
+      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreateGroup(true)}></mdui-fab>
+
+      {showCreateGroup && (
+        <CreateGroupDialog
+          availableMembers={members}
+          currentMember={currentMember}
+          onDismiss={() => setShowCreateGroup(false)}
+          onConfirm={(name, selectedMembers) => {
+            setShowCreateGroup(false);
+            onCreateGroup?.(name, selectedMembers);
+          }}
+        />
+      )}
     </div>
   );
 }

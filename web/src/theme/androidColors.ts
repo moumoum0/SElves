@@ -7,7 +7,7 @@ function hexToRgb(hex: string): string {
 }
 
 // APP_DEFAULT 浅色方案 —— 直接从安卓 Theme.kt LightColorScheme 提取
-const LIGHT: Record<string, string> = {
+const DEFAULT_LIGHT: Record<string, string> = {
   '--mdui-color-primary':                   hexToRgb('475D92'),
   '--mdui-color-on-primary':                hexToRgb('FFFFFF'),
   '--mdui-color-primary-container':         hexToRgb('D9E2FF'),
@@ -45,9 +45,8 @@ const LIGHT: Record<string, string> = {
   '--mdui-color-surface-container-highest': hexToRgb('E6E5ED'),
 };
 
-// APP_DEFAULT 深色方案 —— 安卓 DarkColorScheme 仅定义 primary/secondary/tertiary，
-// 其余使用 Material3 baseline dark 默认值
-const DARK: Record<string, string> = {
+// APP_DEFAULT 深色方案 —— Material3 baseline dark + Purple80/PurpleGrey80/Pink80
+const DEFAULT_DARK: Record<string, string> = {
   '--mdui-color-primary':                   hexToRgb('D0BCFF'),
   '--mdui-color-on-primary':                hexToRgb('381E72'),
   '--mdui-color-primary-container':         hexToRgb('4F378B'),
@@ -85,13 +84,96 @@ const DARK: Record<string, string> = {
   '--mdui-color-surface-container-highest': hexToRgb('36343B'),
 };
 
-export function applyAndroidColorScheme(): void {
+// 云野 (Cloud Field) 浅色方案 —— 从安卓 CloudFieldLightColorScheme 提取
+const CLOUD_FIELD_LIGHT: Record<string, string> = {
+  '--mdui-color-primary':                   hexToRgb('3C6839'),
+  '--mdui-color-on-primary':                hexToRgb('FFFFFF'),
+  '--mdui-color-primary-container':         hexToRgb('BDF0B3'),
+  '--mdui-color-on-primary-container':      hexToRgb('245023'),
+  '--mdui-color-secondary':                 hexToRgb('53634F'),
+  '--mdui-color-on-secondary':              hexToRgb('FFFFFF'),
+  '--mdui-color-secondary-container':       hexToRgb('D6E8CE'),
+  '--mdui-color-on-secondary-container':    hexToRgb('3B4B38'),
+  '--mdui-color-tertiary':                  hexToRgb('38656A'),
+  '--mdui-color-on-tertiary':               hexToRgb('FFFFFF'),
+  '--mdui-color-tertiary-container':        hexToRgb('BCEBF0'),
+  '--mdui-color-on-tertiary-container':     hexToRgb('1E4D52'),
+  '--mdui-color-error':                     hexToRgb('BA1A1A'),
+  '--mdui-color-on-error':                  hexToRgb('FFFFFF'),
+  '--mdui-color-error-container':           hexToRgb('FFDAD6'),
+  '--mdui-color-on-error-container':        hexToRgb('93000A'),
+  '--mdui-color-background':                hexToRgb('F7FBF1'),
+  '--mdui-color-on-background':             hexToRgb('191D17'),
+  '--mdui-color-surface':                   hexToRgb('F7FBF1'),
+  '--mdui-color-on-surface':                hexToRgb('191D17'),
+  '--mdui-color-surface-variant':           hexToRgb('DEE5D8'),
+  '--mdui-color-on-surface-variant':        hexToRgb('424940'),
+  '--mdui-color-outline':                   hexToRgb('73796F'),
+  '--mdui-color-outline-variant':           hexToRgb('C2C8BD'),
+  '--mdui-color-scrim':                     hexToRgb('000000'),
+  '--mdui-color-inverse-surface':           hexToRgb('2D322B'),
+  '--mdui-color-inverse-on-surface':        hexToRgb('EFF2E9'),
+  '--mdui-color-inverse-primary':           hexToRgb('A2D399'),
+  '--mdui-color-surface-dim':               hexToRgb('D8DBD2'),
+  '--mdui-color-surface-bright':            hexToRgb('F7FBF1'),
+  '--mdui-color-surface-container-lowest':  hexToRgb('FFFFFF'),
+  '--mdui-color-surface-container-low':     hexToRgb('F1F5EB'),
+  '--mdui-color-surface-container':         hexToRgb('ECEFE6'),
+  '--mdui-color-surface-container-high':    hexToRgb('E6E9E0'),
+  '--mdui-color-surface-container-highest': hexToRgb('E0E4DA'),
+};
+
+// 云野 (Cloud Field) 深色方案 —— 从安卓 CloudFieldDarkColorScheme 提取
+const CLOUD_FIELD_DARK: Record<string, string> = {
+  '--mdui-color-primary':                   hexToRgb('A2D399'),
+  '--mdui-color-on-primary':                hexToRgb('0C390E'),
+  '--mdui-color-primary-container':         hexToRgb('245023'),
+  '--mdui-color-on-primary-container':      hexToRgb('BDF0B3'),
+  '--mdui-color-secondary':                 hexToRgb('BACCB3'),
+  '--mdui-color-on-secondary':              hexToRgb('253423'),
+  '--mdui-color-secondary-container':       hexToRgb('3B4B38'),
+  '--mdui-color-on-secondary-container':    hexToRgb('D6E8CE'),
+  '--mdui-color-tertiary':                  hexToRgb('A0CFD4'),
+  '--mdui-color-on-tertiary':               hexToRgb('00363B'),
+  '--mdui-color-tertiary-container':        hexToRgb('1E4D52'),
+  '--mdui-color-on-tertiary-container':     hexToRgb('BCEBF0'),
+  '--mdui-color-error':                     hexToRgb('FFB4AB'),
+  '--mdui-color-on-error':                  hexToRgb('690005'),
+  '--mdui-color-error-container':           hexToRgb('93000A'),
+  '--mdui-color-on-error-container':        hexToRgb('FFDAD6'),
+  '--mdui-color-background':                hexToRgb('10140F'),
+  '--mdui-color-on-background':             hexToRgb('E0E4DA'),
+  '--mdui-color-surface':                   hexToRgb('10140F'),
+  '--mdui-color-on-surface':                hexToRgb('E0E4DA'),
+  '--mdui-color-surface-variant':           hexToRgb('424940'),
+  '--mdui-color-on-surface-variant':        hexToRgb('C2C8BD'),
+  '--mdui-color-outline':                   hexToRgb('8C9388'),
+  '--mdui-color-outline-variant':           hexToRgb('424940'),
+  '--mdui-color-scrim':                     hexToRgb('000000'),
+  '--mdui-color-inverse-surface':           hexToRgb('E0E4DA'),
+  '--mdui-color-inverse-on-surface':        hexToRgb('2D322B'),
+  '--mdui-color-inverse-primary':           hexToRgb('3C6839'),
+  '--mdui-color-surface-dim':               hexToRgb('10140F'),
+  '--mdui-color-surface-bright':            hexToRgb('363A34'),
+  '--mdui-color-surface-container-lowest':  hexToRgb('0B0F0A'),
+  '--mdui-color-surface-container-low':     hexToRgb('191D17'),
+  '--mdui-color-surface-container':         hexToRgb('1D211B'),
+  '--mdui-color-surface-container-high':    hexToRgb('272B25'),
+  '--mdui-color-surface-container-highest': hexToRgb('323630'),
+};
+
+export type ColorSchemeName = 'default' | 'cloud_field';
+
+export function applyAndroidColorScheme(scheme: ColorSchemeName = 'default'): void {
+  const light = scheme === 'cloud_field' ? CLOUD_FIELD_LIGHT : DEFAULT_LIGHT;
+  const dark = scheme === 'cloud_field' ? CLOUD_FIELD_DARK : DEFAULT_DARK;
+
   const toRules = (map: Record<string, string>) =>
     Object.entries(map).map(([k, v]) => `  ${k}: ${v};`).join('\n');
 
   const css =
-    `:root {\n${toRules(LIGHT)}\n}\n` +
-    `:root[mdui-theme="dark"] {\n${toRules(DARK)}\n}`;
+    `:root {\n${toRules(light)}\n}\n` +
+    `:root[mdui-theme="dark"] {\n${toRules(dark)}\n}`;
 
   const existing = document.getElementById('selves-android-theme');
   if (existing) existing.remove();

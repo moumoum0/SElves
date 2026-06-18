@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { Member, TrackingSummary } from '../types/models';
 import { SubPageScaffold } from './SubPageScaffold';
+import { LocationTrackingConfigDialog } from '../components/LocationTrackingConfigDialog';
 
 interface LocationPageProps {
   tracking: TrackingSummary;
@@ -15,8 +17,11 @@ const MOCK_RECORDS = [
 
 export function LocationPage({ tracking, currentMember, onBack }: LocationPageProps) {
   const isRecording = tracking.status === 'RECORDING';
+  const [showConfig, setShowConfig] = useState(false);
+  const [trackingConfig, setTrackingConfig] = useState({ recordingInterval: 60, enableAutoStart: false, autoRestartDelay: 300 });
 
   return (
+    <>
     <SubPageScaffold title="轨迹记录" subtitle="查看轨迹记录与统计概览" onBack={onBack}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* 状态卡 */}
@@ -37,7 +42,7 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
               <div style={{ fontWeight: 600, fontSize: 15 }}>{isRecording ? '正在记录轨迹' : '轨迹记录已停止'}</div>
               <div style={{ fontSize: 13, opacity: 0.8 }}>当前成员：{currentMember.name}</div>
             </div>
-            <mdui-chip variant="assist">{isRecording ? '停止' : '开始'}</mdui-chip>
+            <mdui-chip variant="assist" onClick={() => setShowConfig(true)}>{isRecording ? '停止' : '开始'}</mdui-chip>
           </div>
           <mdui-linear-progress value={0.72} style={{ display: 'block' }}></mdui-linear-progress>
         </mdui-card>
@@ -87,5 +92,13 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
         </mdui-card>
       </div>
     </SubPageScaffold>
+    {showConfig && (
+      <LocationTrackingConfigDialog
+        config={trackingConfig}
+        onConfigUpdate={(c) => { setTrackingConfig(c); setShowConfig(false); }}
+        onDismiss={() => setShowConfig(false)}
+      />
+    )}
+  </>
   );
 }

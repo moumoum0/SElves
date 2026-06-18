@@ -92,7 +92,7 @@ export function HomePage({ data, currentMember, onMemberSwitch, onNavigate }: Ho
         </div>
       )}
 
-      <MemberHeader member={currentMember} onMemberSwitch={onMemberSwitch} />
+      <MemberHeader member={currentMember} members={data.members} onMemberSwitch={onMemberSwitch} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
         {visibleModules.map((moduleId) => {

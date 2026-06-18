@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SubPageScaffold } from './SubPageScaffold';
+import { applyAndroidColorScheme, type ColorSchemeName } from '../theme/androidColors';
+import { ImportBackupWarningDialog } from '../components/BackupDialogs';
 
 function useDialogClose<T extends HTMLElement>(open: boolean, onClose: () => void) {
   const ref = useRef<T>(null);
@@ -16,6 +18,7 @@ function useDialogClose<T extends HTMLElement>(open: boolean, onClose: () => voi
 interface SettingsPageProps {
   baseUrl: string;
   onBack: () => void;
+  onNavigateToAbout?: () => void;
 }
 
 const THEME_LABELS: Record<string, string> = {
@@ -34,17 +37,40 @@ const COLOR_LABELS: Record<string, string> = {
   cloud_field: '云野',
 };
 
-export function SettingsPage({ baseUrl, onBack }: SettingsPageProps) {
-  const [language, setLanguage] = useState('zh');
-  const [themeMode, setThemeMode] = useState('auto');
-  const [colorScheme, setColorScheme] = useState('default');
+export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPageProps) {
+  const [language, setLanguage] = useState(() => window.localStorage.getItem('selves-language') || 'zh');
+  const [themeMode, setThemeMode] = useState(() => window.localStorage.getItem('selves-theme') || 'auto');
+  const [colorScheme, setColorScheme] = useState<ColorSchemeName>(() => (window.localStorage.getItem('selves-color-scheme') || 'default') as ColorSchemeName);
   const [quickSwitch, setQuickSwitch] = useState(false);
   const [webServerEnabled, setWebServerEnabled] = useState(false);
   const [showLangDialog, setShowLangDialog] = useState(false);
   const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [showColorDialog, setShowColorDialog] = useState(false);
   const [isBackupLoading, setIsBackupLoading] = useState(false);
+  const [showImportWarning, setShowImportWarning] = useState(false);
   const [isSpImportLoading, setIsSpImportLoading] = useState(false);
+
+  const handleThemeChange = (mode: string) => {
+    setThemeMode(mode);
+    window.localStorage.setItem('selves-theme', mode);
+    import('mdui/functions/setTheme.js').then(({ setTheme }) => {
+      setTheme(mode as 'light' | 'dark' | 'auto');
+    });
+    setShowThemeDialog(false);
+  };
+
+  const handleColorChange = (scheme: ColorSchemeName) => {
+    setColorScheme(scheme);
+    window.localStorage.setItem('selves-color-scheme', scheme);
+    applyAndroidColorScheme(scheme);
+    setShowColorDialog(false);
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setLanguage(lang);
+    window.localStorage.setItem('selves-language', lang);
+    setShowLangDialog(false);
+  };
 
   return (
     <SubPageScaffold title="设置" onBack={onBack}>
@@ -61,7 +87,7 @@ export function SettingsPage({ baseUrl, onBack }: SettingsPageProps) {
         <SettingsGroupTitle>数据与备份</SettingsGroupTitle>
         <SettingsItem icon="schedule" title="定时备份" subtitle="设置自动备份频率和时间" onClick={() => {}} />
         <SettingsItemWithProgress icon="file_upload" title="导出备份" subtitle="备份应用数据到文件" isLoading={isBackupLoading} onClick={() => setIsBackupLoading(true)} />
-        <SettingsItemWithProgress icon="file_download" title="导入备份" subtitle="从文件恢复应用数据" isLoading={isBackupLoading} onClick={() => {}} />
+        <SettingsItemWithProgress icon="file_download" title="导入备份" subtitle="从文件恢复应用数据" isLoading={isBackupLoading} onClick={() => setShowImportWarning(true)} />
         <SettingsItemWithProgress icon="file_download" title="从 SimplyPlural 导入" subtitle="导入 SimplyPlural 导出的 JSON 文件" isLoading={isSpImportLoading} onClick={() => setIsSpImportLoading(true)} />
 
         {/* Web 访问分组 */}
@@ -73,16 +99,16 @@ export function SettingsPage({ baseUrl, onBack }: SettingsPageProps) {
         {/* 其他分组 */}
         <div style={{ height: 16 }} />
         <SettingsGroupTitle>其他</SettingsGroupTitle>
-        <SettingsItem icon="info" title="关于" subtitle="应用信息和版本" onClick={() => {}} />
+        <SettingsItem icon="info" title="关于" subtitle="应用信息和版本" onClick={() => onNavigateToAbout?.()} />
       </div>
 
       {/* 语言选择弹窗 */}
       <DialogHook open={showLangDialog} onClose={() => setShowLangDialog(false)} headline="选择语言">
         <mdui-list>
-          <mdui-list-item active={language === 'zh'} onClick={() => { setLanguage('zh'); setShowLangDialog(false); }}>
+          <mdui-list-item active={language === 'zh'} onClick={() => handleLanguageChange('zh')}>
             简体中文
           </mdui-list-item>
-          <mdui-list-item active={language === 'en'} onClick={() => { setLanguage('en'); setShowLangDialog(false); }}>
+          <mdui-list-item active={language === 'en'} onClick={() => handleLanguageChange('en')}>
             English
           </mdui-list-item>
         </mdui-list>
@@ -92,7 +118,7 @@ export function SettingsPage({ baseUrl, onBack }: SettingsPageProps) {
       <DialogHook open={showThemeDialog} onClose={() => setShowThemeDialog(false)} headline="选择主题模式">
         <mdui-list>
           {Object.entries(THEME_LABELS).map(([k, v]) => (
-            <mdui-list-item key={k} active={themeMode === k} onClick={() => { setThemeMode(k); setShowThemeDialog(false); }}>
+            <mdui-list-item key={k} active={themeMode === k} onClick={() => handleThemeChange(k)}>
               {v}
             </mdui-list-item>
           ))}
@@ -103,12 +129,18 @@ export function SettingsPage({ baseUrl, onBack }: SettingsPageProps) {
       <DialogHook open={showColorDialog} onClose={() => setShowColorDialog(false)} headline="选择配色方案">
         <mdui-list>
           {Object.entries(COLOR_LABELS).map(([k, v]) => (
-            <mdui-list-item key={k} active={colorScheme === k} onClick={() => { setColorScheme(k); setShowColorDialog(false); }}>
+            <mdui-list-item key={k} active={colorScheme === k} onClick={() => handleColorChange(k as ColorSchemeName)}>
               {v}
             </mdui-list-item>
           ))}
         </mdui-list>
       </DialogHook>
+      {showImportWarning && (
+        <ImportBackupWarningDialog
+          onConfirm={() => { setShowImportWarning(false); setIsBackupLoading(true); }}
+          onDismiss={() => setShowImportWarning(false)}
+        />
+      )}
     </SubPageScaffold>
   );
 }

@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useCallback } from 'react';
 import { MemberAvatar } from '../components/MemberAvatar';
+import { AlphabetIndexBar } from '../components/AlphabetIndexBar';
+import { CreateMemberDialog } from '../components/CreateMemberDialog';
+import { EditMemberDialog } from '../components/EditMemberDialog';
 import type { Member } from '../types/models';
 import { SubPageScaffold } from './SubPageScaffold';
 
@@ -7,13 +10,21 @@ interface MemberManagementPageProps {
   members: Member[];
   currentMember: Member;
   onBack: () => void;
+  onCreateMember?: (name: string, bio: string, pronouns: string, groups: string[]) => void;
+  onEditMember?: (id: string, name: string, bio: string, pronouns: string, groups: string[]) => void;
+  onDeleteMember?: (id: string) => void;
 }
 
-export function MemberManagementPage({ members, currentMember, onBack }: MemberManagementPageProps) {
+export function MemberManagementPage({ members, currentMember, onBack, onCreateMember, onEditMember, onDeleteMember }: MemberManagementPageProps) {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'group' | 'letter'>('group');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editTarget, setEditTarget] = useState<Member | null>(null);
+  const letterSectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const filteredMembers = useMemo(() => {
     const keyword = searchQuery.trim().toLocaleLowerCase();
@@ -31,6 +42,12 @@ export function MemberManagementPage({ members, currentMember, onBack }: MemberM
 
   const groups = useMemo(() => buildGroups(filteredMembers), [filteredMembers]);
   const letters = useMemo(() => buildLetters(filteredMembers), [filteredMembers]);
+  const availableLetters = useMemo(() => letters.map((s) => s.letter), [letters]);
+
+  const handleLetterSelected = useCallback((letter: string) => {
+    setSelectedLetter(letter);
+    letterSectionRefs.current[letter]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   return (
     <div style={{ position: 'relative', minHeight: '100%' }}>
@@ -106,72 +123,200 @@ export function MemberManagementPage({ members, currentMember, onBack }: MemberM
           </button>
         </div>
 
-        {viewMode === 'group' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {groups.map((group) => (
-              <GroupSection
-                key={group.name}
-                group={group}
-                expanded={expandedGroups[group.name] ?? false}
-                onToggle={() =>
-                  setExpandedGroups((prev) => ({
-                    ...prev,
-                    [group.name]: !(prev[group.name] ?? false),
-                  }))
-                }
-                currentMemberId={currentMember.id}
-              />
-            ))}
+        <div style={{ display: 'flex', gap: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {viewMode === 'group' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {groups.map((group) => (
+                  <GroupSection
+                    key={group.name}
+                    group={group}
+                    expanded={expandedGroups[group.name] ?? false}
+                    onToggle={() =>
+                      setExpandedGroups((prev) => ({
+                        ...prev,
+                        [group.name]: !(prev[group.name] ?? false),
+                      }))
+                    }
+                    currentMemberId={currentMember.id}
+                    onDeleteMember={setDeleteTarget}
+                    onEditMember={setEditTarget}
+                  />
+                ))}
 
-            {groups.length === 0 ? (
-              <div style={{ padding: '32px 0', textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
-                没有匹配的成员
+                {groups.length === 0 ? (
+                  <div style={{ padding: '32px 0', textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
+                    没有匹配的成员
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {letters.map((section) => (
-              <div key={section.letter}>
-                <div
-                  style={{
-                    width: '100%',
-                    padding: '8px 4px',
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: 'rgb(var(--mdui-color-on-surface))',
-                  }}
-                >
-                  {section.letter}
-                </div>
-                <div>
-                  {section.members.map((m) => (
-                    <MemberRow key={m.id} member={m} active={m.id === currentMember.id} />
-                  ))}
-                </div>
-              </div>
-            ))}
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {letters.map((section) => (
+                  <div
+                    key={section.letter}
+                    ref={(el) => {
+                      letterSectionRefs.current[section.letter] = el;
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '100%',
+                        padding: '8px 4px',
+                        fontSize: 16,
+                        fontWeight: 700,
+                        color: 'rgb(var(--mdui-color-on-surface))',
+                      }}
+                    >
+                      {section.letter}
+                    </div>
+                    <div>
+                      {section.members.map((m) => (
+                        <MemberRow
+                          key={m.id}
+                          member={m}
+                          active={m.id === currentMember.id}
+                          onDelete={() => setDeleteTarget(m)}
+                          onEdit={() => setEditTarget(m)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
 
-            {letters.length === 0 ? (
-              <div style={{ padding: '32px 0', textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
-                没有匹配的成员
+                {letters.length === 0 ? (
+                  <div style={{ padding: '32px 0', textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
+                    没有匹配的成员
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            )}
           </div>
-        )}
+
+          {/* 右侧字母索引栏 — 仅在按字母模式且非搜索时显示 */}
+          {viewMode === 'letter' && searchQuery === '' && availableLetters.length > 0 && (
+            <AlphabetIndexBar
+              availableLetters={availableLetters}
+              selectedLetter={selectedLetter}
+              onLetterSelected={handleLetterSelected}
+            />
+          )}
+        </div>
       </SubPageScaffold>
-      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }}></mdui-fab>
+
+      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreate(true)}></mdui-fab>
+
+      {/* 删除确认对话框 */}
+      {deleteTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          }}
+          onClick={() => setDeleteTarget(null)}
+        >
+          <mdui-dialog
+            open
+            headline="删除成员"
+            onClose={() => setDeleteTarget(null)}
+            style={{ maxWidth: 360 }}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          >
+            <div style={{ padding: '16px 0', fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
+              确定要删除成员「{deleteTarget.name}」吗？此操作不可撤销。
+            </div>
+            <div slot="actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <mdui-button onClick={() => setDeleteTarget(null)}>取消</mdui-button>
+              <mdui-button
+                variant="tonal"
+                style={{ backgroundColor: 'rgb(var(--mdui-color-error))', color: 'rgb(var(--mdui-color-on-error))' }}
+                onClick={() => { onDeleteMember?.(deleteTarget.id); setDeleteTarget(null); }}
+              >
+                删除
+              </mdui-button>
+            </div>
+          </mdui-dialog>
+        </div>
+      )}
+
+      {/* 新建成员弹窗 */}
+      {showCreate && (
+        <CreateMemberDialog
+          existingMembers={members}
+          existingGroups={Array.from(new Set(members.flatMap((m) => m.groups ?? [])))}
+          onDismiss={() => setShowCreate(false)}
+          onConfirm={(name, bio, pronouns, groups) => {
+            setShowCreate(false);
+            onCreateMember?.(name, bio, pronouns, groups);
+          }}
+        />
+      )}
+
+      {/* 编辑成员弹窗 */}
+      {editTarget && (
+        <EditMemberDialog
+          member={editTarget}
+          existingMembers={members}
+          existingGroups={Array.from(new Set(members.flatMap((m) => m.groups ?? [])))}
+          onDismiss={() => setEditTarget(null)}
+          onConfirm={(name, bio, pronouns, groups) => {
+            onEditMember?.(editTarget.id, name, bio, pronouns, groups);
+            setEditTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function MemberRow({ member, active }: { member: Member; active: boolean }) {
+function MemberRow({
+  member,
+  active,
+  onDelete,
+  onEdit,
+}: {
+  member: Member;
+  active: boolean;
+  onDelete: () => void;
+  onEdit: () => void;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 4px' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 4px',
+        position: 'relative',
+        userSelect: 'none',
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setShowMenu(true);
+      }}
+    >
       <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} size={40} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontWeight: 400, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'rgb(var(--mdui-color-on-surface))' }}>{member.name}</span>
+          <span
+            style={{
+              fontWeight: 400,
+              fontSize: 16,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              color: 'rgb(var(--mdui-color-on-surface))',
+            }}
+          >
+            {member.name}
+          </span>
           {active ? (
             <span
               style={{
@@ -187,9 +332,91 @@ function MemberRow({ member, active }: { member: Member; active: boolean }) {
             </span>
           ) : null}
         </div>
-        <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.bio || '暂无简介'}</div>
+        <div
+          style={{
+            fontSize: 12,
+            color: 'rgb(var(--mdui-color-on-surface-variant))',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {member.bio || '暂无简介'}
+        </div>
       </div>
-      <mdui-button-icon icon="more_vert"></mdui-button-icon>
+
+      {/* 操作菜单触发按钮 */}
+      <div style={{ position: 'relative' }}>
+        <mdui-button-icon icon="more_vert" onClick={() => setShowMenu(true)}></mdui-button-icon>
+
+        {showMenu && (
+          <>
+            <div
+              style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+              onClick={() => setShowMenu(false)}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                right: 0,
+                top: '100%',
+                zIndex: 100,
+                minWidth: 140,
+                padding: '4px 0',
+                borderRadius: 8,
+                backgroundColor: 'rgb(var(--mdui-color-surface-container))',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => { setShowMenu(false); onEdit(); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '10px 16px',
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  color: 'rgb(var(--mdui-color-on-surface))',
+                  textAlign: 'left',
+                }}
+              >
+                <mdui-icon name="edit" style={{ fontSize: 18 }}></mdui-icon>
+                编辑
+              </button>
+              {!active && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMenu(false);
+                    onDelete();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    width: '100%',
+                    padding: '10px 16px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    color: 'rgb(var(--mdui-color-error))',
+                    textAlign: 'left',
+                  }}
+                >
+                  <mdui-icon name="delete" style={{ fontSize: 18 }}></mdui-icon>
+                  删除
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -199,11 +426,15 @@ function GroupSection({
   expanded,
   onToggle,
   currentMemberId,
+  onDeleteMember,
+  onEditMember,
 }: {
   group: { name: string; members: Member[] };
   expanded: boolean;
   onToggle: () => void;
   currentMemberId: string;
+  onDeleteMember: (member: Member) => void;
+  onEditMember: (member: Member) => void;
 }) {
   const description = group.name === '未分组' ? '未归档成员' : '';
 
@@ -256,7 +487,7 @@ function GroupSection({
             </div>
           ) : (
             group.members.map((member) => (
-              <MemberRow key={member.id} member={member} active={member.id === currentMemberId} />
+              <MemberRow key={member.id} member={member} active={member.id === currentMemberId} onDelete={() => onDeleteMember(member)} onEdit={() => onEditMember(member)} />
             ))
           )}
         </div>

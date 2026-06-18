@@ -1,4 +1,4 @@
-import { getInitial } from '../lib/utils';
+import { useMemo, useRef, useState } from 'react';
 
 interface MemberAvatarProps {
   name: string;
@@ -6,8 +6,22 @@ interface MemberAvatarProps {
   size?: number;
 }
 
+function getPlaceholderPadding(size: number): number {
+  if (size >= 80) return 16;
+  if (size >= 60) return 12;
+  return 8;
+}
+
 export function MemberAvatar({ name, avatarUrl, size = 40 }: MemberAvatarProps) {
-  const initial = getInitial(name);
+  const [hasError, setHasError] = useState(false);
+  const triedImageRef = useRef(false);
+
+  const shouldShowImage = useMemo(() => {
+    const normalized = avatarUrl?.trim();
+    return Boolean(normalized) && !hasError;
+  }, [avatarUrl, hasError]);
+
+  const placeholderPadding = getPlaceholderPadding(size);
 
   return (
     <div
@@ -20,20 +34,37 @@ export function MemberAvatar({ name, avatarUrl, size = 40 }: MemberAvatarProps) 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: avatarUrl ? 'transparent' : 'rgb(var(--mdui-color-primary))',
-        color: 'rgb(var(--mdui-color-on-primary))',
-        fontWeight: 700,
-        fontSize: size * 0.4,
+        backgroundColor: 'rgba(var(--mdui-color-primary), 0.1)',
+        position: 'relative',
       }}
     >
-      {avatarUrl ? (
+      {shouldShowImage && (
         <img
-          src={avatarUrl}
+          src={avatarUrl ?? undefined}
           alt={name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={() => {
+            if (!triedImageRef.current) {
+              triedImageRef.current = true;
+              setHasError(true);
+            }
+          }}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
         />
-      ) : (
-        initial || <mdui-icon name="person" style={{ fontSize: size * 0.55 }}></mdui-icon>
+      )}
+
+      {!shouldShowImage && (
+        <mdui-icon
+          name="person"
+          style={{
+            fontSize: size - placeholderPadding * 2,
+            color: 'rgb(var(--mdui-color-on-surface-variant))',
+          }}
+        ></mdui-icon>
       )}
     </div>
   );

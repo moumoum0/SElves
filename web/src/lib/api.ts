@@ -95,6 +95,7 @@ export async function loadAppData(): Promise<AppDataResponse> {
       todos: todosResult.data,
       dynamics: dynamicsResult.data,
       votes: sampleData.votes,
+      voteRecords: sampleData.voteRecords,
       diaries: diariesResult.data,
       tracking: sampleData.tracking,
     },

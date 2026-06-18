@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MemberAvatar } from '../components/MemberAvatar';
+import { SystemEditDialog } from '../components/SystemEditDialog';
 import type { SystemInfo } from '../types/models';
 
 export interface SystemPageProps {
@@ -7,6 +8,7 @@ export interface SystemPageProps {
   onNavigateMemberManagement: () => void;
   onNavigateOnlineStats: () => void;
   onNavigateSettings: () => void;
+  onEditSystem?: (name: string, description: string) => void;
 }
 
 interface ManagementItemProps {
@@ -39,11 +41,13 @@ function ManagementListItem({ icon, title, subtitle, onClick }: ManagementItemPr
   );
 }
 
-export function SystemPage({ system, onNavigateMemberManagement, onNavigateOnlineStats, onNavigateSettings }: SystemPageProps) {
+export function SystemPage({ system, onNavigateMemberManagement, onNavigateOnlineStats, onNavigateSettings, onEditSystem }: SystemPageProps) {
   const [showDesc, setShowDesc] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   return (
-    <div style={{ minHeight: '100%', backgroundColor: 'rgb(var(--mdui-color-background))', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <>
+      <div style={{ minHeight: '100%', backgroundColor: 'rgb(var(--mdui-color-background))', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* 系统信息卡片：填充 surfaceContainer，圆角 16，内边距 20 */}
       <div style={{ backgroundColor: 'rgb(var(--mdui-color-surface-container))', borderRadius: 16, padding: 20 }}>
         <div style={{ display: 'flex', alignItems: showDesc ? 'flex-start' : 'center', gap: 16, transition: 'all 0.2s' }}>
@@ -76,12 +80,24 @@ export function SystemPage({ system, onNavigateMemberManagement, onNavigateOnlin
 
       {/* 系统管理 分组标题 + 列表项（裸行，无卡片包裹） */}
       <div style={{ fontSize: 16, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface-variant))', padding: '8px 4px' }}>系统管理</div>
-      <ManagementListItem icon="edit" title="编辑系统" subtitle="修改系统名称和头像" onClick={() => {}} />
+      <ManagementListItem icon="edit" title="编辑系统" subtitle="修改系统名称和头像" onClick={() => setShowEdit(true)} />
       <ManagementListItem icon="group" title="成员管理" subtitle="管理系统成员" onClick={onNavigateMemberManagement} />
       <ManagementListItem icon="schedule" title="在线统计" subtitle="查看成员活跃度和在线时间" onClick={onNavigateOnlineStats} />
 
       <div style={{ fontSize: 16, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface-variant))', padding: '8px 4px' }}>其它</div>
       <ManagementListItem icon="settings" title="系统设置" subtitle="应用设置和偏好" onClick={onNavigateSettings} />
-    </div>
+      </div>
+
+      {showEdit && (
+        <SystemEditDialog
+          system={system}
+          onDismiss={() => setShowEdit(false)}
+          onConfirm={(name, description) => {
+            setShowEdit(false);
+            onEditSystem?.(name, description);
+          }}
+        />
+      )}
+    </>
   );
 }

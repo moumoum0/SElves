@@ -4,16 +4,10 @@ import App from './App';
 import 'mdui/mdui.css';
 import 'mdui';
 import './styles.css';
-import { applyAndroidColorScheme } from './theme/androidColors';
+import { applyAndroidColorScheme, type ColorSchemeName } from './theme/androidColors';
 
-const savedScheme = window.localStorage.getItem('selves-color-scheme');
-if (savedScheme && savedScheme !== '#475D92') {
-  import('mdui/functions/setColorScheme.js').then(({ setColorScheme }) => {
-    setColorScheme(savedScheme);
-  });
-} else {
-  applyAndroidColorScheme();
-}
+const savedColorScheme = (window.localStorage.getItem('selves-color-scheme') || 'default') as ColorSchemeName;
+applyAndroidColorScheme(savedColorScheme);
 
 const savedTheme = window.localStorage.getItem('selves-theme') as 'light' | 'dark' | 'auto' | null;
 if (savedTheme) {
