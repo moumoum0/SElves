@@ -28,7 +28,7 @@ export function SystemEditDialog({ system, onDismiss, onConfirm }: SystemEditDia
         style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>编辑系统</div>
+        <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>编辑系统</div>
 
         {/* 头像 */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
@@ -71,7 +71,7 @@ export function SystemEditDialog({ system, onDismiss, onConfirm }: SystemEditDia
         {/* 按钮 */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={onDismiss}>取消</button>
-          <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14, fontWeight: 600 }} onClick={handleConfirm}>保存</button>
+          <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14, fontWeight: 600 }} onClick={handleConfirm}>确认</button>
         </div>
       </div>
     </div>

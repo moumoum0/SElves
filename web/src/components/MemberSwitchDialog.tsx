@@ -117,16 +117,11 @@ export function MemberSwitchDialog({
                     if (!isCurrent) setMenuTarget(member);
                   }}
                 >
-                  <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} size={44} />
+                  <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} size={40} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 16, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {member.name}
                     </div>
-                    {member.bio && (
-                      <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {member.bio}
-                      </div>
-                    )}
                   </div>
                   {isCurrent && (
                     <mdui-icon name="check" style={{ color: 'rgb(var(--mdui-color-primary))', fontSize: 20 }}></mdui-icon>
@@ -178,7 +173,7 @@ export function MemberSwitchDialog({
             onClick={() => { onDismiss(); onCreateNewMember(); }}
           >
             <div style={{
-              width: 44, height: 44, borderRadius: '50%',
+              width: 40, height: 40, borderRadius: '50%',
               backgroundColor: 'rgba(var(--mdui-color-primary), 0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
@@ -207,7 +202,7 @@ export function MemberSwitchDialog({
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
             }}
           >
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 12 }}>
+            <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 12 }}>
               删除成员
             </div>
             <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 24 }}>

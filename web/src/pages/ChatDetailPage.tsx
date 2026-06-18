@@ -14,7 +14,7 @@ interface ChatDetailPageProps {
   onDeleteMessage?: (messageId: string) => void;
   onAddMembers?: (members: Member[]) => void;
   onRemoveMembers?: (members: Member[]) => void;
-  onUpdateGroupInfo?: (name: string) => void;
+  onUpdateGroupInfo?: (name: string, avatarUrl?: string) => void;
   onDeleteGroup?: () => void;
   onTransferOwnership?: (member: Member) => void;
 }
@@ -115,7 +115,7 @@ export function ChatDetailPage({
           onDismiss={() => setShowManagement(false)}
           onAddMembers={(m) => { setShowManagement(false); onAddMembers?.(m); }}
           onRemoveMembers={(m) => { setShowManagement(false); onRemoveMembers?.(m); }}
-          onUpdateGroupInfo={(name) => { setShowManagement(false); onUpdateGroupInfo?.(name); }}
+          onUpdateGroupInfo={(name, avatarUrl) => { setShowManagement(false); onUpdateGroupInfo?.(name, avatarUrl); }}
           onDeleteGroup={() => { setShowManagement(false); onDeleteGroup?.(); onBack(); }}
           onTransferOwnership={(m) => { setShowManagement(false); onTransferOwnership?.(m); }}
         />

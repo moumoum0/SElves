@@ -55,7 +55,7 @@ export function CreateGroupDialog({
       >
         {step === 'info' ? (
           <>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>创建群聊</div>
+            <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>创建群聊</div>
 
             {/* 群头像 */}
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
@@ -90,8 +90,8 @@ export function CreateGroupDialog({
           </>
         ) : (
           <>
-            <div style={{ fontSize: 20, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 4 }}>选择成员</div>
-            <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 16 }}>已选 {selectedIds.size} 位</div>
+            <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 4 }}>选择成员</div>
+            <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 16 }}>群主将自动包含在群聊中</div>
 
             <div style={{ maxHeight: 320, overflowY: 'auto', marginBottom: 16 }}>
               {availableMembers.map((m) => {
@@ -103,20 +103,20 @@ export function CreateGroupDialog({
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: isSelf ? 'default' : 'pointer' }}
                     onClick={() => toggleMember(m.id)}
                   >
+                    <mdui-checkbox checked={checked} disabled={isSelf}></mdui-checkbox>
                     <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
                       {isSelf && <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-primary))' }}>群主（你）</div>}
                     </div>
-                    <mdui-checkbox checked={checked} disabled={isSelf}></mdui-checkbox>
                   </div>
                 );
               })}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={() => setStep('info')}>上一步</button>
-              <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14, fontWeight: 600 }} onClick={handleConfirm}>创建</button>
+              <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={() => setStep('info')}>取消</button>
+              <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14, fontWeight: 600 }} onClick={handleConfirm}>确认</button>
             </div>
           </>
         )}

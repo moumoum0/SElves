@@ -41,7 +41,7 @@ export function CreateMemberDialog({
         style={{ width: '92%', maxWidth: 400, maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 20, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>新建成员</div>
+        <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>新建成员</div>
 
         {/* 头像 */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
@@ -132,7 +132,7 @@ export function CreateMemberDialog({
         {/* 按钮 */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={onDismiss}>取消</button>
-          <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14, fontWeight: 600 }} onClick={handleConfirm}>创建</button>
+          <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14, fontWeight: 600 }} onClick={handleConfirm}>确认</button>
         </div>
       </div>
 
@@ -144,8 +144,15 @@ export function CreateMemberDialog({
             <mdui-text-field
               label="分组名称"
               value={newGroupInput}
-              style={{ width: '100%', marginBottom: 16 }}
+              style={{ width: '100%', marginBottom: 12 }}
               onInput={(e: Event) => setNewGroupInput((e.target as HTMLInputElement).value)}
+            ></mdui-text-field>
+            <mdui-text-field
+              label="分组描述"
+              placeholder="描述这个分组的用途..."
+              value=""
+              rows={2}
+              style={{ width: '100%', marginBottom: 16 }}
             ></mdui-text-field>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={() => { setShowNewGroupDialog(false); setNewGroupInput(''); }}>取消</button>
