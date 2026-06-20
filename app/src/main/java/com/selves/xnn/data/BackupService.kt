@@ -15,6 +15,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import com.google.gson.*
 import java.lang.reflect.Type
+import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.*
@@ -56,31 +57,17 @@ class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<Loc
     }
 
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): LocalDateTime? {
+        if (json == null || json.isJsonNull) return null
+        if (!json.isJsonPrimitive) {
+            // 空对象 {} 或其他非字符串类型，说明备份数据损坏，直接抛出让调用方感知
+            throw JsonParseException("LocalDateTime 字段格式异常，期望字符串但得到: ${json.javaClass.simpleName}，内容: $json")
+        }
+        val dateString = json.asString
+        if (dateString.isNullOrBlank()) return null
         return try {
-            when {
-                json == null || json.isJsonNull -> null
-                json.isJsonPrimitive -> {
-                    val dateString = json.asString
-                    if (dateString.isNullOrBlank()) {
-                        null
-                    } else {
-                        LocalDateTime.parse(dateString, formatter)
-                    }
-                }
-                json.isJsonObject -> {
-                    // 处理错误序列化的情况，JSON是空对象{}
-                    Log.w("LocalDateTimeAdapter", "LocalDateTime被序列化为JsonObject，使用当前时间作为fallback")
-                    LocalDateTime.now()
-                }
-                else -> {
-                    Log.w("LocalDateTimeAdapter", "未知的JSON类型: ${json.javaClass.simpleName}")
-                    LocalDateTime.now()
-                }
-            }
+            LocalDateTime.parse(dateString, formatter)
         } catch (e: Exception) {
-            Log.e("LocalDateTimeAdapter", "解析LocalDateTime失败: ${json?.toString()}, ${json?.javaClass?.simpleName}, ${e.message}", e)
-            // 如果解析失败，返回当前时间作为fallback
-            LocalDateTime.now()
+            throw JsonParseException("LocalDateTime 解析失败: $dateString", e)
         }
     }
 }
@@ -115,10 +102,11 @@ data class BackupData(
     val systems: List<SystemEntity> = emptyList(),
     val onlineStatus: List<OnlineStatusEntity> = emptyList(),
     val memberDiaries: List<MemberDiaryEntity> = emptyList(),
+    val locationRecords: List<LocationRecordEntity> = emptyList(),
     val preferences: PreferencesBackupData = PreferencesBackupData()
 ) {
     companion object {
-        const val BACKUP_VERSION = 3  // 增加版本号，因为添加了新字段
+        const val BACKUP_VERSION = 4  // v4: 新增 locationRecords 字段
         // 如果后续需要扩展其他静态常量，可在此处添加
     }
 }
@@ -172,7 +160,8 @@ class BackupService @Inject constructor(
             "voteRecords",
             "systems",
             "onlineStatus",
-            "memberDiaries"
+            "memberDiaries",
+            "locationRecords"
         )
         private const val PREFERENCES_FIELD = "preferences"
     }
@@ -428,6 +417,7 @@ class BackupService @Inject constructor(
         val systems = database.systemDao().getAllSystemsSync()
         val onlineStatus = database.onlineStatusDao().getAllOnlineStatusSync()
         val memberDiaries = database.memberDiaryDao().getAllDiariesSync()
+        val locationRecords = database.locationRecordDao().getAllLocationRecordsSync()
         
         Log.d(TAG, "数据收集统计:")
         Log.d(TAG, "  - 成员: ${members.size}")
@@ -445,6 +435,7 @@ class BackupService @Inject constructor(
         Log.d(TAG, "  - 系统: ${systems.size}")
         Log.d(TAG, "  - 在线状态: ${onlineStatus.size}")
         Log.d(TAG, "  - 成员日记: ${memberDiaries.size}")
+        Log.d(TAG, "  - 位置记录: ${locationRecords.size}")
         
         // 检查LocalDateTime字段
         dynamics.forEach { dynamic ->
@@ -474,6 +465,7 @@ class BackupService @Inject constructor(
             systems = systems,
             onlineStatus = onlineStatus,
             memberDiaries = memberDiaries,
+            locationRecords = locationRecords,
             preferences = preferences
         )
     }
@@ -719,95 +711,97 @@ class BackupService @Inject constructor(
         // 使用数据库事务确保操作的原子性
         // 如果导入过程中出现任何错误，所有更改都会回滚
         try {
-            database.runInTransaction {
-                // 在事务中执行所有数据库操作
-                kotlinx.coroutines.runBlocking {
-                    // 清空现有数据
-                    Log.d(TAG, "清空现有数据...")
-                    clearAllData()
-                    
-                    // 导入数据
-                    Log.d(TAG, "导入 ${backupData.members.size} 个成员")
-                    backupData.members.forEach { member ->
-                        database.memberDao().insertMember(member)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.memberGroups.size} 个成员分组")
-                    backupData.memberGroups.forEach { group ->
-                        database.memberGroupDao().upsertGroup(group)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.chatGroups.size} 个群组")
-                    backupData.chatGroups.forEach { group ->
-                        database.chatGroupDao().insertGroup(group)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.messages.size} 个消息")
-                    backupData.messages.forEach { message ->
-                        database.messageDao().insertMessage(message)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.messageReadStatus.size} 个已读状态")
-                    backupData.messageReadStatus.forEach { status ->
-                        database.messageReadStatusDao().insertReadStatus(status)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.todos.size} 个待办事项")
-                    backupData.todos.forEach { todo ->
-                        database.todoDao().insertTodo(todo)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.dynamics.size} 个动态")
-                    backupData.dynamics.forEach { dynamic ->
-                        Log.v(TAG, "导入动态: ${dynamic.id}, createdAt=${dynamic.createdAt}, updatedAt=${dynamic.updatedAt}")
-                        database.dynamicDao().insertDynamic(dynamic)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.dynamicComments.size} 个动态评论")
-                    backupData.dynamicComments.forEach { comment ->
-                        database.dynamicDao().insertComment(comment)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.dynamicLikes.size} 个动态点赞")
-                    backupData.dynamicLikes.forEach { like ->
-                        database.dynamicDao().insertLike(like)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.votes.size} 个投票")
-                    backupData.votes.forEach { vote ->
-                        Log.v(TAG, "导入投票: ${vote.id}, createdAt=${vote.createdAt}, endTime=${vote.endTime}")
-                        database.voteDao().insertVote(vote)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.voteOptions.size} 个投票选项")
-                    backupData.voteOptions.forEach { option ->
-                        database.voteDao().insertVoteOption(option)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.voteRecords.size} 个投票记录")
-                    backupData.voteRecords.forEach { record ->
-                        database.voteDao().insertVoteRecord(record)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.systems.size} 个系统")
-                    backupData.systems.forEach { system ->
-                        database.systemDao().insertSystem(system)
-                    }
-                    
-                    Log.d(TAG, "导入 ${backupData.onlineStatus.size} 个在线状态")
-                    backupData.onlineStatus.forEach { status ->
-                        database.onlineStatusDao().insertOnlineStatus(status)
-                    }
-
-                    Log.d(TAG, "导入 ${backupData.memberDiaries.size} 个成员日记")
-                    backupData.memberDiaries.forEach { diary ->
-                        database.memberDiaryDao().upsertDiary(diary)
-                    }
-                    
-                    // 同步所有用户信息，确保数据一致性
-                    Log.d(TAG, "开始同步用户信息，确保数据一致性...")
-                    syncUserInfoAfterRestore()
+            database.withTransaction {
+                // 清空现有数据
+                Log.d(TAG, "清空现有数据...")
+                clearAllData()
+                
+                // 导入数据
+                Log.d(TAG, "导入 ${backupData.members.size} 个成员")
+                backupData.members.forEach { member ->
+                    database.memberDao().insertMember(member)
                 }
+                
+                Log.d(TAG, "导入 ${backupData.memberGroups.size} 个成员分组")
+                backupData.memberGroups.forEach { group ->
+                    database.memberGroupDao().upsertGroup(group)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.chatGroups.size} 个群组")
+                backupData.chatGroups.forEach { group ->
+                    database.chatGroupDao().insertGroup(group)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.messages.size} 个消息")
+                backupData.messages.forEach { message ->
+                    database.messageDao().insertMessage(message)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.messageReadStatus.size} 个已读状态")
+                backupData.messageReadStatus.forEach { status ->
+                    database.messageReadStatusDao().insertReadStatus(status)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.todos.size} 个待办事项")
+                backupData.todos.forEach { todo ->
+                    database.todoDao().insertTodo(todo)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.dynamics.size} 个动态")
+                backupData.dynamics.forEach { dynamic ->
+                    Log.v(TAG, "导入动态: ${dynamic.id}, createdAt=${dynamic.createdAt}, updatedAt=${dynamic.updatedAt}")
+                    database.dynamicDao().insertDynamic(dynamic)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.dynamicComments.size} 个动态评论")
+                backupData.dynamicComments.forEach { comment ->
+                    database.dynamicDao().insertComment(comment)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.dynamicLikes.size} 个动态点赞")
+                backupData.dynamicLikes.forEach { like ->
+                    database.dynamicDao().insertLike(like)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.votes.size} 个投票")
+                backupData.votes.forEach { vote ->
+                    Log.v(TAG, "导入投票: ${vote.id}, createdAt=${vote.createdAt}, endTime=${vote.endTime}")
+                    database.voteDao().insertVote(vote)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.voteOptions.size} 个投票选项")
+                backupData.voteOptions.forEach { option ->
+                    database.voteDao().insertVoteOption(option)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.voteRecords.size} 个投票记录")
+                backupData.voteRecords.forEach { record ->
+                    database.voteDao().insertVoteRecord(record)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.systems.size} 个系统")
+                backupData.systems.forEach { system ->
+                    database.systemDao().insertSystem(system)
+                }
+                
+                Log.d(TAG, "导入 ${backupData.onlineStatus.size} 个在线状态")
+                backupData.onlineStatus.forEach { status ->
+                    database.onlineStatusDao().insertOnlineStatus(status)
+                }
+
+                Log.d(TAG, "导入 ${backupData.memberDiaries.size} 个成员日记")
+                backupData.memberDiaries.forEach { diary ->
+                    database.memberDiaryDao().upsertDiary(diary)
+                }
+
+                Log.d(TAG, "导入 ${backupData.locationRecords.size} 个位置记录")
+                backupData.locationRecords.forEach { record ->
+                    database.locationRecordDao().insertLocationRecord(record)
+                }
+                
+                // 同步所有用户信息，确保数据一致性
+                Log.d(TAG, "开始同步用户信息，确保数据一致性...")
+                syncUserInfoAfterRestore()
             }
             
             // 事务成功提交后，恢复用户偏好设置
@@ -859,33 +853,16 @@ class BackupService @Inject constructor(
      * 恢复备份后同步用户信息，确保数据一致性
      */
     private suspend fun syncUserInfoAfterRestore() {
-        try {
-            // 获取所有成员
-            val members = database.memberDao().getAllMembersSync()
-            Log.d(TAG, "开始为 ${members.size} 个成员同步用户信息")
-            
-            var syncCount = 0
-            members.forEach { member ->
-                try {
-                    // 同步动态表中的用户信息
-                    database.dynamicDao().updateAuthorInfo(member.id, member.name, member.avatarUrl)
-                    database.dynamicDao().updateCommentAuthorInfo(member.id, member.name, member.avatarUrl)
-                    
-                    // 同步投票表中的用户信息
-                    database.voteDao().updateVoteAuthorInfo(member.id, member.name, member.avatarUrl)
-                    database.voteDao().updateVoteRecordUserInfo(member.id, member.name, member.avatarUrl)
-                    
-                    syncCount++
-                    Log.d(TAG, "已同步用户信息: ${member.id} - ${member.name}")
-                } catch (e: Exception) {
-                    Log.e(TAG, "同步用户信息失败: ${member.id} - ${member.name}, ${e.message}", e)
-                }
-            }
-            
-            Log.d(TAG, "用户信息同步完成，成功同步 $syncCount/${members.size} 个用户")
-        } catch (e: Exception) {
-            Log.e(TAG, "同步用户信息时发生错误: ${e.message}", e)
+        val members = database.memberDao().getAllMembersSync()
+        Log.d(TAG, "开始为 ${members.size} 个成员同步用户信息")
+        members.forEach { member ->
+            database.dynamicDao().updateAuthorInfo(member.id, member.name, member.avatarUrl)
+            database.dynamicDao().updateCommentAuthorInfo(member.id, member.name, member.avatarUrl)
+            database.voteDao().updateVoteAuthorInfo(member.id, member.name, member.avatarUrl)
+            database.voteDao().updateVoteRecordUserInfo(member.id, member.name, member.avatarUrl)
+            Log.d(TAG, "已同步用户信息: ${member.id} - ${member.name}")
         }
+        Log.d(TAG, "用户信息同步完成，共同步 ${members.size} 个用户")
     }
 
     /**
@@ -894,6 +871,7 @@ class BackupService @Inject constructor(
     private suspend fun clearAllData() {
         // 按照外键依赖关系的逆序删除
         database.onlineStatusDao().deleteAll()
+        database.locationRecordDao().deleteAll()
         database.voteDao().deleteAllVoteRecords()
         database.voteDao().deleteAllVoteOptions()
         database.voteDao().deleteAllVotes()

@@ -58,5 +58,12 @@ interface LocationRecordDao {
     
     @Query("DELETE FROM location_records WHERE timestamp < :cutoffDate")
     suspend fun deleteOldLocationRecords(cutoffDate: LocalDateTime)
+
+    // 备份用的同步查询方法
+    @Query("SELECT * FROM location_records ORDER BY timestamp ASC")
+    suspend fun getAllLocationRecordsSync(): List<LocationRecordEntity>
+
+    @Query("DELETE FROM location_records")
+    suspend fun deleteAll()
 }
 
