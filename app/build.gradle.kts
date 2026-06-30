@@ -130,6 +130,36 @@ android {
     }
 }
 
+val webProjectDir = rootProject.projectDir.resolve("web")
+val webDistDir = webProjectDir.resolve("dist")
+val webAssetsDir = layout.projectDirectory.dir("src/main/assets/web")
+val hasWebProject = webProjectDir.isDirectory
+val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+
+val buildWebDist = tasks.register<Exec>("buildWebDist") {
+    workingDir(webProjectDir)
+    if (isWindows) {
+        commandLine("npm.cmd", "run", "build")
+        val appData = System.getenv("APPDATA") ?: System.getProperty("user.home") + "\\AppData\\Roaming"
+        environment("npm_config_prefix", "$appData\\npm")
+        environment("npm_config_cache", "$appData\\npm-cache")
+    } else {
+        commandLine("npm", "run", "build")
+    }
+    isEnabled = hasWebProject
+}
+
+val syncWebAssets = tasks.register<Sync>("syncWebAssets") {
+    dependsOn(buildWebDist)
+    from(webDistDir)
+    into(webAssetsDir)
+    enabled = hasWebProject
+}
+
+tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(syncWebAssets)
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(platform(libs.kotlin.bom))
@@ -188,6 +218,7 @@ dependencies {
     implementation(libs.ktor.server.websockets)
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.server.status.pages)
+    implementation(libs.ktor.server.auth)
     
     // ZXing for QR code generation
     implementation(libs.zxing.core)

@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Wifi
@@ -78,6 +79,7 @@ fun SettingsScreen(
     val showLanguageDialog by viewModel.showLanguageDialog.collectAsState()
     val webServerEnabled by viewModel.webServerEnabled.collectAsState()
     val webServerIp by viewModel.webServerIp.collectAsState()
+    val webApiToken by viewModel.webApiToken.collectAsState()
     val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
     val backupMessage by viewModel.backupMessage.collectAsState()
     val showBackupProgressDialog by viewModel.showBackupProgressDialog.collectAsState()
@@ -277,6 +279,8 @@ fun SettingsScreen(
                 item {
                     WebAccessInfoCard(
                         url = viewModel.webServerUrl,
+                        token = webApiToken,
+                        onCopyToken = { viewModel.refreshWebApiToken() },
                         context = context
                     )
                 }
@@ -573,6 +577,8 @@ fun SettingsItemWithProgress(
 @Composable
 private fun WebAccessInfoCard(
     url: String,
+    token: String?,
+    onCopyToken: () -> Unit,
     context: Context
 ) {
     val qrBitmap = remember(url) { generateQrCodeBitmap(url, 240) }
@@ -591,6 +597,7 @@ private fun WebAccessInfoCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 访问地址行
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -618,6 +625,50 @@ private fun WebAccessInfoCard(
                         contentDescription = stringResource(R.string.settings_web_access_url),
                         tint = MaterialTheme.colorScheme.primary
                     )
+                }
+            }
+
+            // Token 行
+            if (token != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "API Token",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = token,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                    // 复制 token
+                    IconButton(onClick = {
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Selves Token", token))
+                        Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "复制 Token",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    // 刷新 token
+                    IconButton(onClick = onCopyToken) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "刷新 Token",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
                 }
             }
 

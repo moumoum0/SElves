@@ -36,7 +36,7 @@ export function GroupChatPage({
   });
 
   return (
-    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(var(--mdui-color-surface))', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(var(--mdui-color-surface))', position: 'relative', overflow: 'hidden' }}>
       <MemberHeader
         member={currentMember}
         members={members}
@@ -45,11 +45,11 @@ export function GroupChatPage({
       />
 
       {sortedGroups.length === 0 ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--mdui-color-on-surface))' }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--mdui-color-on-surface))' }}>
           暂无群聊，请点击右下角创建
         </div>
       ) : (
-        <div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
           {sortedGroups.map((group, index) => {
             const msgs = groupMessages[group.id] ?? [];
             const latest = msgs.at(-1);

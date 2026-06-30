@@ -67,6 +67,7 @@ ktor-serialization-gson = { group = "io.ktor", name = "ktor-serialization-gson",
 ktor-server-websockets = { group = "io.ktor", name = "ktor-server-websockets", version.ref = "ktor" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors", version.ref = "ktor" }
 ktor-server-status-pages = { group = "io.ktor", name = "ktor-server-status-pages", version.ref = "ktor" }
+ktor-server-auth = { group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 slf4j-nop = { group = "org.slf4j", name = "slf4j-nop", version.ref = "slf4j" }
 

@@ -187,11 +187,11 @@ export function ChatDetailPage({
             placeholder="发送消息..."
             value={messageText}
             style={{ flex: 1 }}
-            max-rows="5"
-            onInput={(e: Event) =>
+            max-rows={5}
+            onInput={(e) =>
               setMessageText((e.target as HTMLInputElement).value)
             }
-            onKeyDown={handleKeyDown as unknown as (e: Event) => void}
+            onKeyDown={handleKeyDown}
           ></mdui-text-field>
 
           {/* 发送按钮 */}

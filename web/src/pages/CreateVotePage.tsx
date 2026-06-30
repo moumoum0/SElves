@@ -395,7 +395,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
                 endTime ? (
                   <mdui-button-icon
                     icon="close"
-                    onClick={(e: MouseEvent) => {
+                    onClick={(e) => {
                       e.stopPropagation();
                       setEndTime(null);
                     }}

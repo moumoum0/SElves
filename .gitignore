@@ -369,3 +369,6 @@ fabric.properties
 todo.txt
 CLAUDE.md
 .claude/
+
+.codanna/
+.codannaignore

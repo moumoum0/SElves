@@ -60,7 +60,8 @@ export function DynamicPage({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100%',
+        height: '100%',
+        overflow: 'hidden',
         position: 'relative',
         backgroundColor: 'rgb(var(--mdui-color-surface))',
       }}
@@ -68,8 +69,7 @@ export function DynamicPage({
       {/* ── TopBar ── */}
       <div
         style={{
-          position: 'sticky',
-          top: 0,
+          flexShrink: 0,
           zIndex: 10,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderBottom: '1px solid rgba(var(--mdui-color-outline-variant), 0.35)',
@@ -149,11 +149,13 @@ export function DynamicPage({
       <div
         style={{
           flex: 1,
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
           padding: 16,
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
-          paddingBottom: 80,
         }}
       >
         {isLoading ? (
@@ -223,7 +225,7 @@ export function DynamicPage({
       {/* ── FAB ── */}
       <mdui-fab
         icon="add"
-        style={{ position: 'fixed', right: 16, bottom: 16 }}
+        style={{ position: 'absolute', right: 16, bottom: 16 }}
         onClick={onNavigateToCreateDynamic}
       ></mdui-fab>
     </div>

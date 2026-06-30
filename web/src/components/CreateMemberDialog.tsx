@@ -65,7 +65,7 @@ export function CreateMemberDialog({
             value={name}
             error-text={nameError}
             style={{ width: '100%' }}
-            onInput={(e: Event) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}
+            onInput={(e) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}
           ></mdui-text-field>
         </div>
 
@@ -77,7 +77,7 @@ export function CreateMemberDialog({
             value={bio}
             rows={3}
             style={{ width: '100%' }}
-            onInput={(e: Event) => setBio((e.target as HTMLInputElement).value)}
+            onInput={(e) => setBio((e.target as HTMLInputElement).value)}
           ></mdui-text-field>
         </div>
 
@@ -88,7 +88,7 @@ export function CreateMemberDialog({
             placeholder="如：TA / 她 / 他"
             value={pronouns}
             style={{ width: '100%' }}
-            onInput={(e: Event) => setPronouns((e.target as HTMLInputElement).value)}
+            onInput={(e) => setPronouns((e.target as HTMLInputElement).value)}
           ></mdui-text-field>
         </div>
 
@@ -145,7 +145,7 @@ export function CreateMemberDialog({
               label="分组名称"
               value={newGroupInput}
               style={{ width: '100%', marginBottom: 12 }}
-              onInput={(e: Event) => setNewGroupInput((e.target as HTMLInputElement).value)}
+              onInput={(e) => setNewGroupInput((e.target as HTMLInputElement).value)}
             ></mdui-text-field>
             <mdui-text-field
               label="分组描述"

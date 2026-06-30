@@ -79,7 +79,7 @@ export function CreateGroupDialog({
                 value={groupName}
                 error-text={nameError}
                 style={{ width: '100%' }}
-                onInput={(e: Event) => { setGroupName((e.target as HTMLInputElement).value); setNameError(''); }}
+                onInput={(e) => { setGroupName((e.target as HTMLInputElement).value); setNameError(''); }}
               ></mdui-text-field>
             </div>
 

@@ -50,10 +50,11 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
   }, []);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%' }}>
+    <>
       <SubPageScaffold
         title="成员管理"
         onBack={onBack}
+        fab={<mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreate(true)}></mdui-fab>}
         actions={
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {!showSearchBar ? (
@@ -204,8 +205,6 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
         </div>
       </SubPageScaffold>
 
-      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreate(true)}></mdui-fab>
-
       {/* 删除确认对话框 */}
       {deleteTarget && (
         <div
@@ -223,7 +222,7 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
           <mdui-dialog
             open
             headline="删除成员"
-            onClose={() => setDeleteTarget(null)}
+            on-close={() => setDeleteTarget(null)}
             style={{ maxWidth: 360 }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
@@ -270,7 +269,7 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 

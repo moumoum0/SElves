@@ -204,7 +204,7 @@ export function DynamicDetailPage({
               value={commentText}
               style={{ flex: 1 }}
               maxlength={1000}
-              onInput={(e: Event) =>
+              onInput={(e) =>
                 setCommentText((e.target as HTMLInputElement).value)
               }
             ></mdui-text-field>

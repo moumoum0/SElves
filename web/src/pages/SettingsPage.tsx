@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SubPageScaffold } from './SubPageScaffold';
 import { applyAndroidColorScheme, type ColorSchemeName } from '../theme/androidColors';
 import { ImportBackupWarningDialog } from '../components/BackupDialogs';
+import { getApiToken, setApiToken, getApiBaseUrl, setApiBaseUrl } from '../lib/api';
 
 function useDialogClose<T extends HTMLElement>(open: boolean, onClose: () => void) {
   const ref = useRef<T>(null);
@@ -49,6 +50,8 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
   const [isBackupLoading, setIsBackupLoading] = useState(false);
   const [showImportWarning, setShowImportWarning] = useState(false);
   const [isSpImportLoading, setIsSpImportLoading] = useState(false);
+  const [apiToken, setApiTokenState] = useState(() => getApiToken());
+  const [apiUrl, setApiUrlState] = useState(() => getApiBaseUrl());
 
   const handleThemeChange = (mode: string) => {
     setThemeMode(mode);
@@ -94,7 +97,40 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
         <div style={{ height: 16 }} />
         <SettingsGroupTitle>Web 访问</SettingsGroupTitle>
         <SettingsSwitchItem icon="wifi" title="开启 Web 访问" subtitle="通过局域网浏览器访问 Selves 数据" checked={webServerEnabled} onChange={setWebServerEnabled} />
-        {webServerEnabled && <WebAccessInfoCard url={baseUrl} />}
+        {webServerEnabled && (
+          <>
+            <div style={{ padding: '8px 4px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <mdui-text-field
+                label="API 地址"
+                value={apiUrl}
+                onInput={(e) => {
+                  const val = (e.target as unknown as HTMLInputElement).value;
+                  setApiUrlState(val);
+                  setApiBaseUrl(val);
+                }}
+                placeholder="http://192.168.x.x:8080"
+                style={{ width: '100%' }}
+              />
+              <mdui-text-field
+                label="访问令牌 (Token)"
+                value={apiToken}
+                onInput={(e) => {
+                  const val = (e.target as unknown as HTMLInputElement).value.toUpperCase();
+                  setApiTokenState(val);
+                  setApiToken(val);
+                  // 如果输入了 6 位 token，标记为已配置
+                  if (val.length === 6) {
+                    localStorage.setItem('selves-token-configured', 'true');
+                  }
+                }}
+                placeholder="例如：A3B7K9"
+                helper="6位字母+数字组合"
+                style={{ width: '100%' }}
+              />
+            </div>
+            <WebAccessInfoCard url={apiUrl} />
+          </>
+        )}
 
         {/* 其他分组 */}
         <div style={{ height: 16 }} />
@@ -256,6 +292,19 @@ function SettingsItemWithProgress({
 
 function WebAccessInfoCard({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!url) { setQrDataUrl(null); return; }
+    let cancelled = false;
+    import('qrcode').then((QRCode) => {
+      if (cancelled) return;
+      QRCode.toDataURL(url, { width: 180, margin: 1, color: { dark: '#000000', light: '#ffffff' } })
+        .then((dataUrl: string) => { if (!cancelled) setQrDataUrl(dataUrl); })
+        .catch(() => { if (!cancelled) setQrDataUrl(null); });
+    });
+    return () => { cancelled = true; };
+  }, [url]);
 
   const handleCopy = async () => {
     try {
@@ -292,7 +341,7 @@ function WebAccessInfoCard({ url }: { url: string }) {
             {url || '未配置接口地址'}
           </div>
         </div>
-        <mdui-button-icon icon="content_copy" onClick={handleCopy} />
+        <mdui-button-icon icon={copied ? 'check' : 'content_copy'} onClick={handleCopy} />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 12 }}>
         <div style={{ fontSize: 11, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 8 }}>
@@ -303,13 +352,17 @@ function WebAccessInfoCard({ url }: { url: string }) {
             width: 180,
             height: 180,
             borderRadius: 8,
-            backgroundColor: 'rgb(var(--mdui-color-surface))',
+            backgroundColor: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
-          <mdui-icon name="qr_code_2" style={{ fontSize: 80, color: 'rgb(var(--mdui-color-primary))' }} />
+          {qrDataUrl
+            ? <img src={qrDataUrl} alt="QR Code" style={{ width: 180, height: 180 }} />
+            : <mdui-icon name="qr_code_2" style={{ fontSize: 80, color: 'rgb(var(--mdui-color-primary))' }} />
+          }
         </div>
         <div style={{ fontSize: 11, color: 'rgb(var(--mdui-color-on-surface-variant))', marginTop: 8 }}>
           确保设备与手机在同一局域网

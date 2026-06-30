@@ -179,7 +179,7 @@ function EditGroupInfoDialog({ group, onDismiss, onConfirm }: { group: ChatGroup
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
-          <mdui-text-field label="群名称" value={name} error-text={nameError} style={{ width: '100%' }} onInput={(e: Event) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}></mdui-text-field>
+          <mdui-text-field label="群名称" value={name} error-text={nameError} style={{ width: '100%' }} onInput={(e) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}></mdui-text-field>
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={onDismiss}>取消</button>

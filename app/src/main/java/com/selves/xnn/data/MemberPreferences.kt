@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.TrackingConfig
@@ -36,6 +37,7 @@ class MemberPreferences(private val context: Context) {
         
         // Web 访问服务
         private val WEB_SERVER_ENABLED = booleanPreferencesKey("web_server_enabled")
+        private val WEB_API_TOKEN = stringPreferencesKey("web_api_token")
     }
     
     /**
@@ -186,13 +188,13 @@ class MemberPreferences(private val context: Context) {
             preferences[LANGUAGE] = language
         }
     }
-    
+
     /**
      * 获取 Web 服务器启用状态
      */
     val webServerEnabled: Flow<Boolean> = context.dataStore.data
         .map { preferences -> preferences[WEB_SERVER_ENABLED] ?: false }
-    
+
     /**
      * 保存 Web 服务器启用状态
      */
@@ -200,5 +202,38 @@ class MemberPreferences(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[WEB_SERVER_ENABLED] = enabled
         }
+    }
+
+    /**
+     * 获取 Web API Token
+     */
+    val webApiToken: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[WEB_API_TOKEN] }
+
+    /**
+     * 获取 Web API Token（同步阻塞，仅用于 Ktor 路由鉴权）
+     */
+    suspend fun getWebApiToken(): String? {
+        return context.dataStore.data.first()[WEB_API_TOKEN]
+    }
+
+    /**
+     * 保存 Web API Token
+     */
+    suspend fun saveWebApiToken(token: String) {
+        context.dataStore.edit { preferences ->
+            preferences[WEB_API_TOKEN] = token
+        }
+    }
+
+    /**
+     * 生成并保存新的 Web API Token
+     * 格式：6位大写字母+数字组合（如 A3B7K9）
+     */
+    suspend fun generateWebApiToken(): String {
+        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // 排除易混淆字符 0O1I
+        val token = (1..6).map { chars.random() }.joinToString("")
+        saveWebApiToken(token)
+        return token
     }
 }

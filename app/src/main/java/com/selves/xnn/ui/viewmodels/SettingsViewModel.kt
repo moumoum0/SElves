@@ -115,6 +115,12 @@ class SettingsViewModel @Inject constructor(
                 }
             }
         }
+
+        viewModelScope.launch {
+            memberPreferences.webApiToken.collect { token ->
+                _webApiToken.value = token
+            }
+        }
     }
     
     fun setThemeMode(themeMode: ThemeMode) {
@@ -331,6 +337,9 @@ class SettingsViewModel @Inject constructor(
     private val _webServerIp = MutableStateFlow(WebServerService.getLocalIpAddress())
     val webServerIp: StateFlow<String> = _webServerIp.asStateFlow()
 
+    private val _webApiToken = MutableStateFlow<String?>(null)
+    val webApiToken: StateFlow<String?> = _webApiToken.asStateFlow()
+
     val webServerUrl: String
         get() = "http://${_webServerIp.value}:${WebServerService.SERVER_PORT}"
 
@@ -343,10 +352,22 @@ class SettingsViewModel @Inject constructor(
             _webServerEnabled.value = enabled
             if (enabled) {
                 _webServerIp.value = WebServerService.getLocalIpAddress()
+                // 开启时若尚无 token，自动生成一个
+                if (memberPreferences.getWebApiToken() == null) {
+                    val token = memberPreferences.generateWebApiToken()
+                    _webApiToken.value = token
+                }
                 WebServerService.start(context)
             } else {
                 WebServerService.stop(context)
             }
+        }
+    }
+
+    fun refreshWebApiToken() {
+        viewModelScope.launch {
+            val token = memberPreferences.generateWebApiToken()
+            _webApiToken.value = token
         }
     }
 

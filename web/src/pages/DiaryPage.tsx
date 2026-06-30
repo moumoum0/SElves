@@ -113,8 +113,13 @@ export function DiaryPage({
   const isEditing = editingDiary !== null;
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
-      <SubPageScaffold title={`${currentMember.name} 的日记`} onBack={onBack} noPadding>
+    <>
+      <SubPageScaffold
+        title={`${currentMember.name} 的日记`}
+        onBack={onBack}
+        noPadding
+        fab={<mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={openCreateDialog}></mdui-fab>}
+      >
         <div style={{ padding: '0 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
           {memberDiaries.length === 0 ? (
             <div
@@ -195,9 +200,6 @@ export function DiaryPage({
           )}
         </div>
       </SubPageScaffold>
-
-      {/* FAB */}
-      <mdui-fab icon="add" style={{ position: 'fixed', right: 16, bottom: 16 }} onClick={openCreateDialog}></mdui-fab>
 
       {/* 长按底部弹窗（编辑/删除） */}
       {selectedDiary && (
@@ -290,7 +292,7 @@ export function DiaryPage({
           onConfirm={handleConfirm}
         />
       )}
-    </div>
+    </>
   );
 }
 

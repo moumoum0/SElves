@@ -164,13 +164,12 @@ export function HomePage({ data, currentMember, onMemberSwitch, onNavigate }: Ho
           }
         })}
 
-        {/* FAB 空白间距 */}
-        <div style={{ height: 80 }} />
+        {/* FAB 空白间距已移除 */}
       </div>
 
       {/* 编辑模式 FAB */}
       {isEditMode && (
-        <div style={{ position: 'fixed', right: 16, bottom: 80, zIndex: 10 }}>
+        <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 10 }}>
           <mdui-fab icon="edit" onClick={() => { /* 编辑首页布局弹窗占位 */ }}></mdui-fab>
         </div>
       )}

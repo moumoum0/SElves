@@ -1,7 +1,8 @@
 import { sampleData } from '../data/sampleData';
-import type { AppData, ChatGroup, Dynamic, Member, MemberDiary, Message, SystemInfo, Todo } from '../types/models';
+import type { AppData, ChatGroup, Dynamic, Member, MemberDiary, Message, SystemInfo, Todo, Vote, VoteRecord } from '../types/models';
 
 const API_BASE_URL_KEY = 'selves-api-base-url';
+const API_TOKEN_KEY = 'selves-api-token';
 
 export function getApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
@@ -14,6 +15,36 @@ export function setApiBaseUrl(value: string): void {
   window.localStorage.setItem(API_BASE_URL_KEY, value.replace(/\/$/, ''));
 }
 
+export function getApiToken(): string {
+  return window.localStorage.getItem(API_TOKEN_KEY) ?? '';
+}
+
+export function setApiToken(value: string): void {
+  window.localStorage.setItem(API_TOKEN_KEY, value);
+}
+
+// ===== 写入请求 =====
+
+async function mutate<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const token = getApiToken();
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export { fetchJson };
+export const postJson = <T>(path: string, body: unknown) => mutate<T>('POST', path, body);
+export const putJson = <T>(path: string, body: unknown) => mutate<T>('PUT', path, body);
+export const deleteApi = (path: string) => mutate<void>('DELETE', path);
+
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(`${getApiBaseUrl()}${path}`);
   if (!response.ok) {
@@ -22,11 +53,17 @@ async function fetchJson<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-async function fetchWithFallback<T>(path: string, fallback: T): Promise<{ data: T; live: boolean }> {
+async function fetchWithFallback<T>(path: string, fallback: T, timeoutMs = 8000): Promise<{ data: T; live: boolean }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const data = await fetchJson<T>(path);
+    const response = await fetch(`${getApiBaseUrl()}${path}`, { signal: controller.signal });
+    clearTimeout(timer);
+    if (!response.ok) throw new Error(`${response.status}`);
+    const data = (await response.json()) as T;
     return { data, live: true };
   } catch {
+    clearTimeout(timer);
     return { data: fallback, live: false };
   }
 }
@@ -52,21 +89,33 @@ export interface AppDataResponse {
   baseUrl: string;
 }
 
-export async function loadAppData(): Promise<AppDataResponse> {
-  const [systemResult, membersResult, groupsResult, todosResult, dynamicsResult, diariesResult] = await Promise.all([
+export async function loadAppData(currentMemberId?: string): Promise<AppDataResponse> {
+  // groups 一返回就立即开始拉消息，与其他接口完全并行
+  const groupsAndMessages = fetchWithFallback<ChatGroup[]>('/api/groups', sampleData.groups).then(
+    async (groupsResult) => {
+      const messageResults = await Promise.all(
+        groupsResult.data.map((group) =>
+          fetchWithFallback<Message[]>(`/api/groups/${group.id}/messages`, sampleData.groupMessages[group.id] ?? []),
+        ),
+      );
+      return { groupsResult, messageResults };
+    },
+  );
+
+  const [systemResult, membersResult, todosResult, dynamicsResult, diariesResult, votesResult] = await Promise.all([
     fetchWithFallback<SystemInfo>('/api/system', sampleData.system),
     fetchWithFallback<Member[]>('/api/members', sampleData.members),
-    fetchWithFallback<ChatGroup[]>('/api/groups', sampleData.groups),
     fetchWithFallback<Todo[]>('/api/todos', sampleData.todos),
     fetchWithFallback<Dynamic[]>('/api/dynamics', sampleData.dynamics),
     fetchWithFallback<MemberDiary[]>('/api/diaries', sampleData.diaries),
+    fetchWithFallback<Vote[]>(
+      currentMemberId ? `/api/votes?userId=${encodeURIComponent(currentMemberId)}` : '/api/votes',
+      sampleData.votes,
+    ),
   ]);
 
+  const { groupsResult, messageResults } = await groupsAndMessages;
   const groups = groupsResult.data;
-
-  const messageResults = await Promise.all(
-    groups.map((group) => fetchWithFallback<Message[]>(`/api/groups/${group.id}/messages`, sampleData.groupMessages[group.id] ?? [])),
-  );
 
   const groupMessages = normalizeMessageMap(
     groups,
@@ -80,6 +129,7 @@ export async function loadAppData(): Promise<AppDataResponse> {
     todosResult,
     dynamicsResult,
     diariesResult,
+    votesResult,
     ...messageResults,
   ].some((result) => !result.live);
 
@@ -94,8 +144,9 @@ export async function loadAppData(): Promise<AppDataResponse> {
       unreadCounts: buildUnreadCounts(groups, groupMessages),
       todos: todosResult.data,
       dynamics: dynamicsResult.data,
-      votes: sampleData.votes,
-      voteRecords: sampleData.voteRecords,
+      dynamicComments: [],
+      votes: votesResult.data,
+      voteRecords: [],
       diaries: diariesResult.data,
       tracking: sampleData.tracking,
     },

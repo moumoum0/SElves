@@ -42,12 +42,11 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
   }, []);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%' }}>
+    <div style={{ position: 'relative', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* TopAppBar */}
       <mdui-top-app-bar
         style={{
-          position: 'sticky',
-          top: 0,
+          flexShrink: 0,
           zIndex: 10,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderBottom: '1px solid rgba(var(--mdui-color-outline-variant), 0.35)',
@@ -60,6 +59,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
       </mdui-top-app-bar>
 
       {/* 主要内容 */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
       <div style={{ padding: 16 }}>
         {/* 统计卡片 */}
         {stats.total > 0 ? (
@@ -201,12 +201,13 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
           </div>
         )}
       </div>
+      </div>
 
       {/* FAB */}
       <mdui-fab
         icon="add"
         onClick={() => setShowCreateDialog(true)}
-        style={{ position: 'fixed', right: 24, bottom: 24 }}
+        style={{ position: 'absolute', right: 24, bottom: 24 }}
       ></mdui-fab>
 
       {/* ─── 创建待办对话框 ─── */}
@@ -297,7 +298,7 @@ function TodoCard({
     <mdui-card
       variant="filled"
       style={{ borderRadius: 12, padding: 0, boxShadow: 'none' }}
-      onContextMenu={(e: MouseEvent) => {
+      onContextMenu={(e) => {
         e.preventDefault();
         onLongPress();
       }}
@@ -481,7 +482,7 @@ function CreateTodoDialog({
           label="标题"
           value={title}
           style={{ width: '100%', marginBottom: 8 }}
-          onInput={(e: Event) => {
+          onInput={(e) => {
             setTitle((e.target as HTMLInputElement).value);
             setShowTitleError(false);
           }}
@@ -506,7 +507,7 @@ function CreateTodoDialog({
           value={description}
           style={{ width: '100%', marginBottom: 8 }}
           rows={3}
-          onInput={(e: Event) =>
+          onInput={(e) =>
             setDescription((e.target as HTMLInputElement).value)
           }
         ></mdui-text-field>

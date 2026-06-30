@@ -30,9 +30,9 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
   }, [votes, filterActive, searchQuery]);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%', backgroundColor: 'rgb(var(--mdui-color-surface))' }}>
+    <div style={{ position: 'relative', height: '100%', overflow: 'hidden', backgroundColor: 'rgb(var(--mdui-color-surface))', display: 'flex', flexDirection: 'column' }}>
       {/* TopBar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'rgb(var(--mdui-color-surface))' }}>
+      <div style={{ flexShrink: 0, zIndex: 10, backgroundColor: 'rgb(var(--mdui-color-surface))' }}>
         {/* AppBar */}
         <div
           style={{
@@ -104,7 +104,7 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
       </div>
 
       {/* Content */}
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
         {filteredVotes.length === 0 ? (
           <div
             style={{
@@ -138,7 +138,7 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
 
       <mdui-fab
         icon="add"
-        style={{ position: 'fixed', right: 16, bottom: 16 }}
+        style={{ position: 'absolute', right: 16, bottom: 16 }}
         onClick={onNavigateToCreateVote}
       ></mdui-fab>
     </div>

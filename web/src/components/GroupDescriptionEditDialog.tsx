@@ -107,7 +107,7 @@ export function GroupDescriptionEditDialog({
             value={name}
             error-text={nameError}
             style={{ width: '100%' }}
-            onInput={(e: Event) => {
+            onInput={(e) => {
               setName((e.target as HTMLInputElement).value.replace(/\n/g, ''));
               setNameError('');
             }}
@@ -122,7 +122,7 @@ export function GroupDescriptionEditDialog({
             value={description}
             rows={4}
             style={{ width: '100%' }}
-            onInput={(e: Event) => setDescription((e.target as HTMLInputElement).value)}
+            onInput={(e) => setDescription((e.target as HTMLInputElement).value)}
           />
         </div>
 

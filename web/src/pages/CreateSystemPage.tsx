@@ -198,8 +198,8 @@ export function CreateSystemPage({ onBack, onConfirm }: CreateSystemPageProps) {
           placeholder="请输入系统名称"
           value={name}
           style={{ width: '100%' }}
-          onInput={(e: Event) => setName((e.target as HTMLInputElement).value)}
-          onKeyDown={(e: KeyboardEvent) => {
+          onInput={(e) => setName((e.target as HTMLInputElement).value)}
+          onKeyDown={(e) => {
             if (e.key === 'Enter' && canCreate) handleCreate();
           }}
         />

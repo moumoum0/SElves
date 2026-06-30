@@ -52,7 +52,7 @@ export function SystemEditDialog({ system, onDismiss, onConfirm }: SystemEditDia
             value={name}
             error-text={nameError}
             style={{ width: '100%' }}
-            onInput={(e: Event) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}
+            onInput={(e) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}
           ></mdui-text-field>
         </div>
 
@@ -64,7 +64,7 @@ export function SystemEditDialog({ system, onDismiss, onConfirm }: SystemEditDia
             value={description}
             rows={4}
             style={{ width: '100%' }}
-            onInput={(e: Event) => setDescription((e.target as HTMLInputElement).value)}
+            onInput={(e) => setDescription((e.target as HTMLInputElement).value)}
           ></mdui-text-field>
         </div>
 
