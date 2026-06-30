@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { TextField } from '../ui/components/TextField';
+import { Checkbox } from '../ui/components/Checkbox';
 
 interface CreateGroupDialogProps {
   availableMembers: Member[];
@@ -65,7 +68,7 @@ export function CreateGroupDialog({
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer',
               }}>
-                <mdui-icon name="photo_camera" style={{ fontSize: 32, color: 'rgb(var(--mdui-color-primary))' }}></mdui-icon>
+                <Icon style={{ fontSize: 32, color: 'rgb(var(--mdui-color-primary))' }}>photo_camera</Icon>
               </div>
             </div>
             <div style={{ textAlign: 'center', fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 20 }}>
@@ -74,13 +77,13 @@ export function CreateGroupDialog({
 
             {/* 群名 */}
             <div style={{ marginBottom: 20 }}>
-              <mdui-text-field
+              <TextField
                 label="群名称"
                 value={groupName}
-                error-text={nameError}
+                supportingText={nameError}
                 style={{ width: '100%' }}
-                onInput={(e) => { setGroupName((e.target as HTMLInputElement).value); setNameError(''); }}
-              ></mdui-text-field>
+                onChange={(val) => { setGroupName(val); setNameError(''); }}
+              />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -103,7 +106,7 @@ export function CreateGroupDialog({
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: isSelf ? 'default' : 'pointer' }}
                     onClick={() => toggleMember(m.id)}
                   >
-                    <mdui-checkbox checked={checked} disabled={isSelf}></mdui-checkbox>
+                    <Checkbox checked={checked} disabled={isSelf}></Checkbox>
                     <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>

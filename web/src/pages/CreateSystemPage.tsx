@@ -1,4 +1,7 @@
 import { useRef, useState } from 'react';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
+import { TextField } from '../ui/components/TextField';
 
 interface CreateSystemPageProps {
   onBack: () => void;
@@ -65,7 +68,7 @@ export function CreateSystemPage({ onBack, onConfirm }: CreateSystemPageProps) {
             padding: '0 4px',
           }}
         >
-          <mdui-button-icon icon="close" onClick={onBack} />
+          <IconButton onClick={onBack}><md-icon>close</md-icon></IconButton>
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px', overflow: 'hidden' }}>
             <div
               style={{
@@ -146,13 +149,12 @@ export function CreateSystemPage({ onBack, onConfirm }: CreateSystemPageProps) {
               />
             ) : (
               <>
-                <mdui-icon
-                  name="account_circle"
+                <Icon
                   style={{
                     fontSize: 48,
                     color: 'rgb(var(--mdui-color-on-surface-variant))',
                   }}
-                />
+                >account_circle</Icon>
                 <div
                   style={{
                     fontSize: 12,
@@ -182,23 +184,22 @@ export function CreateSystemPage({ onBack, onConfirm }: CreateSystemPageProps) {
               justifyContent: 'center',
             }}
           >
-            <mdui-icon
-              name="photo_camera"
+            <Icon
               style={{
                 fontSize: 18,
                 color: 'rgb(var(--mdui-color-surface))',
               }}
-            />
+            >photo_camera</Icon>
           </div>
         </div>
 
         {/* 系统名称输入 */}
-        <mdui-text-field
+        <TextField
           label="系统名称"
           placeholder="请输入系统名称"
           value={name}
           style={{ width: '100%' }}
-          onInput={(e) => setName((e.target as HTMLInputElement).value)}
+          onChange={(val) => setName(val)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && canCreate) handleCreate();
           }}

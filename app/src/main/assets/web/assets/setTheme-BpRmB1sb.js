@@ -1,1 +1,0 @@
-import{$ as a}from"./index-BQdJOb2w.js";const c=(t,o=document.documentElement)=>{const m=a(o),s=["light","dark","auto"],e="mdui-theme-";m.removeClass(s.map(n=>e+n).join(" ")).addClass(e+t)};export{c as setTheme};

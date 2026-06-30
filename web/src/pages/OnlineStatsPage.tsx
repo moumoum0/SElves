@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MemberAvatar } from '../components/MemberAvatar';
 import type { Member } from '../types/models';
+import { Card } from '../ui/components/Card';
+import { Chip } from '../ui/components/Chip';
+import { CircularProgress } from '../ui/components/Progress';
+import { Tab, Tabs } from '../ui/components/Tabs';
 import { SubPageScaffold } from './SubPageScaffold';
 
 interface OnlineStatsPageProps {
@@ -118,31 +122,19 @@ export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsP
     [filter, logs]
   );
 
-  const tabsRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const el = tabsRef.current;
-    if (!el) return;
-    const handler = (e: Event) => {
-      const val = Number((e.target as any).value);
-      if (!Number.isNaN(val)) setTab(val);
-    };
-    el.addEventListener('change', handler);
-    return () => el.removeEventListener('change', handler);
-  }, []);
-
   return (
     <SubPageScaffold title="在线统计" onBack={onBack}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <mdui-tabs ref={tabsRef} value={String(tab)}>
-          <mdui-tab value="0">在线状态</mdui-tab>
-          <mdui-tab value="1">在线时长</mdui-tab>
-          <mdui-tab value="2">登录日志</mdui-tab>
-        </mdui-tabs>
+        <Tabs activeIndex={tab} onChange={setTab}>
+          <Tab>在线状态</Tab>
+          <Tab>在线时长</Tab>
+          <Tab>登录日志</Tab>
+        </Tabs>
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {isLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <mdui-circular-progress />
+              <CircularProgress />
             </div>
           ) : (
             <div style={{ padding: 16 }}>
@@ -170,7 +162,7 @@ export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsP
                   <FilterChips selected={filter} onChange={setFilter} />
                   {isLoadingLogs ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-                      <mdui-circular-progress />
+                      <CircularProgress />
                     </div>
                   ) : (
                     <>
@@ -178,11 +170,11 @@ export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsP
                         <LoginLogItem key={idx} log={log} />
                       ))}
                       {filteredLogs.length === 0 && (
-                        <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
+                        <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
                           <div style={{ padding: 32, textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))', fontSize: 14 }}>
                             暂无登录日志
                           </div>
-                        </mdui-card>
+                        </Card>
                       )}
                     </>
                   )}
@@ -243,7 +235,7 @@ function OnlineStatItem({ stat, isCurrent }: { stat: MemberOnlineStat; isCurrent
 
 function OnlineTimeStatItem({ stat, isCurrent }: { stat: MemberOnlineStat; isCurrent: boolean }) {
   return (
-    <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
+    <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
         <MemberAvatar name={stat.member.name} avatarUrl={stat.member.avatarUrl} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -269,13 +261,13 @@ function OnlineTimeStatItem({ stat, isCurrent }: { stat: MemberOnlineStat; isCur
           {formatOnlineTime(stat.todayOnlineMinutes)}
         </span>
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
 function LoginLogSummaryCard({ summary }: { summary: LoginLogSummary }) {
   return (
-    <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))', padding: 16 }}>
+    <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))', padding: 16 }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 12 }}>登录统计</div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <SummaryItem title="总登录" value={String(summary.totalLogins)} color="rgb(var(--mdui-color-primary))" />
@@ -285,7 +277,7 @@ function LoginLogSummaryCard({ summary }: { summary: LoginLogSummary }) {
       <div style={{ marginTop: 8, fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
         今日平均在线时长: {formatDuration(summary.averageOnlineTime)}
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -301,15 +293,15 @@ function SummaryItem({ title, value, color }: { title: string; value: string; co
 function FilterChips({ selected, onChange }: { selected: 'ALL' | 'TODAY'; onChange: (v: 'ALL' | 'TODAY') => void }) {
   return (
     <div style={{ display: 'flex', gap: 8 }}>
-      <mdui-chip selectable selected={selected === 'ALL'} onClick={() => onChange('ALL')}>全部</mdui-chip>
-      <mdui-chip selectable selected={selected === 'TODAY'} onClick={() => onChange('TODAY')}>今天</mdui-chip>
+      <Chip selectable selected={selected === 'ALL'} onClick={() => onChange('ALL')}>全部</Chip>
+      <Chip selectable selected={selected === 'TODAY'} onClick={() => onChange('TODAY')}>今天</Chip>
     </div>
   );
 }
 
 function LoginLogItem({ log }: { log: LoginLog }) {
   return (
-    <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
+    <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
         <MemberAvatar name={log.memberName} avatarUrl={log.memberAvatar} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -338,6 +330,6 @@ function LoginLogItem({ log }: { log: LoginLog }) {
           ) : null}
         </div>
       </div>
-    </mdui-card>
+    </Card>
   );
 }

@@ -28,6 +28,7 @@ import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
 import com.selves.xnn.utils.LanguageManager
+import com.selves.xnn.service.WebServerService
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import android.content.Context
@@ -81,6 +82,13 @@ class MainActivity : ComponentActivity() {
             
             LaunchedEffect(Unit) {
                 memberPreferences.colorScheme.collect { colorScheme = it }
+            }
+
+            // 应用启动时恢复 Web 服务器（进程被杀后服务不会自动恢复）
+            LaunchedEffect(Unit) {
+                if (memberPreferences.webServerEnabled.first()) {
+                    WebServerService.start(this@MainActivity)
+                }
             }
             
             SelvesTheme(

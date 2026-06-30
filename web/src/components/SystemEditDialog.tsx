@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { SystemInfo } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { TextField } from '../ui/components/TextField';
 
 interface SystemEditDialogProps {
   system: SystemInfo;
@@ -40,32 +42,32 @@ export function SystemEditDialog({ system, onDismiss, onConfirm }: SystemEditDia
               backgroundColor: 'rgb(var(--mdui-color-primary))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <mdui-icon name="photo_camera" style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-primary))' }}></mdui-icon>
+              <Icon style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-primary))' }}>photo_camera</Icon>
             </div>
           </div>
         </div>
 
         {/* 系统名称 */}
         <div style={{ marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="系统名称"
             value={name}
             error-text={nameError}
             style={{ width: '100%' }}
-            onInput={(e) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}
-          ></mdui-text-field>
+            onChange={(val) => { setName(val); setNameError(''); }}
+          />
         </div>
 
         {/* 系统简介 */}
         <div style={{ marginBottom: 20 }}>
-          <mdui-text-field
+          <TextField
             label="系统简介"
             placeholder="添加系统描述..."
             value={description}
             rows={4}
             style={{ width: '100%' }}
-            onInput={(e) => setDescription((e.target as HTMLInputElement).value)}
-          ></mdui-text-field>
+            onChange={(val) => setDescription(val)}
+          />
         </div>
 
         {/* 按钮 */}

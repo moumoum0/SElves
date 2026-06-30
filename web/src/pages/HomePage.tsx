@@ -3,6 +3,12 @@ import type { NavigateFunction } from 'react-router-dom';
 import { MemberHeader } from '../components/MemberHeader';
 import { formatDynamicTime, formatTimestamp, formatVoteRemaining } from '../lib/utils';
 import type { AppData, Dynamic, Member, MemberDiary, Todo, Vote } from '../types/models';
+import { Button } from '../ui/components/Button';
+import { Card } from '../ui/components/Card';
+import { Checkbox } from '../ui/components/Checkbox';
+import { FAB } from '../ui/components/FAB';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
 
 interface HomePageProps {
   data: AppData;
@@ -83,12 +89,12 @@ export function HomePage({ data, currentMember, onMemberSwitch, onNavigate }: Ho
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
-            <mdui-icon name="edit" style={{ fontSize: 18 }}></mdui-icon>
+            <Icon style={{ fontSize: 18 }}>edit</Icon>
             <span>编辑模式</span>
           </div>
-          <mdui-button variant="text" onClick={() => setIsEditMode(false)} style={{ color: 'rgb(var(--mdui-color-on-primary-container))' }}>
+          <Button variant="text" onClick={() => setIsEditMode(false)} style={{ color: 'rgb(var(--mdui-color-on-primary-container))' }}>
             完成
-          </mdui-button>
+          </Button>
         </div>
       )}
 
@@ -170,7 +176,7 @@ export function HomePage({ data, currentMember, onMemberSwitch, onNavigate }: Ho
       {/* 编辑模式 FAB */}
       {isEditMode && (
         <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 10 }}>
-          <mdui-fab icon="edit" onClick={() => { /* 编辑首页布局弹窗占位 */ }}></mdui-fab>
+          <FAB icon="edit" onClick={() => { /* 编辑首页布局弹窗占位 */ }} />
         </div>
       )}
     </div>
@@ -192,7 +198,7 @@ function FunctionModulesSection({
   enabledModules: Record<string, boolean>;
 }) {
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         padding: 16,
@@ -207,10 +213,10 @@ function FunctionModulesSection({
           {MODULE_TITLES.functions}
         </span>
         {isEditMode && (
-          <mdui-button variant="text" onClick={onEditClick} style={{ fontSize: 14, padding: '0 8px' }}>
-            <mdui-icon name="settings" style={{ fontSize: 18, marginRight: 4 }}></mdui-icon>
+          <Button variant="text" onClick={onEditClick} style={{ fontSize: 14, padding: '0 8px' }}>
+            <Icon style={{ fontSize: 18, marginRight: 4 }}>settings</Icon>
             编辑
-          </mdui-button>
+          </Button>
         )}
       </div>
       <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' }}>
@@ -238,7 +244,7 @@ function FunctionModulesSection({
               position: 'relative',
             }}
           >
-            <mdui-icon name={m.icon} style={{ fontSize: 32, color: 'rgb(var(--mdui-color-on-surface))' }}></mdui-icon>
+            <Icon style={{ fontSize: 32, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.icon}</Icon>
             <span style={{ fontSize: 14, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.label}</span>
             {isEditMode && (
               <div
@@ -262,13 +268,13 @@ function FunctionModulesSection({
                   fontSize: 12,
                 }}
               >
-                <mdui-icon name="close" style={{ fontSize: 14 }}></mdui-icon>
+                <Icon style={{ fontSize: 14 }}>close</Icon>
               </div>
             )}
           </div>
         ))}
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -293,7 +299,7 @@ function LocationTrackingSection({
     : '--:--';
 
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         padding: 16,
@@ -309,7 +315,7 @@ function LocationTrackingSection({
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {isEditMode ? (
-            <mdui-button-icon icon="close" onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}></mdui-button-icon>
+            <IconButton onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}><md-icon>close</md-icon></IconButton>
           ) : (
             <>
               <div
@@ -321,7 +327,7 @@ function LocationTrackingSection({
                 }}
               />
               <span style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{statusText}</span>
-              <mdui-button-icon icon="chevron_right" onClick={onNavigateToLocation} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-button-icon>
+              <IconButton onClick={onNavigateToLocation} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}><md-icon>chevron_right</md-icon></IconButton>
             </>
           )}
         </div>
@@ -334,14 +340,14 @@ function LocationTrackingSection({
           <LocationStatItem label="最近" value={lastTime} icon="schedule" />
         </div>
       )}
-    </mdui-card>
+    </Card>
   );
 }
 
 function LocationStatItem({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-      <mdui-icon name={icon} style={{ fontSize: 20, color: 'rgb(var(--mdui-color-primary))' }}></mdui-icon>
+      <Icon style={{ fontSize: 20, color: 'rgb(var(--mdui-color-primary))' }}>{icon}</Icon>
       <span style={{ fontSize: 16, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))' }}>{value}</span>
       <span style={{ fontSize: 11, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{label}</span>
     </div>
@@ -363,7 +369,7 @@ function TodoSection({
   onEditClick: () => void;
 }) {
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         padding: 16,
@@ -378,9 +384,9 @@ function TodoSection({
           {MODULE_TITLES.todo}
         </span>
         {isEditMode ? (
-          <mdui-button-icon icon="close" onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}></mdui-button-icon>
+          <IconButton onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}><md-icon>close</md-icon></IconButton>
         ) : (
-          <mdui-button-icon icon="chevron_right" onClick={onNavigateToTodo} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-button-icon>
+          <IconButton onClick={onNavigateToTodo} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}><md-icon>chevron_right</md-icon></IconButton>
         )}
       </div>
 
@@ -388,7 +394,7 @@ function TodoSection({
         <div style={{ marginTop: 8 }}>
           {pendingTodos.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
-              <mdui-icon name="assignment" style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}></mdui-icon>
+              <Icon style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}>assignment</Icon>
               <div style={{ fontSize: 15 }}>暂无待办</div>
               <div style={{ fontSize: 13, opacity: 0.6, marginTop: 6 }}>点击创建待办事项</div>
             </div>
@@ -409,7 +415,7 @@ function TodoSection({
           )}
         </div>
       )}
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -474,7 +480,7 @@ function TodoItem({ todo }: { todo: Todo }) {
         </div>
       )}
 
-      <mdui-checkbox checked={todo.isCompleted} disabled style={{ flexShrink: 0 }}></mdui-checkbox>
+      <Checkbox checked={todo.isCompleted} disabled style={{ flexShrink: 0 }} />
     </div>
   );
 }
@@ -492,7 +498,7 @@ function DynamicSection({
   onEditClick: () => void;
 }) {
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         padding: 16,
@@ -507,9 +513,9 @@ function DynamicSection({
           {MODULE_TITLES.dynamic}
         </span>
         {isEditMode ? (
-          <mdui-button-icon icon="close" onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}></mdui-button-icon>
+          <IconButton onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}><md-icon>close</md-icon></IconButton>
         ) : (
-          <mdui-button-icon icon="chevron_right" onClick={onNavigateToDynamic} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-button-icon>
+          <IconButton onClick={onNavigateToDynamic} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}><md-icon>chevron_right</md-icon></IconButton>
         )}
       </div>
 
@@ -517,7 +523,7 @@ function DynamicSection({
         <div style={{ marginTop: 8 }}>
           {dynamics.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
-              <mdui-icon name="timeline" style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}></mdui-icon>
+              <Icon style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}>timeline</Icon>
               <div style={{ fontSize: 15 }}>暂无动态</div>
               <div style={{ fontSize: 13, opacity: 0.6, marginTop: 6 }}>点击创建动态</div>
             </div>
@@ -538,7 +544,7 @@ function DynamicSection({
           )}
         </div>
       )}
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -577,7 +583,7 @@ function VoteSection({
   onEditClick: () => void;
 }) {
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         padding: 16,
@@ -592,9 +598,9 @@ function VoteSection({
           {MODULE_TITLES.vote}
         </span>
         {isEditMode ? (
-          <mdui-button-icon icon="close" onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}></mdui-button-icon>
+          <IconButton onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}><md-icon>close</md-icon></IconButton>
         ) : (
-          <mdui-button-icon icon="chevron_right" onClick={onNavigateToVote} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-button-icon>
+          <IconButton onClick={onNavigateToVote} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}><md-icon>chevron_right</md-icon></IconButton>
         )}
       </div>
 
@@ -602,7 +608,7 @@ function VoteSection({
         <div style={{ marginTop: 8 }}>
           {votes.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
-              <mdui-icon name="poll" style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}></mdui-icon>
+              <Icon style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}>poll</Icon>
               <div style={{ fontSize: 15 }}>暂无投票</div>
               <div style={{ fontSize: 13, opacity: 0.6, marginTop: 6 }}>点击创建投票</div>
             </div>
@@ -623,7 +629,7 @@ function VoteSection({
           )}
         </div>
       )}
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -669,7 +675,7 @@ function DiarySection({
   onEditClick: () => void;
 }) {
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         padding: 16,
@@ -684,9 +690,9 @@ function DiarySection({
           {MODULE_TITLES.diary}
         </span>
         {isEditMode ? (
-          <mdui-button-icon icon="close" onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}></mdui-button-icon>
+          <IconButton onClick={onEditClick} style={{ color: 'rgb(var(--mdui-color-error))' }}><md-icon>close</md-icon></IconButton>
         ) : (
-          <mdui-button-icon icon="chevron_right" onClick={onNavigateToDiary} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-button-icon>
+          <IconButton onClick={onNavigateToDiary} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))' }}><md-icon>chevron_right</md-icon></IconButton>
         )}
       </div>
 
@@ -694,7 +700,7 @@ function DiarySection({
         <div style={{ marginTop: 8 }}>
           {recentDiaries.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
-              <mdui-icon name="menu_book" style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}></mdui-icon>
+              <Icon style={{ fontSize: 48, opacity: 0.5, display: 'block', margin: '0 auto 12px' }}>menu_book</Icon>
               <div style={{ fontSize: 15 }}>暂无日记</div>
               <div style={{ fontSize: 13, opacity: 0.6, marginTop: 6 }}>点击新建日记</div>
             </div>
@@ -757,6 +763,6 @@ function DiarySection({
           )}
         </div>
       )}
-    </mdui-card>
+    </Card>
   );
 }

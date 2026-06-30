@@ -1,20 +1,18 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { SubPageScaffold } from './SubPageScaffold';
 import { applyAndroidColorScheme, type ColorSchemeName } from '../theme/androidColors';
+import { setThemeMode as applyThemeMode } from '../ui/theme/themeManager';
 import { ImportBackupWarningDialog } from '../components/BackupDialogs';
 import { getApiToken, setApiToken, getApiBaseUrl, setApiBaseUrl } from '../lib/api';
-
-function useDialogClose<T extends HTMLElement>(open: boolean, onClose: () => void) {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !open) return;
-    const handler = () => onClose();
-    el.addEventListener('close', handler);
-    return () => el.removeEventListener('close', handler);
-  }, [open, onClose]);
-  return ref;
-}
+import { Switch } from '../ui/components/Switch';
+import { Radio } from '../ui/components/Radio';
+import { TextField } from '../ui/components/TextField';
+import { CircularProgress } from '../ui/components/Progress';
+import { Dialog } from '../ui/components/Dialog';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
+import { Card } from '../ui/components/Card';
+import { List, ListItem } from '../ui/components/List';
 
 interface SettingsPageProps {
   baseUrl: string;
@@ -55,10 +53,7 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
 
   const handleThemeChange = (mode: string) => {
     setThemeMode(mode);
-    window.localStorage.setItem('selves-theme', mode);
-    import('mdui/functions/setTheme.js').then(({ setTheme }) => {
-      setTheme(mode as 'light' | 'dark' | 'auto');
-    });
+    applyThemeMode(mode as 'light' | 'dark' | 'auto');
     setShowThemeDialog(false);
   };
 
@@ -85,52 +80,47 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
         <SettingsItem icon="palette" title="颜色与个性化" subtitle={COLOR_LABELS[colorScheme] ?? '应用默认'} onClick={() => setShowColorDialog(true)} />
         <SettingsSwitchItem icon="swap_horiz" title="快捷切换成员" subtitle="在投票和聊天界面显示快捷成员切换" checked={quickSwitch} onChange={setQuickSwitch} />
 
-        {/* 数据与备份分组 */}
-        <div style={{ height: 16 }} />
+        {/* ===== 数据与备份（已注释） ===== */}
+        {/* <div style={{ height: 16 }} />
         <SettingsGroupTitle>数据与备份</SettingsGroupTitle>
         <SettingsItem icon="schedule" title="定时备份" subtitle="设置自动备份频率和时间" onClick={() => {}} />
         <SettingsItemWithProgress icon="file_upload" title="导出备份" subtitle="备份应用数据到文件" isLoading={isBackupLoading} onClick={() => setIsBackupLoading(true)} />
         <SettingsItemWithProgress icon="file_download" title="导入备份" subtitle="从文件恢复应用数据" isLoading={isBackupLoading} onClick={() => setShowImportWarning(true)} />
-        <SettingsItemWithProgress icon="file_download" title="从 SimplyPlural 导入" subtitle="导入 SimplyPlural 导出的 JSON 文件" isLoading={isSpImportLoading} onClick={() => setIsSpImportLoading(true)} />
+        <SettingsItemWithProgress icon="file_download" title="从 SimplyPlural 导入" subtitle="导入 SimplyPlural 导出的 JSON 文件" isLoading={isSpImportLoading} onClick={() => setIsSpImportLoading(true)} /> */}
 
-        {/* Web 访问分组 */}
-        <div style={{ height: 16 }} />
+        {/* ===== Web 访问（已注释） ===== */}
+        {/* <div style={{ height: 16 }} />
         <SettingsGroupTitle>Web 访问</SettingsGroupTitle>
         <SettingsSwitchItem icon="wifi" title="开启 Web 访问" subtitle="通过局域网浏览器访问 Selves 数据" checked={webServerEnabled} onChange={setWebServerEnabled} />
         {webServerEnabled && (
           <>
             <div style={{ padding: '8px 4px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <mdui-text-field
+              <TextField
                 label="API 地址"
                 value={apiUrl}
-                onInput={(e) => {
-                  const val = (e.target as unknown as HTMLInputElement).value;
-                  setApiUrlState(val);
-                  setApiBaseUrl(val);
-                }}
+                onChange={(val) => { setApiUrlState(val); setApiBaseUrl(val); }}
                 placeholder="http://192.168.x.x:8080"
                 style={{ width: '100%' }}
               />
-              <mdui-text-field
+              <TextField
                 label="访问令牌 (Token)"
                 value={apiToken}
-                onInput={(e) => {
-                  const val = (e.target as unknown as HTMLInputElement).value.toUpperCase();
-                  setApiTokenState(val);
-                  setApiToken(val);
-                  // 如果输入了 6 位 token，标记为已配置
-                  if (val.length === 6) {
+                onChange={(val) => {
+                  const upper = val.toUpperCase();
+                  setApiTokenState(upper);
+                  setApiToken(upper);
+                  if (upper.length === 6) {
                     localStorage.setItem('selves-token-configured', 'true');
                   }
                 }}
                 placeholder="例如：A3B7K9"
-                helper="6位字母+数字组合"
+                supportingText="6位字母+数字组合"
                 style={{ width: '100%' }}
               />
             </div>
             <WebAccessInfoCard url={apiUrl} />
           </>
-        )}
+        )} */}
 
         {/* 其他分组 */}
         <div style={{ height: 16 }} />
@@ -139,38 +129,38 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
       </div>
 
       {/* 语言选择弹窗 */}
-      <DialogHook open={showLangDialog} onClose={() => setShowLangDialog(false)} headline="选择语言">
-        <mdui-list>
-          <mdui-list-item active={language === 'zh'} onClick={() => handleLanguageChange('zh')}>
+      <Dialog open={showLangDialog} onClose={() => setShowLangDialog(false)} headline="选择语言">
+        <List>
+          <ListItem active={language === 'zh'} leading={<Radio checked={language === 'zh'} />} onClick={() => handleLanguageChange('zh')}>
             简体中文
-          </mdui-list-item>
-          <mdui-list-item active={language === 'en'} onClick={() => handleLanguageChange('en')}>
+          </ListItem>
+          <ListItem active={language === 'en'} leading={<Radio checked={language === 'en'} />} onClick={() => handleLanguageChange('en')}>
             English
-          </mdui-list-item>
-        </mdui-list>
-      </DialogHook>
+          </ListItem>
+        </List>
+      </Dialog>
 
       {/* 主题模式弹窗 */}
-      <DialogHook open={showThemeDialog} onClose={() => setShowThemeDialog(false)} headline="选择主题模式">
-        <mdui-list>
+      <Dialog open={showThemeDialog} onClose={() => setShowThemeDialog(false)} headline="选择主题模式">
+        <List>
           {Object.entries(THEME_LABELS).map(([k, v]) => (
-            <mdui-list-item key={k} active={themeMode === k} onClick={() => handleThemeChange(k)}>
+            <ListItem key={k} active={themeMode === k} leading={<Radio checked={themeMode === k} />} onClick={() => handleThemeChange(k)}>
               {v}
-            </mdui-list-item>
+            </ListItem>
           ))}
-        </mdui-list>
-      </DialogHook>
+        </List>
+      </Dialog>
 
       {/* 配色方案弹窗 */}
-      <DialogHook open={showColorDialog} onClose={() => setShowColorDialog(false)} headline="选择配色方案">
-        <mdui-list>
+      <Dialog open={showColorDialog} onClose={() => setShowColorDialog(false)} headline="选择配色方案">
+        <List>
           {Object.entries(COLOR_LABELS).map(([k, v]) => (
-            <mdui-list-item key={k} active={colorScheme === k} onClick={() => handleColorChange(k as ColorSchemeName)}>
+            <ListItem key={k} active={colorScheme === k} leading={<Radio checked={colorScheme === k} />} onClick={() => handleColorChange(k as ColorSchemeName)}>
               {v}
-            </mdui-list-item>
+            </ListItem>
           ))}
-        </mdui-list>
-      </DialogHook>
+        </List>
+      </Dialog>
       {showImportWarning && (
         <ImportBackupWarningDialog
           onConfirm={() => { setShowImportWarning(false); setIsBackupLoading(true); }}
@@ -202,7 +192,7 @@ function SettingsItem({ icon, title, subtitle, onClick }: { icon: string; title:
         borderRadius: 4,
       }}
     >
-      <mdui-icon name={icon} style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))', flexShrink: 0 }} />
+      <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))', flexShrink: 0 }}>{icon}</Icon>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))', lineHeight: 1.5 }}>{title}</div>
         <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.5 }}>{subtitle}</div>
@@ -236,17 +226,15 @@ function SettingsSwitchItem({
         borderRadius: 4,
       }}
     >
-      <mdui-icon name={icon} style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))', flexShrink: 0 }} />
+      <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))', flexShrink: 0 }}>{icon}</Icon>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))', lineHeight: 1.5 }}>{title}</div>
         <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.5 }}>{subtitle}</div>
       </div>
-      <mdui-switch
-        checked={checked}
-        onClick={(e) => {
-          e.stopPropagation();
-          onChange(!checked);
-        }}
+      <Switch
+        selected={checked}
+        onChange={onChange}
+        onClick={(e) => e.stopPropagation()}
       />
     </div>
   );
@@ -280,12 +268,12 @@ function SettingsItemWithProgress({
         opacity: isLoading ? 0.5 : 1,
       }}
     >
-      <mdui-icon name={icon} style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))', flexShrink: 0 }} />
+      <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))', flexShrink: 0 }}>{icon}</Icon>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))', lineHeight: 1.5 }}>{title}</div>
         <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.5 }}>{subtitle}</div>
       </div>
-      {isLoading && <mdui-circular-progress style={{ width: 20, height: 20 }} />}
+      {isLoading && <CircularProgress style={{ width: 20, height: 20 }} />}
     </div>
   );
 }
@@ -317,7 +305,7 @@ function WebAccessInfoCard({ url }: { url: string }) {
   };
 
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         borderRadius: 12,
@@ -341,7 +329,7 @@ function WebAccessInfoCard({ url }: { url: string }) {
             {url || '未配置接口地址'}
           </div>
         </div>
-        <mdui-button-icon icon={copied ? 'check' : 'content_copy'} onClick={handleCopy} />
+        <IconButton onClick={handleCopy}><md-icon>{copied ? 'check' : 'content_copy'}</md-icon></IconButton>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 12 }}>
         <div style={{ fontSize: 11, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 8 }}>
@@ -361,33 +349,13 @@ function WebAccessInfoCard({ url }: { url: string }) {
         >
           {qrDataUrl
             ? <img src={qrDataUrl} alt="QR Code" style={{ width: 180, height: 180 }} />
-            : <mdui-icon name="qr_code_2" style={{ fontSize: 80, color: 'rgb(var(--mdui-color-primary))' }} />
+            : <Icon style={{ fontSize: 80, color: 'rgb(var(--mdui-color-primary))' }}>qr_code_2</Icon>
           }
         </div>
         <div style={{ fontSize: 11, color: 'rgb(var(--mdui-color-on-surface-variant))', marginTop: 8 }}>
           确保设备与手机在同一局域网
         </div>
       </div>
-    </mdui-card>
-  );
-}
-
-function DialogHook({
-  open,
-  onClose,
-  headline,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  headline: string;
-  children: ReactNode;
-}) {
-  const ref = useDialogClose<HTMLElement>(open, onClose);
-  if (!open) return null;
-  return (
-    <mdui-dialog ref={ref} open headline={headline} close-on-overlay-click close-on-esc>
-      {children}
-    </mdui-dialog>
+    </Card>
   );
 }

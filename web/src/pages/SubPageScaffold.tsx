@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { IconButton } from '../ui/components/IconButton';
 
 interface SubPageScaffoldProps {
   title: string;
@@ -23,7 +24,7 @@ export function SubPageScaffold({ title, subtitle, onBack, actions, children, no
           borderBottom: '1px solid rgba(var(--mdui-color-outline-variant), 0.35)',
         }}
       >
-        <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+        <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
         <mdui-top-app-bar-title>
           <div>
             <div style={{ fontSize: 16, fontWeight: 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

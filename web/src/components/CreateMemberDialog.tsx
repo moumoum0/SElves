@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { TextField } from '../ui/components/TextField';
 
 interface CreateMemberDialogProps {
   existingMembers: Member[];
@@ -53,43 +55,43 @@ export function CreateMemberDialog({
               backgroundColor: 'rgb(var(--mdui-color-primary))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <mdui-icon name="photo_camera" style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-primary))' }}></mdui-icon>
+              <Icon style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-primary))' }}>photo_camera</Icon>
             </div>
           </div>
         </div>
 
         {/* 名称 */}
         <div style={{ marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="成员名"
             value={name}
             error-text={nameError}
             style={{ width: '100%' }}
-            onInput={(e) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}
-          ></mdui-text-field>
+            onChange={(val) => { setName(val); setNameError(''); }}
+          />
         </div>
 
         {/* 简介 */}
         <div style={{ marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="简介"
             placeholder="介绍一下这位成员..."
             value={bio}
             rows={3}
             style={{ width: '100%' }}
-            onInput={(e) => setBio((e.target as HTMLInputElement).value)}
-          ></mdui-text-field>
+            onChange={(val) => setBio(val)}
+          />
         </div>
 
         {/* 代词 */}
         <div style={{ marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="代词"
             placeholder="如：TA / 她 / 他"
             value={pronouns}
             style={{ width: '100%' }}
-            onInput={(e) => setPronouns((e.target as HTMLInputElement).value)}
-          ></mdui-text-field>
+            onChange={(val) => setPronouns(val)}
+          />
         </div>
 
         {/* 已选分组 */}
@@ -123,7 +125,7 @@ export function CreateMemberDialog({
               style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 16, border: '1px solid rgb(var(--mdui-color-outline))', background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'rgb(var(--mdui-color-primary))' }}
               onClick={() => setShowNewGroupDialog(true)}
             >
-              <mdui-icon name="add" style={{ fontSize: 16 }}></mdui-icon>
+              <Icon style={{ fontSize: 16 }}>add</Icon>
               新建分组
             </button>
           </div>
@@ -141,19 +143,19 @@ export function CreateMemberDialog({
         <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }} onClick={(e) => e.stopPropagation()}>
           <div style={{ width: '85%', maxWidth: 300, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 20, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>新建分组</div>
-            <mdui-text-field
+            <TextField
               label="分组名称"
               value={newGroupInput}
               style={{ width: '100%', marginBottom: 12 }}
-              onInput={(e) => setNewGroupInput((e.target as HTMLInputElement).value)}
-            ></mdui-text-field>
-            <mdui-text-field
+              onChange={(val) => setNewGroupInput(val)}
+            />
+            <TextField
               label="分组描述"
               placeholder="描述这个分组的用途..."
               value=""
               rows={2}
               style={{ width: '100%', marginBottom: 16 }}
-            ></mdui-text-field>
+            />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={() => { setShowNewGroupDialog(false); setNewGroupInput(''); }}>取消</button>
               <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', fontSize: 14 }}

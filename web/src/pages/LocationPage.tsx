@@ -2,6 +2,10 @@ import { useState } from 'react';
 import type { Member, TrackingSummary } from '../types/models';
 import { SubPageScaffold } from './SubPageScaffold';
 import { LocationTrackingConfigDialog } from '../components/LocationTrackingConfigDialog';
+import { Icon } from '../ui/components/Icon';
+import { Card } from '../ui/components/Card';
+import { Chip } from '../ui/components/Chip';
+import { LinearProgress } from '../ui/components/Progress';
 
 interface LocationPageProps {
   tracking: TrackingSummary;
@@ -25,7 +29,7 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
     <SubPageScaffold title="轨迹记录" subtitle="查看轨迹记录与统计概览" onBack={onBack}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* 状态卡 */}
-        <mdui-card
+        <Card
           variant="filled"
           style={{
             padding: 16,
@@ -36,31 +40,31 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             <div style={{ width: 52, height: 52, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isRecording ? 'rgba(255,255,255,0.16)' : 'rgb(var(--mdui-color-primary))', color: isRecording ? 'inherit' : 'rgb(var(--mdui-color-on-primary))', flexShrink: 0 }}>
-              <mdui-icon name={isRecording ? 'navigation' : 'location_on'} style={{ fontSize: 28 }}></mdui-icon>
+              <Icon style={{ fontSize: 28 }}>{isRecording ? 'navigation' : 'location_on'}</Icon>
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: 15 }}>{isRecording ? '正在记录轨迹' : '轨迹记录已停止'}</div>
               <div style={{ fontSize: 13, opacity: 0.8 }}>当前成员：{currentMember.name}</div>
             </div>
-            <mdui-chip variant="assist" onClick={() => setShowConfig(true)}>{isRecording ? '停止' : '开始'}</mdui-chip>
+            <Chip variant="assist" onClick={() => setShowConfig(true)}>{isRecording ? '停止' : '开始'}</Chip>
           </div>
-          <mdui-linear-progress value={0.72} style={{ display: 'block' }}></mdui-linear-progress>
-        </mdui-card>
+          <LinearProgress value={0.72} style={{ display: 'block' }} />
+        </Card>
 
         {/* 统计数据 */}
         <div style={{ display: 'flex', gap: 12 }}>
           {[{ label: '今日', value: String(tracking.todayRecords) }, { label: '总计', value: String(tracking.totalRecords) }, { label: '最后', value: tracking.lastRecordTime }].map((s) => (
-            <mdui-card key={s.label} variant="filled" style={{ flex: 1, padding: 12, borderRadius: 12, textAlign: 'center' }}>
+            <Card key={s.label} variant="filled" style={{ flex: 1, padding: 12, borderRadius: 12, textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: 'rgb(var(--mdui-color-primary))' }}>{s.value}</div>
               <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{s.label}</div>
-            </mdui-card>
+            </Card>
           ))}
         </div>
 
         {/* 地图占位 */}
-        <mdui-card variant="filled" style={{ padding: 16, borderRadius: 16 }}>
+        <Card variant="filled" style={{ padding: 16, borderRadius: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <mdui-icon name="map" style={{ color: 'rgb(var(--mdui-color-primary))' }}></mdui-icon>
+            <Icon style={{ color: 'rgb(var(--mdui-color-primary))' }}>map</Icon>
             <span style={{ fontWeight: 600, fontSize: 15 }}>地图预览</span>
           </div>
           <div style={{ height: 160, borderRadius: 12, backgroundColor: 'rgb(var(--mdui-color-surface-container-high))', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 12px 12px' }}>
@@ -68,12 +72,12 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
             <div style={{ position: 'absolute', right: 68, bottom: 52, width: 16, height: 16, borderRadius: '50%', backgroundColor: 'rgb(var(--mdui-color-error))' }} />
             <span style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))', zIndex: 1 }}>Web 预览占位 · 等待地图能力接入</span>
           </div>
-        </mdui-card>
+        </Card>
 
         {/* 今日记录 */}
-        <mdui-card variant="filled" style={{ padding: 16, borderRadius: 16 }}>
+        <Card variant="filled" style={{ padding: 16, borderRadius: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <mdui-icon name="history" style={{ color: 'rgb(var(--mdui-color-primary))' }}></mdui-icon>
+            <Icon style={{ color: 'rgb(var(--mdui-color-primary))' }}>history</Icon>
             <span style={{ fontWeight: 600, fontSize: 15 }}>今日记录</span>
           </div>
           {MOCK_RECORDS.map((r, i) => (
@@ -89,7 +93,7 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
               </div>
             </div>
           ))}
-        </mdui-card>
+        </Card>
       </div>
     </SubPageScaffold>
     {showConfig && (

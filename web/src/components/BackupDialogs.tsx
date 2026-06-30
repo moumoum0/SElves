@@ -1,3 +1,7 @@
+import { Button } from '../ui/components/Button';
+import { Icon } from '../ui/components/Icon';
+import { CircularProgress, LinearProgress } from '../ui/components/Progress';
+
 interface BackupProgressDialogProps {
   title?: string;
   message?: string;
@@ -17,11 +21,11 @@ export function BackupProgressDialog({ title = '备份中', message = '正在处
 
         {progress != null ? (
           <>
-            <mdui-linear-progress value={progress} style={{ display: 'block', width: '100%', height: 6, borderRadius: 3 }}></mdui-linear-progress>
+            <LinearProgress value={progress} style={{ display: 'block', width: '100%', height: 6, borderRadius: 3 }} />
             <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{Math.round(progress * 100)}%</div>
           </>
         ) : (
-          <mdui-circular-progress style={{ width: 40, height: 40, color: 'rgb(var(--mdui-color-primary))' }}></mdui-circular-progress>
+          <CircularProgress style={{ width: 40, height: 40, color: 'rgb(var(--mdui-color-primary))' }} />
         )}
 
         <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', textAlign: 'center' }}>{message}</div>
@@ -46,7 +50,7 @@ export function ImportBackupWarningDialog({ onConfirm, onDismiss }: ImportBackup
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-          <mdui-icon name="warning" style={{ fontSize: 32, color: 'rgb(var(--mdui-color-error))' }}></mdui-icon>
+          <Icon style={{ fontSize: 32, color: 'rgb(var(--mdui-color-error))' }}>warning</Icon>
         </div>
         <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>导入备份</div>
         <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8, color: 'rgb(var(--mdui-color-on-surface))' }}>导入备份将会：</div>
@@ -57,8 +61,18 @@ export function ImportBackupWarningDialog({ onConfirm, onDismiss }: ImportBackup
         <div style={{ fontSize: 14, fontWeight: 500, color: 'rgb(var(--mdui-color-error))', marginBottom: 8 }}>此操作不可撤销！</div>
         <div style={{ fontSize: 14, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>确定要继续导入吗？</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={onDismiss}>取消</button>
-          <button type="button" style={{ padding: '8px 20px', borderRadius: 8, border: 'none', backgroundColor: 'rgb(var(--mdui-color-error))', color: 'rgb(var(--mdui-color-on-error))', cursor: 'pointer', fontSize: 14, fontWeight: 500 }} onClick={onConfirm}>确认导入</button>
+          <Button variant="text" onClick={onDismiss}>取消</Button>
+          <Button
+            variant="filled"
+            onClick={onConfirm}
+            style={{
+              '--md-filled-button-container-color': 'rgb(var(--mdui-color-error))',
+              '--md-filled-button-label-text-color': 'rgb(var(--mdui-color-on-error))',
+              '--md-filled-button-hover-state-layer-color': 'rgb(var(--mdui-color-on-error))',
+            } as React.CSSProperties}
+          >
+            确认导入
+          </Button>
         </div>
       </div>
     </div>

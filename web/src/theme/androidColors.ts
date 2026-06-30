@@ -6,6 +6,11 @@ function hexToRgb(hex: string): string {
   return `${r} ${g} ${b}`;
 }
 
+// 将空格分隔的 RGB 三元组（mdui 格式）转换为完整的 rgb() 颜色字符串（Material Web 格式）
+function tripletToRgb(triplet: string): string {
+  return `rgb(${triplet.replace(/ /g, ', ')})`;
+}
+
 // APP_DEFAULT 浅色方案 —— 直接从安卓 Theme.kt LightColorScheme 提取
 const DEFAULT_LIGHT: Record<string, string> = {
   '--mdui-color-primary':                   hexToRgb('475D92'),
@@ -166,14 +171,27 @@ export type ColorSchemeName = 'default' | 'cloud_field';
 
 export function applyAndroidColorScheme(scheme: ColorSchemeName = 'default'): void {
   const light = scheme === 'cloud_field' ? CLOUD_FIELD_LIGHT : DEFAULT_LIGHT;
-  const dark = scheme === 'cloud_field' ? CLOUD_FIELD_DARK : DEFAULT_DARK;
+  const dark  = scheme === 'cloud_field' ? CLOUD_FIELD_DARK  : DEFAULT_DARK;
 
-  const toRules = (map: Record<string, string>) =>
+  // --mdui-color-* : 保持空格三元组格式，兼容现有 rgb(var(...)) / rgba(var(...), alpha) 用法
+  const toMduiRules = (map: Record<string, string>) =>
     Object.entries(map).map(([k, v]) => `  ${k}: ${v};`).join('\n');
 
+  // --md-sys-color-* : Material Web 组件使用完整的 rgb() 颜色字符串
+  const toMdSysRules = (map: Record<string, string>) =>
+    Object.entries(map)
+      .map(([k, v]) => `  ${k.replace('--mdui-color-', '--md-sys-color-')}: ${tripletToRgb(v)};`)
+      .join('\n');
+
+  const lightRules = `${toMduiRules(light)}\n${toMdSysRules(light)}`;
+  const darkRules  = `${toMduiRules(dark)}\n${toMdSysRules(dark)}`;
+
+  // 暗色选择器对齐 mdui setTheme 实际添加的类（.mdui-theme-dark / .mdui-theme-auto）
+  // 修正原来的 :root[mdui-theme="dark"] 属性选择器（该属性 mdui 从未实际写入）
   const css =
-    `:root {\n${toRules(light)}\n}\n` +
-    `:root[mdui-theme="dark"] {\n${toRules(dark)}\n}`;
+    `:root {\n${lightRules}\n}\n` +
+    `.mdui-theme-dark {\n${darkRules}\n}\n` +
+    `@media (prefers-color-scheme: dark) {\n  .mdui-theme-auto {\n${darkRules}\n  }\n}`;
 
   const existing = document.getElementById('selves-android-theme');
   if (existing) existing.remove();

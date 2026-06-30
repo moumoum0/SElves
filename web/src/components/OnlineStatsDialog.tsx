@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
 
 interface OnlineStatDialogProps {
   members: Member[];
@@ -61,7 +62,7 @@ export function OnlineStatsDialog({ members, currentMember, onDismiss }: OnlineS
       >
         {/* 标题 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 20, flexShrink: 0 }}>
-          <mdui-icon name="schedule" style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-icon>
+          <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>schedule</Icon>
           <span style={{ fontSize: 22, fontWeight: 700 }}>在线统计</span>
         </div>
 

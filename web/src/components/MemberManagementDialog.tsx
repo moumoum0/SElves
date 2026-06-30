@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import { EditMemberDialog } from './EditMemberDialog';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
 
 interface MemberManagementDialogProps {
   members: Member[];
@@ -34,7 +35,7 @@ export function MemberManagementDialog({
           {/* 标题栏 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 20, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <mdui-icon name="group" style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-icon>
+              <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>group</Icon>
               <span style={{ fontSize: 22, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))' }}>成员管理</span>
             </div>
             <button
@@ -42,7 +43,7 @@ export function MemberManagementDialog({
               onClick={onCreateNewMember}
               style={{ width: 40, height: 40, borderRadius: '50%', border: 'none', backgroundColor: 'rgb(var(--mdui-color-primary))', color: 'rgb(var(--mdui-color-on-primary))', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
-              <mdui-icon name="add" style={{ fontSize: 20 }}></mdui-icon>
+              <Icon style={{ fontSize: 20 }}>add</Icon>
             </button>
           </div>
 
@@ -68,7 +69,7 @@ export function MemberManagementDialog({
                 {/* more_vert 菜单 */}
                 <div style={{ position: 'relative' }}>
                   <button type="button" onClick={() => setMenuOpen(menuOpen === member.id ? null : member.id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 4 }}>
-                    <mdui-icon name="more_vert" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-icon>
+                    <Icon style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>more_vert</Icon>
                   </button>
                   {menuOpen === member.id && (
                     <>
@@ -76,12 +77,12 @@ export function MemberManagementDialog({
                       <div style={{ position: 'absolute', right: 0, top: 32, zIndex: 11, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.2)', minWidth: 120, overflow: 'hidden' }}>
                         <button type="button" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14 }}
                           onClick={() => { setMenuOpen(null); setEditTarget(member); }}>
-                          <mdui-icon name="edit" style={{ fontSize: 16 }}></mdui-icon>编辑
+                          <Icon style={{ fontSize: 16 }}>edit</Icon>编辑
                         </button>
                         {member.id !== currentMember.id && (
                           <button type="button" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-error))' }}
                             onClick={() => { setMenuOpen(null); setDeleteTarget(member); }}>
-                            <mdui-icon name="delete" style={{ fontSize: 16, color: 'rgb(var(--mdui-color-error))' }}></mdui-icon>删除
+                            <Icon style={{ fontSize: 16, color: 'rgb(var(--mdui-color-error))' }}>delete</Icon>删除
                           </button>
                         )}
                       </div>

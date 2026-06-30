@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { formatDetailDateTime, formatTimestamp } from '../lib/utils';
 import type { Member, MemberDiary } from '../types/models';
+import { Button } from '../ui/components/Button';
+import { Card } from '../ui/components/Card';
+import { Dialog } from '../ui/components/Dialog';
+import { FAB } from '../ui/components/FAB';
+import { Icon } from '../ui/components/Icon';
+import { ListItem } from '../ui/components/List';
+import { TextField } from '../ui/components/TextField';
 import { SubPageScaffold } from './SubPageScaffold';
 
 interface DiaryPageProps {
@@ -10,18 +17,6 @@ interface DiaryPageProps {
   onCreateDiary?: (title: string, content: string) => void;
   onUpdateDiary?: (id: string, title: string, content: string) => void;
   onDeleteDiary?: (id: string) => void;
-}
-
-function useDialogClose<T extends HTMLElement>(open: boolean, onClose: () => void) {
-  const ref = useRef<T>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !open) return;
-    const handler = () => onClose();
-    el.addEventListener('close', handler);
-    return () => el.removeEventListener('close', handler);
-  }, [open, onClose]);
-  return ref;
 }
 
 export function DiaryPage({
@@ -118,7 +113,7 @@ export function DiaryPage({
         title={`${currentMember.name} 的日记`}
         onBack={onBack}
         noPadding
-        fab={<mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={openCreateDialog}></mdui-fab>}
+        fab={<FAB icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={openCreateDialog} />}
       >
         <div style={{ padding: '0 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
           {memberDiaries.length === 0 ? (
@@ -133,14 +128,14 @@ export function DiaryPage({
                 padding: '32px 0',
               }}
             >
-              <mdui-icon name="edit" style={{ fontSize: 64, opacity: 0.5, marginBottom: 16 }}></mdui-icon>
+              <Icon style={{ fontSize: 64, opacity: 0.5, marginBottom: 16 }}>edit</Icon>
               <div style={{ fontSize: 16 }}>还没有日记</div>
               <div style={{ fontSize: 14, opacity: 0.6, marginTop: 8 }}>点击右下角按钮新建日记</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '16px 0' }}>
               {memberDiaries.map((diary) => (
-                <mdui-card
+                <Card
                   key={diary.id}
                   variant="filled"
                   style={{
@@ -194,7 +189,7 @@ export function DiaryPage({
                       {formatTimestamp(diary.createdAt)}
                     </div>
                   </div>
-                </mdui-card>
+                </Card>
               ))}
             </div>
           )}
@@ -251,19 +246,19 @@ export function DiaryPage({
               }}
             />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <mdui-list-item onClick={() => openEditDialog(selectedDiary)}>
-                <mdui-icon name="edit" slot="icon" style={{ fontSize: 20 }}></mdui-icon>
+              <ListItem onClick={() => openEditDialog(selectedDiary)}>
+                <Icon slot="icon" style={{ fontSize: 20 }}>edit</Icon>
                 <span>编辑</span>
-              </mdui-list-item>
-              <mdui-list-item
+              </ListItem>
+              <ListItem
                 onClick={() => {
                   setDeletingDiary(selectedDiary);
                   setSelectedDiary(null);
                 }}
               >
-                <mdui-icon name="delete" slot="icon" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-error))' }}></mdui-icon>
+                <Icon slot="icon" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-error))' }}>delete</Icon>
                 <span style={{ color: 'rgb(var(--mdui-color-error))' }}>删除</span>
-              </mdui-list-item>
+              </ListItem>
             </div>
           </div>
         </>
@@ -305,17 +300,24 @@ function DeleteConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const ref = useDialogClose<HTMLElement>(true, onCancel);
   return (
-    <mdui-dialog ref={ref} open headline="删除日记" close-on-overlay-click close-on-esc>
+    <Dialog
+      open={true}
+      onClose={onCancel}
+      headline="删除日记"
+      actions={
+        <>
+          <Button variant="text" onClick={onCancel}>
+            取消
+          </Button>
+          <Button variant="filled" style={{ backgroundColor: 'rgb(var(--mdui-color-error))' }} onClick={onConfirm}>
+            删除
+          </Button>
+        </>
+      }
+    >
       <div style={{ padding: '0 24px 16px' }}>确定要删除这篇日记吗？</div>
-      <mdui-button slot="action" variant="text" onClick={onCancel}>
-        取消
-      </mdui-button>
-      <mdui-button slot="action" variant="filled" style={{ backgroundColor: 'rgb(var(--mdui-color-error))' }} onClick={onConfirm}>
-        删除
-      </mdui-button>
-    </mdui-dialog>
+    </Dialog>
   );
 }
 
@@ -340,38 +342,43 @@ function EditDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const ref = useDialogClose<HTMLElement>(open, onCancel);
   if (!open) return null;
   return (
-    <mdui-dialog ref={ref} open headline={isEditing ? '编辑日记' : '新建日记'} close-on-overlay-click close-on-esc>
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      headline={isEditing ? '编辑日记' : '新建日记'}
+      actions={
+        <>
+          <Button variant="text" onClick={onCancel}>
+            取消
+          </Button>
+          <Button variant="filled" onClick={onConfirm}>
+            确定
+          </Button>
+        </>
+      }
+    >
       <div style={{ padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <mdui-text-field
+        <TextField
           label="标题（可选）"
           placeholder="输入日记标题"
           variant="outlined"
           value={title}
-          onInput={(e) => onTitleChange((e.target as HTMLInputElement).value.replace(/\n/g, ''))}
-        ></mdui-text-field>
-        {React.createElement('mdui-text-field', {
-          label: '内容',
-          placeholder: '写下今天的故事…',
-          variant: 'outlined',
-          type: 'textarea',
-          rows: 5,
-          value: content,
-          onInput: (e: React.FormEvent<HTMLInputElement>) => {
-            onContentChange(e.currentTarget.value);
-          },
-          error: contentError,
-          helper: contentError ? '请输入日记内容' : undefined,
-        })}
+          onChange={(val) => onTitleChange(val.replace(/\n/g, ''))}
+        />
+        <TextField
+          label="内容"
+          placeholder="写下今天的故事…"
+          variant="outlined"
+          type="textarea"
+          rows={5}
+          value={content}
+          onChange={(val) => onContentChange(val)}
+          error={contentError}
+          supportingText={contentError ? '请输入日记内容' : undefined}
+        />
       </div>
-      <mdui-button slot="action" variant="text" onClick={onCancel}>
-        取消
-      </mdui-button>
-      <mdui-button slot="action" variant="filled" onClick={onConfirm}>
-        确定
-      </mdui-button>
-    </mdui-dialog>
+    </Dialog>
   );
 }

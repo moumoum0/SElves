@@ -68,6 +68,7 @@ class WebServerService : Service() {
     @Inject lateinit var database: AppDatabase
     @Inject lateinit var memberPreferences: MemberPreferences
 
+    @Volatile
     private var server: EmbeddedServer<*, *>? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -126,31 +127,51 @@ class WebServerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        server?.stop(1000, 5000)
+        val runningServer = server
         server = null
-        Log.i(TAG, "Web server stopped")
+        serviceScope.launch {
+            runningServer?.stop(1000, 5000)
+            Log.i(TAG, "Web server stopped")
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     private fun startServer() {
+        if (server != null) {
+            serviceScope.launch {
+                val ip = getLocalIpAddress()
+                Log.i(TAG, "Web server already running: http://$ip:$SERVER_PORT")
+                updateNotification("http://$ip:$SERVER_PORT")
+            }
+            return
+        }
+
         try {
-            server = embeddedServer(CIO, port = SERVER_PORT) {
+            val newServer = embeddedServer(CIO, port = SERVER_PORT) {
                 installPlugins()
                 setupRoutes()
             }
+            server = newServer
+
             serviceScope.launch {
                 try {
-                    server!!.start(wait = false)
-                    val ip = getLocalIpAddress()
-                    Log.i(TAG, "Web server started: http://$ip:$SERVER_PORT")
-                    updateNotification("http://$ip:$SERVER_PORT")
+                    newServer.start(wait = false)
+                    if (server === newServer) {
+                        val ip = getLocalIpAddress()
+                        Log.i(TAG, "Web server started: http://$ip:$SERVER_PORT")
+                        updateNotification("http://$ip:$SERVER_PORT")
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to start web server: ${e.message}", e)
+                    if (server === newServer) {
+                        server = null
+                    }
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create web server: ${e.message}", e)
+            server = null
         }
     }
 

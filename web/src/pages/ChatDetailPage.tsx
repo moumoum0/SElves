@@ -3,6 +3,9 @@ import { MemberAvatar } from '../components/MemberAvatar';
 import { GroupManagementDialog } from '../components/GroupManagementDialog';
 import { formatMessageTime } from '../lib/utils';
 import type { ChatGroup, Member, Message } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
+import { TextField } from '../ui/components/TextField';
 
 interface ChatDetailPageProps {
   currentMember: Member;
@@ -79,7 +82,7 @@ export function ChatDetailPage({
           backgroundColor: 'rgb(var(--mdui-color-surface))',
         }}
       >
-        <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+        <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
         <mdui-top-app-bar-title>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
             <span
@@ -104,7 +107,7 @@ export function ChatDetailPage({
             </span>
           </div>
         </mdui-top-app-bar-title>
-        <mdui-button-icon icon="more_vert" onClick={() => setShowManagement(true)}></mdui-button-icon>
+        <IconButton onClick={() => setShowManagement(true)}><md-icon>more_vert</md-icon></IconButton>
       </mdui-top-app-bar>
 
       {showManagement && (
@@ -176,31 +179,27 @@ export function ChatDetailPage({
           }}
         >
           {/* 图片按钮 */}
-          <mdui-button-icon
-            icon="image"
+          <IconButton
             style={{ color: 'rgb(var(--mdui-color-primary))', flexShrink: 0 }}
-          ></mdui-button-icon>
+          ><md-icon>image</md-icon></IconButton>
 
           {/* 文本输入框 */}
-          <mdui-text-field
+          <TextField
             variant="outlined"
             placeholder="发送消息..."
             value={messageText}
             style={{ flex: 1 }}
             max-rows={5}
-            onInput={(e) =>
-              setMessageText((e.target as HTMLInputElement).value)
-            }
+            onChange={(val) => setMessageText(val)}
             onKeyDown={handleKeyDown}
-          ></mdui-text-field>
+          />
 
           {/* 发送按钮 */}
-          <mdui-button-icon
-            icon="send"
+          <IconButton
             style={{ color: 'rgb(var(--mdui-color-primary))', flexShrink: 0 }}
             disabled={!messageText.trim()}
             onClick={handleSend}
-          ></mdui-button-icon>
+          ><md-icon>send</md-icon></IconButton>
         </div>
       </div>
     </div>
@@ -355,7 +354,7 @@ function MessageItem({
               (e.target as HTMLElement).style.backgroundColor = 'transparent';
             }}
           >
-            <mdui-icon name="content_copy" style={{ fontSize: 18 }}></mdui-icon>
+            <Icon style={{ fontSize: 18 }}>content_copy</Icon>
             复制
           </button>
           {/* 删除 */}
@@ -385,7 +384,7 @@ function MessageItem({
               (e.target as HTMLElement).style.backgroundColor = 'transparent';
             }}
           >
-            <mdui-icon name="delete" style={{ fontSize: 18 }}></mdui-icon>
+            <Icon style={{ fontSize: 18 }}>delete</Icon>
             删除
           </button>
         </div>

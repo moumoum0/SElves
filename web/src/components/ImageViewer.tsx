@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Icon } from '../ui/components/Icon';
 
 interface ImageViewerProps {
   src: string;
@@ -41,7 +42,7 @@ export function ImageViewer({ src, senderName, timestamp, onClose }: ImageViewer
           display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
         }}
       >
-        <mdui-icon name="arrow_back" style={{ fontSize: 24 }}></mdui-icon>
+        <Icon style={{ fontSize: 24 }}>arrow_back</Icon>
       </button>
 
       {/* 发送者信息 */}

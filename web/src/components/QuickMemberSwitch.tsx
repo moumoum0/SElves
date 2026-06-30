@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import { MemberSwitchDialog } from './MemberSwitchDialog';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
 
 interface QuickMemberSwitchProps {
   currentMember: Member | null;
@@ -43,8 +44,7 @@ export function QuickMemberSwitch({
         />
 
         {/* 交换图标在右下角，不要圆形背景 */}
-        <mdui-icon
-          name="swap_horiz"
+        <Icon
           style={{
             position: 'absolute',
             bottom: 0,
@@ -54,7 +54,7 @@ export function QuickMemberSwitch({
             fontSize: size * 0.3,
             color: 'rgb(var(--mdui-color-primary))',
           }}
-        />
+        >swap_horiz</Icon>
       </div>
 
       {/* 成员切换对话框 */}

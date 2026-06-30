@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
 
 interface MemberSwitchDialogProps {
   members: Member[];
@@ -124,7 +125,7 @@ export function MemberSwitchDialog({
                     </div>
                   </div>
                   {isCurrent && (
-                    <mdui-icon name="check" style={{ color: 'rgb(var(--mdui-color-primary))', fontSize: 20 }}></mdui-icon>
+                    <Icon style={{ color: 'rgb(var(--mdui-color-primary))', fontSize: 20 }}>check</Icon>
                   )}
                 </div>
 
@@ -150,7 +151,7 @@ export function MemberSwitchDialog({
                       }}
                       onClick={() => { setMenuTarget(null); setDeleteTarget(member); }}
                     >
-                      <mdui-icon name="delete" style={{ fontSize: 18 }}></mdui-icon>
+                      <Icon style={{ fontSize: 18 }}>delete</Icon>
                       删除
                     </button>
                   </div>
@@ -177,7 +178,7 @@ export function MemberSwitchDialog({
               backgroundColor: 'rgba(var(--mdui-color-primary), 0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              <mdui-icon name="add" style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }}></mdui-icon>
+              <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }}>add</Icon>
             </div>
             新建成员
           </button>

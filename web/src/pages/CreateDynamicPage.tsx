@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
-import type { Dynamic, Member } from '../types/models';
+import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
 
 interface CreateDynamicPageProps {
   currentMember: Member;
@@ -104,7 +106,7 @@ export function CreateDynamicPage({
             padding: '0 4px',
           }}
         >
-          <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+          <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px', overflow: 'hidden' }}>
             <div
               style={{
@@ -121,8 +123,7 @@ export function CreateDynamicPage({
           </div>
 
           {/* Publish button */}
-          <mdui-button-icon
-            icon="check"
+          <IconButton
             style={{
               color: canPublish
                 ? 'rgb(var(--mdui-color-primary))'
@@ -130,7 +131,7 @@ export function CreateDynamicPage({
               cursor: canPublish ? 'pointer' : 'default',
             }}
             onClick={canPublish ? handlePublish : undefined}
-          ></mdui-button-icon>
+          ><md-icon>check</md-icon></IconButton>
         </div>
       </div>
 
@@ -234,10 +235,9 @@ function ImageGrid({ imagePaths, maxImages, onAddClick, onRemoveImage }: ImageGr
                   }}
                   onClick={onAddClick}
                 >
-                  <mdui-icon
-                    name="add"
+                  <Icon
                     style={{ fontSize: 32, color: 'rgb(var(--mdui-color-on-surface-variant))' }}
-                  ></mdui-icon>
+                  >add</Icon>
                 </div>
               );
             }
@@ -279,13 +279,12 @@ function ImageGrid({ imagePaths, maxImages, onAddClick, onRemoveImage }: ImageGr
                     cursor: 'pointer',
                   }}
                 >
-                  <mdui-icon
-                    name="close"
+                  <Icon
                     style={{
                       fontSize: 14,
                       color: 'rgb(var(--mdui-color-on-error))',
                     }}
-                  ></mdui-icon>
+                  >close</Icon>
                 </div>
               </div>
             );

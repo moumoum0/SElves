@@ -2,6 +2,12 @@ import { useMemo, useState } from 'react';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { formatDetailDateTime } from '../lib/utils';
 import type { Dynamic, Member } from '../types/models';
+import { IconButton } from '../ui/components/IconButton';
+import { TextField } from '../ui/components/TextField';
+import { Icon } from '../ui/components/Icon';
+import { CircularProgress } from '../ui/components/Progress';
+import { FAB } from '../ui/components/FAB';
+import { Chip } from '../ui/components/Chip';
 
 type FilterType = 'IMAGE' | 'TEXT' | null;
 
@@ -84,24 +90,21 @@ export function DynamicPage({
           }}
         >
           {/* Back */}
-          <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+          <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
 
           {/* Title / SearchBar toggle */}
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px', overflow: 'hidden' }}>
             {showSearchBar ? (
-              <mdui-text-field
+              <TextField
                 value={searchQuery}
                 placeholder="搜索动态..."
                 variant="outlined"
                 style={{ width: '100%' }}
-                onInput={(e) =>
-                  setSearchQuery((e.target as HTMLInputElement).value)
-                }
+                onChange={(val) => setSearchQuery(val)}
               >
-                <mdui-icon slot="icon" name="search"></mdui-icon>
+                <Icon slot="icon">search</Icon>
                 <div slot="end-icon" style={{ display: 'flex', alignItems: 'center' }}>
-                  <mdui-button-icon
-                    icon={filterIcon}
+                  <IconButton
                     style={{
                       color:
                         filterType !== null
@@ -109,16 +112,15 @@ export function DynamicPage({
                           : 'rgb(var(--mdui-color-on-surface-variant))',
                     }}
                     onClick={cycleFilterType}
-                  ></mdui-button-icon>
-                  <mdui-button-icon
-                    icon="close"
+                  ><md-icon>{filterIcon}</md-icon></IconButton>
+                  <IconButton
                     onClick={() => {
                       setShowSearchBar(false);
                       setSearchQuery('');
                     }}
-                  ></mdui-button-icon>
+                  ><md-icon>close</md-icon></IconButton>
                 </div>
-              </mdui-text-field>
+              </TextField>
             ) : (
               <div
                 style={{
@@ -137,10 +139,7 @@ export function DynamicPage({
 
           {/* Search icon — only when search is not open */}
           {!showSearchBar && (
-            <mdui-button-icon
-              icon="search"
-              onClick={() => setShowSearchBar(true)}
-            ></mdui-button-icon>
+            <IconButton onClick={() => setShowSearchBar(true)}><md-icon>search</md-icon></IconButton>
           )}
         </div>
       </div>
@@ -167,7 +166,7 @@ export function DynamicPage({
               minHeight: 200,
             }}
           >
-            <mdui-circular-progress></mdui-circular-progress>
+            <CircularProgress />
           </div>
         ) : filteredDynamics.length === 0 ? (
           /* ── Empty state ── */
@@ -180,15 +179,14 @@ export function DynamicPage({
               padding: 32,
             }}
           >
-            <mdui-icon
-              name="timeline"
+            <Icon
               style={{
                 fontSize: 64,
                 opacity: 0.5,
                 color: 'rgb(var(--mdui-color-on-surface-variant))',
                 display: 'block',
               }}
-            ></mdui-icon>
+            >timeline</Icon>
             <div style={{ height: 16 }} />
             <span
               style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface-variant))' }}
@@ -223,11 +221,11 @@ export function DynamicPage({
       </div>
 
       {/* ── FAB ── */}
-      <mdui-fab
+      <FAB
         icon="add"
         style={{ position: 'absolute', right: 16, bottom: 16 }}
         onClick={onNavigateToCreateDynamic}
-      ></mdui-fab>
+      />
     </div>
   );
 }
@@ -299,14 +297,13 @@ function DynamicCard({
 
         {/* Delete — only visible to author */}
         {currentUserId === dynamic.authorId && (
-          <mdui-button-icon
-            icon="delete"
+          <IconButton
             style={{ color: 'rgb(var(--mdui-color-error))' }}
             onClick={(e) => {
               (e as unknown as MouseEvent).stopPropagation();
               onDeleteClick();
             }}
-          ></mdui-button-icon>
+          ><md-icon>delete</md-icon></IconButton>
         )}
       </div>
 
@@ -378,9 +375,9 @@ function DynamicCard({
           <div style={{ height: 8 }} />
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             {dynamic.tags.map((tag) => (
-              <mdui-chip key={tag} variant="assist" style={{ fontSize: 12 }}>
+              <Chip key={tag} variant="assist" style={{ fontSize: 12 }}>
                 #{tag}
-              </mdui-chip>
+              </Chip>
             ))}
           </div>
         </>
@@ -399,15 +396,14 @@ function DynamicCard({
             onLikeClick();
           }}
         >
-          <mdui-icon
-            name={dynamic.isLiked ? 'favorite' : 'favorite_border'}
+          <Icon
             style={{
               fontSize: 20,
               color: dynamic.isLiked
                 ? 'rgb(var(--mdui-color-error))'
                 : 'rgb(var(--mdui-color-on-surface-variant))',
             }}
-          ></mdui-icon>
+          >{dynamic.isLiked ? 'favorite' : 'favorite_border'}</Icon>
           <span
             style={{
               fontSize: 14,
@@ -426,13 +422,12 @@ function DynamicCard({
             onCommentClick();
           }}
         >
-          <mdui-icon
-            name="comment"
+          <Icon
             style={{
               fontSize: 20,
               color: 'rgb(var(--mdui-color-on-surface-variant))',
             }}
-          ></mdui-icon>
+          >comment</Icon>
           <span
             style={{
               fontSize: 14,

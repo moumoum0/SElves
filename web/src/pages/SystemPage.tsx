@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Icon } from '../ui/components/Icon';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { SystemEditDialog } from '../components/SystemEditDialog';
 import type { SystemInfo } from '../types/models';
@@ -32,7 +33,7 @@ function ManagementListItem({ icon, title, subtitle, onClick }: ManagementItemPr
         borderRadius: 8,
       }}
     >
-      <mdui-icon name={icon} style={{ color: 'rgb(var(--mdui-color-on-surface-variant))', fontSize: 24, flexShrink: 0 }}></mdui-icon>
+      <Icon style={{ color: 'rgb(var(--mdui-color-on-surface-variant))', fontSize: 24, flexShrink: 0 }}>{icon}</Icon>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))', lineHeight: '24px' }}>{title}</div>
         <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: '20px' }}>{subtitle}</div>

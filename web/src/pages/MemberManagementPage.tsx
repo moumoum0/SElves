@@ -5,6 +5,12 @@ import { CreateMemberDialog } from '../components/CreateMemberDialog';
 import { EditMemberDialog } from '../components/EditMemberDialog';
 import type { Member } from '../types/models';
 import { SubPageScaffold } from './SubPageScaffold';
+import { FAB } from '../ui/components/FAB';
+import { IconButton } from '../ui/components/IconButton';
+import { TextField } from '../ui/components/TextField';
+import { Icon } from '../ui/components/Icon';
+import { Dialog } from '../ui/components/Dialog';
+import { Button } from '../ui/components/Button';
 
 interface MemberManagementPageProps {
   members: Member[];
@@ -54,11 +60,11 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
       <SubPageScaffold
         title="成员管理"
         onBack={onBack}
-        fab={<mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreate(true)}></mdui-fab>}
+        fab={<FAB icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreate(true)} />}
         actions={
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {!showSearchBar ? (
-              <mdui-button-icon icon="search" onClick={() => setShowSearchBar(true)}></mdui-button-icon>
+              <IconButton onClick={() => setShowSearchBar(true)}><md-icon>search</md-icon></IconButton>
             ) : null}
           </div>
         }
@@ -72,21 +78,20 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
               marginBottom: 12,
             }}
           >
-            <mdui-text-field
+            <TextField
               value={searchQuery}
               placeholder="搜索成员"
-              icon="search"
-              clearable
               style={{ flex: 1 }}
-              onInput={(event) => setSearchQuery((event.target as HTMLInputElement).value)}
-            ></mdui-text-field>
-            <mdui-button-icon
-              icon="close"
+              onChange={(val) => setSearchQuery(val)}
+            >
+              <md-icon slot="leading-icon">search</md-icon>
+            </TextField>
+            <IconButton
               onClick={() => {
                 setShowSearchBar(false);
                 setSearchQuery('');
               }}
-            ></mdui-button-icon>
+            ><md-icon>close</md-icon></IconButton>
           </div>
         ) : null}
 
@@ -119,7 +124,7 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
               flexShrink: 0,
             }}
           >
-            <mdui-icon name="more_vert" style={{ fontSize: 18 }}></mdui-icon>
+            <Icon style={{ fontSize: 18 }}>more_vert</Icon>
             <span style={{ fontSize: 13 }}>{viewMode === 'letter' ? '按首字母' : '按分组'}</span>
           </button>
         </div>
@@ -219,27 +224,29 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
           }}
           onClick={() => setDeleteTarget(null)}
         >
-          <mdui-dialog
-            open
+          <Dialog
+            open={true}
+            onClose={() => setDeleteTarget(null)}
             headline="删除成员"
-            on-close={() => setDeleteTarget(null)}
             style={{ maxWidth: 360 }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            actions={
+              <>
+                <Button variant="tonal" onClick={() => setDeleteTarget(null)}>取消</Button>
+                <Button
+                  variant="tonal"
+                  style={{ backgroundColor: 'rgb(var(--mdui-color-error))', color: 'rgb(var(--mdui-color-on-error))' }}
+                  onClick={() => { onDeleteMember?.(deleteTarget.id); setDeleteTarget(null); }}
+                >
+                  删除
+                </Button>
+              </>
+            }
           >
             <div style={{ padding: '16px 0', fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
               确定要删除成员「{deleteTarget.name}」吗？此操作不可撤销。
             </div>
-            <div slot="actions" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <mdui-button onClick={() => setDeleteTarget(null)}>取消</mdui-button>
-              <mdui-button
-                variant="tonal"
-                style={{ backgroundColor: 'rgb(var(--mdui-color-error))', color: 'rgb(var(--mdui-color-on-error))' }}
-                onClick={() => { onDeleteMember?.(deleteTarget.id); setDeleteTarget(null); }}
-              >
-                删除
-              </mdui-button>
-            </div>
-          </mdui-dialog>
+          </Dialog>
         </div>
       )}
 
@@ -346,7 +353,7 @@ function MemberRow({
 
       {/* 操作菜单触发按钮 */}
       <div style={{ position: 'relative' }}>
-        <mdui-button-icon icon="more_vert" onClick={() => setShowMenu(true)}></mdui-button-icon>
+        <IconButton onClick={() => setShowMenu(true)}><md-icon>more_vert</md-icon></IconButton>
 
         {showMenu && (
           <>
@@ -384,7 +391,7 @@ function MemberRow({
                   textAlign: 'left',
                 }}
               >
-                <mdui-icon name="edit" style={{ fontSize: 18 }}></mdui-icon>
+                <Icon style={{ fontSize: 18 }}>edit</Icon>
                 编辑
               </button>
               {!active && (
@@ -408,7 +415,7 @@ function MemberRow({
                     textAlign: 'left',
                   }}
                 >
-                  <mdui-icon name="delete" style={{ fontSize: 18 }}></mdui-icon>
+                  <Icon style={{ fontSize: 18 }}>delete</Icon>
                   删除
                 </button>
               )}
@@ -454,10 +461,9 @@ function GroupSection({
           textAlign: 'left',
         }}
       >
-        <mdui-icon
-          name={expanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}
+        <Icon
           style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface))', marginLeft: 4 }}
-        ></mdui-icon>
+        >{expanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}</Icon>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
           <span style={{ fontSize: 16, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', whiteSpace: 'nowrap' }}>
             {group.name}

@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { ChatGroup, Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { Checkbox } from '../ui/components/Checkbox';
+import { TextField } from '../ui/components/TextField';
+import { Radio } from '../ui/components/Radio';
 
 interface GroupManagementDialogProps {
   group: ChatGroup;
@@ -76,7 +80,7 @@ function ManagementOption({ icon, title, subtitle, onClick, destructive = false 
   const bg = destructive ? 'rgba(var(--mdui-color-error), 0.08)' : 'rgba(var(--mdui-color-surface-variant), 0.3)';
   return (
     <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 12, backgroundColor: bg, marginBottom: 8, cursor: 'pointer', transition: 'background-color 0.15s' }}>
-      <mdui-icon name={icon} style={{ fontSize: 24, color, flexShrink: 0 }}></mdui-icon>
+      <Icon style={{ fontSize: 24, color, flexShrink: 0 }}>{icon}</Icon>
       <div>
         <div style={{ fontSize: 16, fontWeight: 500, color: destructive ? 'rgb(var(--mdui-color-error))' : 'rgb(var(--mdui-color-on-surface))' }}>{title}</div>
         <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{subtitle}</div>
@@ -106,7 +110,7 @@ function AddMemberDialog({ group, allMembers, onDismiss, onConfirm }: { group: C
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }} onClick={() => toggle(m.id)}>
                 <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
                 <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
-                <mdui-checkbox checked={selected.has(m.id)}></mdui-checkbox>
+                <Checkbox checked={selected.has(m.id)} />
               </div>
             ))}
           </div>
@@ -139,7 +143,7 @@ function RemoveMemberDialog({ group, currentMember, onDismiss, onConfirm }: { gr
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }} onClick={() => toggle(m.id)}>
               <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
               <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
-              <mdui-checkbox checked={selected.has(m.id)}></mdui-checkbox>
+              <Checkbox checked={selected.has(m.id)} />
             </div>
           ))}
         </div>
@@ -175,11 +179,11 @@ function EditGroupInfoDialog({ group, onDismiss, onConfirm }: { group: ChatGroup
             <span style={{ fontSize: 32, fontWeight: 500, color: 'rgb(var(--mdui-color-primary))' }}>
               {group.name.charAt(0).toUpperCase()}
             </span>
-            <mdui-icon name="photo_camera" style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 20, color: 'rgb(var(--mdui-color-primary))', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: '50%', padding: 2 }}></mdui-icon>
+            <Icon style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 20, color: 'rgb(var(--mdui-color-primary))', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: '50%', padding: 2 }}>photo_camera</Icon>
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
-          <mdui-text-field label="群名称" value={name} error-text={nameError} style={{ width: '100%' }} onInput={(e) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}></mdui-text-field>
+          <TextField label="群名称" value={name} error-text={nameError} style={{ width: '100%' }} onChange={(val) => { setName(val); setNameError(''); }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={onDismiss}>取消</button>
@@ -223,7 +227,7 @@ function TransferOwnershipDialog({ group, currentMember, onDismiss, onConfirm }:
         <div style={{ maxHeight: 280, overflowY: 'auto', marginBottom: 16 }}>
           {candidates.map((m) => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }} onClick={() => setSelected(m.id)}>
-              <mdui-radio checked={selected === m.id} style={{ flexShrink: 0 }}></mdui-radio>
+              <Radio checked={selected === m.id} style={{ flexShrink: 0 }} />
               <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
               <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
             </div>

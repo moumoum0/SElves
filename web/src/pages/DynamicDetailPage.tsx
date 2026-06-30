@@ -1,8 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { formatDetailDateTime } from '../lib/utils';
 import type { Dynamic, DynamicComment, Member } from '../types/models';
 import { SubPageScaffold } from './SubPageScaffold';
+import { IconButton } from '../ui/components/IconButton';
+import { TextField } from '../ui/components/TextField';
+import { Icon } from '../ui/components/Icon';
+import { Chip } from '../ui/components/Chip';
 
 interface DynamicDetailPageProps {
   dynamic: Dynamic;
@@ -56,7 +60,7 @@ export function DynamicDetailPage({
             padding: '0 4px',
           }}
         >
-          <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+          <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px', overflow: 'hidden' }}>
             <div
               style={{
@@ -187,27 +191,24 @@ export function DynamicDetailPage({
                     {replyToComment.content}
                   </div>
                 </div>
-                <mdui-button-icon
-                  icon="close"
+                <IconButton
                   style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-primary-container))' }}
                   onClick={() => setReplyToComment(null)}
-                />
+                ><md-icon>close</md-icon></IconButton>
               </div>
             </>
           )}
 
           {/* Input row */}
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-            <mdui-text-field
+            <TextField
               variant="outlined"
               placeholder={replyToComment ? '回复评论...' : '写评论...'}
               value={commentText}
               style={{ flex: 1 }}
               maxlength={1000}
-              onInput={(e) =>
-                setCommentText((e.target as HTMLInputElement).value)
-              }
-            ></mdui-text-field>
+              onChange={(val) => setCommentText(val)}
+            />
             <button
               onClick={() => {
                 if (commentText.trim()) {
@@ -235,10 +236,7 @@ export function DynamicDetailPage({
                 flexShrink: 0,
               }}
             >
-              <mdui-icon
-                name="send"
-                style={{ fontSize: 20 }}
-              ></mdui-icon>
+              <Icon style={{ fontSize: 20 }}>send</Icon>
             </button>
           </div>
         </div>
@@ -258,8 +256,7 @@ export function DynamicDetailPage({
           }}
           onClick={() => setPreviewImage(null)}
         >
-          <mdui-button-icon
-            icon="close"
+          <IconButton
             style={{
               position: 'absolute',
               top: 16,
@@ -268,7 +265,7 @@ export function DynamicDetailPage({
               zIndex: 101,
             }}
             onClick={() => setPreviewImage(null)}
-          />
+          ><md-icon>close</md-icon></IconButton>
           <img
             src={previewImage}
             alt=""
@@ -354,11 +351,10 @@ function DynamicDetailCard({
 
         {/* Delete — only visible to author */}
         {currentUserId === dynamic.authorId && (
-          <mdui-button-icon
-            icon="delete"
+          <IconButton
             style={{ color: 'rgb(var(--mdui-color-error))' }}
             onClick={onDeleteClick}
-          ></mdui-button-icon>
+          ><md-icon>delete</md-icon></IconButton>
         )}
       </div>
 
@@ -427,9 +423,9 @@ function DynamicDetailCard({
           <div style={{ height: 16 }} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {dynamic.tags.map((tag) => (
-              <mdui-chip key={tag} variant="assist" style={{ fontSize: 12 }}>
+              <Chip key={tag} variant="assist" style={{ fontSize: 12 }}>
                 #{tag}
-              </mdui-chip>
+              </Chip>
             ))}
           </div>
         </>
@@ -447,15 +443,14 @@ function DynamicDetailCard({
         }}
         onClick={onLikeClick}
       >
-        <mdui-icon
-          name={dynamic.isLiked ? 'favorite' : 'favorite_border'}
+        <Icon
           style={{
             fontSize: 24,
             color: dynamic.isLiked
               ? 'rgb(var(--mdui-color-error))'
               : 'rgb(var(--mdui-color-on-surface-variant))',
           }}
-        />
+        >{dynamic.isLiked ? 'favorite' : 'favorite_border'}</Icon>
         <span
           style={{
             fontSize: 16,
@@ -545,8 +540,7 @@ function CommentItem({
             回复
           </button>
           {currentUserId === comment.authorId && (
-            <mdui-button-icon
-              icon="delete"
+            <IconButton
               style={{
                 fontSize: 16,
                 color: 'rgb(var(--mdui-color-error))',
@@ -554,7 +548,7 @@ function CommentItem({
                 height: 32,
               }}
               onClick={onDeleteClick}
-            ></mdui-button-icon>
+            ><md-icon>delete</md-icon></IconButton>
           )}
         </div>
       </div>

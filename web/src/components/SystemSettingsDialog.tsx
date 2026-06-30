@@ -1,3 +1,5 @@
+import { Icon } from '../ui/components/Icon';
+
 interface SystemSettingsDialogProps {
   onDismiss: () => void;
 }
@@ -95,14 +97,13 @@ function SettingsItem({ icon, title, subtitle, onClick }: SettingsItemProps) {
         borderRadius: 4,
       }}
     >
-      <mdui-icon
-        name={icon}
+      <Icon
         style={{
           fontSize: 24,
           color: 'rgb(var(--mdui-color-on-surface-variant))',
           flexShrink: 0,
         }}
-      />
+      >{icon}</Icon>
       <div style={{ flex: 1, minWidth: 0, marginLeft: 16 }}>
         <div style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>
           {title}

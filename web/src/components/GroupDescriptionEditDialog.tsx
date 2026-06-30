@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TextField } from '../ui/components/TextField';
 
 interface MemberGroup {
   name: string;
@@ -101,14 +102,14 @@ export function GroupDescriptionEditDialog({
 
         {/* 分组名称 */}
         <div style={{ marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="分组名称"
             placeholder="请输入分组名称"
             value={name}
             error-text={nameError}
             style={{ width: '100%' }}
-            onInput={(e) => {
-              setName((e.target as HTMLInputElement).value.replace(/\n/g, ''));
+            onChange={(val) => {
+              setName(val.replace(/\n/g, ''));
               setNameError('');
             }}
           />
@@ -116,19 +117,19 @@ export function GroupDescriptionEditDialog({
 
         {/* 分组描述 */}
         <div style={{ marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="分组描述"
             placeholder="添加分组描述..."
             value={description}
             rows={4}
             style={{ width: '100%' }}
-            onInput={(e) => setDescription((e.target as HTMLInputElement).value)}
+            onChange={(val) => setDescription(val)}
           />
         </div>
 
         {/* 父级分组选择 */}
         <div style={{ position: 'relative', marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             label="父级分组"
             value={selectedParentName ?? '无'}
             readonly

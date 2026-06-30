@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FAB } from '../ui/components/FAB';
 import { MemberHeader } from '../components/MemberHeader';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { CreateGroupDialog } from '../components/CreateGroupDialog';
@@ -149,7 +150,7 @@ export function GroupChatPage({
         </div>
       )}
 
-      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreateGroup(true)}></mdui-fab>
+      <FAB icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreateGroup(true)} />
 
       {showCreateGroup && (
         <CreateGroupDialog
