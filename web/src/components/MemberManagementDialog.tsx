@@ -25,10 +25,12 @@ export function MemberManagementDialog({
   return (
     <>
       <div
-        style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+        className="dialog-overlay"
+        style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
         onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
       >
         <div
+          className="dialog-panel"
           style={{ width: '92%', maxWidth: 420, maxHeight: '80vh', display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, overflow: 'hidden' }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -74,7 +76,7 @@ export function MemberManagementDialog({
                   {menuOpen === member.id && (
                     <>
                       <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setMenuOpen(null)} />
-                      <div style={{ position: 'absolute', right: 0, top: 32, zIndex: 11, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.2)', minWidth: 120, overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', right: 0, top: 32, zIndex: 11, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 8, boxShadow: '0 4px 16px rgba(var(--mdui-color-scrim), 0.2)', minWidth: 120, overflow: 'hidden' }}>
                         <button type="button" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14 }}
                           onClick={() => { setMenuOpen(null); setEditTarget(member); }}>
                           <Icon style={{ fontSize: 16 }}>edit</Icon>编辑
@@ -102,8 +104,8 @@ export function MemberManagementDialog({
 
       {/* 删除确认 */}
       {deleteTarget && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <div style={{ width: '88%', maxWidth: 340, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24 }}>
+        <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.4)' }}>
+          <div className="dialog-panel alert-dialog-panel" style={{ width: '88%', maxWidth: 340, backgroundColor: 'rgb(var(--mdui-color-surface))', padding: 24 }}>
             <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>删除成员</div>
             <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 20 }}>确定要删除成员「{deleteTarget.name}」吗？</div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>

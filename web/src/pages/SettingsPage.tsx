@@ -340,7 +340,7 @@ function WebAccessInfoCard({ url }: { url: string }) {
             width: 180,
             height: 180,
             borderRadius: 8,
-            backgroundColor: '#ffffff',
+            backgroundColor: 'rgb(var(--mdui-color-surface))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

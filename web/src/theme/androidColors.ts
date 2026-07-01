@@ -1,14 +1,17 @@
 
+// 逗号分隔的 RGB 三元组，与 mdui 原生变量格式（如 --mdui-color-scrim-light: 0,0,0）一致。
+// 必须用逗号：rgba(var(--mdui-color-scrim), 0.5) 展开后需为合法的 rgba(0, 0, 0, 0.5)；
+// 若用空格会得到 rgba(0 0 0, 0.5)，混用空格分量与逗号 alpha 是非法 CSS，整条声明会被丢弃。
 function hexToRgb(hex: string): string {
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
   const b = parseInt(hex.slice(4, 6), 16);
-  return `${r} ${g} ${b}`;
+  return `${r}, ${g}, ${b}`;
 }
 
-// 将空格分隔的 RGB 三元组（mdui 格式）转换为完整的 rgb() 颜色字符串（Material Web 格式）
+// 将 RGB 三元组（mdui 格式）转换为完整的 rgb() 颜色字符串（Material Web 格式）
 function tripletToRgb(triplet: string): string {
-  return `rgb(${triplet.replace(/ /g, ', ')})`;
+  return `rgb(${triplet})`;
 }
 
 // APP_DEFAULT 浅色方案 —— 直接从安卓 Theme.kt LightColorScheme 提取

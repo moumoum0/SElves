@@ -220,7 +220,7 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
           }}
           onClick={() => setDeleteTarget(null)}
         >
@@ -371,7 +371,7 @@ function MemberRow({
                 padding: '4px 0',
                 borderRadius: 8,
                 backgroundColor: 'rgb(var(--mdui-color-surface-container))',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                boxShadow: '0 2px 12px rgba(var(--mdui-color-scrim), 0.2)',
               }}
             >
               <button

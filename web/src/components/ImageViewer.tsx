@@ -28,7 +28,7 @@ export function ImageViewer({ src, senderName, timestamp, onClose }: ImageViewer
       onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
       style={{
         position: 'fixed', inset: 0, zIndex: 500,
-        backgroundColor: 'rgba(0,0,0,0.92)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.92)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
@@ -38,8 +38,8 @@ export function ImageViewer({ src, senderName, timestamp, onClose }: ImageViewer
         style={{
           position: 'absolute', top: 16, left: 16,
           width: 48, height: 48, borderRadius: '50%',
-          backgroundColor: 'rgba(0,0,0,0.5)', border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+          backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--mdui-color-surface))',
         }}
       >
         <Icon style={{ fontSize: 24 }}>arrow_back</Icon>
@@ -49,8 +49,8 @@ export function ImageViewer({ src, senderName, timestamp, onClose }: ImageViewer
       {senderName && timestamp && (
         <div style={{
           position: 'absolute', top: 16, right: 16,
-          backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 24,
-          padding: '8px 16px', color: '#fff', textAlign: 'right',
+          backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)', borderRadius: 24,
+          padding: '8px 16px', color: 'rgb(var(--mdui-color-surface))', textAlign: 'right',
         }}>
           <div style={{ fontSize: 14 }}>{senderName}</div>
           <div style={{ fontSize: 12, opacity: 0.7 }}>{formatTs(timestamp)}</div>

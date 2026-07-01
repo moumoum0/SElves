@@ -64,13 +64,13 @@ export function AboutPage({ onBack, onDeveloperModeUnlocked }: AboutPageProps) {
             overflow: 'hidden',
             cursor: 'pointer',
             position: 'relative',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, rgb(var(--mdui-color-primary)) 0%, rgb(var(--mdui-color-tertiary)) 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Icon style={{ fontSize: 64, color: '#fff' }}>diversity_3</Icon>
+          <Icon style={{ fontSize: 64, color: 'rgb(var(--mdui-color-on-primary))' }}>diversity_3</Icon>
         </div>
 
         <div style={{ height: 24 }} />

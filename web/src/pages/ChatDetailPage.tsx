@@ -322,7 +322,7 @@ function MessageItem({
             zIndex: 1000,
             backgroundColor: 'rgb(var(--mdui-color-surface-container))',
             borderRadius: 8,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 2px 12px rgba(var(--mdui-color-scrim), 0.15)',
             padding: '4px 0',
             minWidth: 120,
           }}
@@ -404,11 +404,11 @@ function MessageBubble({
 }) {
   const bubbleColor = isFromCurrentMember
     ? 'rgb(var(--mdui-color-primary))'
-    : 'rgb(var(--mdui-color-surface-container-high))';
+    : 'rgb(var(--mdui-color-surface-variant))';
 
   const contentColor = isFromCurrentMember
     ? 'rgb(var(--mdui-color-on-primary))'
-    : 'rgb(var(--mdui-color-on-surface))';
+    : 'rgb(var(--mdui-color-on-surface-variant))';
 
   // 气泡圆角：current → topStart=16, topEnd=0, bottomStart=16, bottomEnd=16
   // other → topStart=0, topEnd=16, bottomStart=16, bottomEnd=16
@@ -457,8 +457,8 @@ function MessageBubble({
           fontSize: 11,
           lineHeight: 1.3,
           color: isFromCurrentMember
-            ? 'rgba(255,255,255,0.7)'
-            : 'rgba(var(--mdui-color-on-surface), 0.5)',
+            ? 'rgba(var(--mdui-color-on-primary), 0.7)'
+            : 'rgba(var(--mdui-color-on-surface-variant), 0.7)',
           marginTop: 4,
           textAlign: 'right',
         }}

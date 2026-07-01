@@ -248,7 +248,7 @@ export function DynamicDetailPage({
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.9)',
+            backgroundColor: 'rgba(var(--mdui-color-scrim), 0.9)',
             zIndex: 100,
             display: 'flex',
             alignItems: 'center',
@@ -261,7 +261,7 @@ export function DynamicDetailPage({
               position: 'absolute',
               top: 16,
               right: 16,
-              color: 'white',
+              color: 'rgb(var(--mdui-color-surface))',
               zIndex: 101,
             }}
             onClick={() => setPreviewImage(null)}

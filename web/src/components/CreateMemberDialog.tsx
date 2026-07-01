@@ -36,11 +36,13 @@ export function CreateMemberDialog({
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+      className="dialog-overlay"
+      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
-        style={{ width: '92%', maxWidth: 400, maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}
+        className="dialog-panel"
+        style={{ width: '92%', maxWidth: 400, maxHeight: '90vh', overflowY: 'auto', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>新建成员</div>
@@ -140,8 +142,8 @@ export function CreateMemberDialog({
 
       {/* 新建分组子弹窗 */}
       {showNewGroupDialog && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }} onClick={(e) => e.stopPropagation()}>
-          <div style={{ width: '85%', maxWidth: 300, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 20, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}>
+        <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.4)' }} onClick={(e) => e.stopPropagation()}>
+          <div className="dialog-panel" style={{ width: '85%', maxWidth: 300, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 20, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }}>
             <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>新建分组</div>
             <TextField
               label="分组名称"

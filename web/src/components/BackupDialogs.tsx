@@ -10,8 +10,8 @@ interface BackupProgressDialogProps {
 
 export function BackupProgressDialog({ title = '备份中', message = '正在处理，请稍候...', progress = null }: BackupProgressDialogProps) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-      <div style={{
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}>
+      <div className="dialog-panel" style={{
         width: '88%', maxWidth: 360,
         backgroundColor: 'rgb(var(--mdui-color-surface-container))',
         borderRadius: 16, padding: 24,
@@ -42,11 +42,13 @@ interface ImportBackupWarningDialogProps {
 export function ImportBackupWarningDialog({ onConfirm, onDismiss }: ImportBackupWarningDialogProps) {
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+      className="dialog-overlay"
+      style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
-        style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24 }}
+        className="dialog-panel alert-dialog-panel"
+        style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', padding: 24 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>

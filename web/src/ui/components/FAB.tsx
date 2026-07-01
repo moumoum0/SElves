@@ -19,7 +19,7 @@ export interface FABProps {
  * Material Web FAB（悬浮操作按钮）适配层。
  * 图标通过 slot="icon" 传入 md-icon。
  */
-export function FAB({ icon, label, size, variant, lowered, onClick, className, style }: FABProps) {
+export function FAB({ icon, label, size, variant = 'primary', lowered, onClick, className, style }: FABProps) {
   return (
     <md-fab
       label={label}

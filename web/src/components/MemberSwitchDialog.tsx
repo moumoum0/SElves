@@ -74,20 +74,22 @@ export function MemberSwitchDialog({
 
   return (
     <div
+      className="dialog-overlay"
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
+        className="dialog-panel"
         style={{
           width: '90%', maxWidth: 360,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -137,7 +139,7 @@ export function MemberSwitchDialog({
                       position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                       zIndex: 10, minWidth: 120,
                       backgroundColor: 'rgb(var(--mdui-color-surface-container))',
-                      borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                      borderRadius: 8, boxShadow: '0 2px 12px rgba(var(--mdui-color-scrim), 0.2)',
                       padding: '4px 0',
                     }}
                   >
@@ -188,19 +190,21 @@ export function MemberSwitchDialog({
       {/* 删除确认弹窗 */}
       {deleteTarget && (
         <div
+          className="dialog-overlay"
           style={{
             position: 'fixed', inset: 0, zIndex: 300,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
+            className="dialog-panel alert-dialog-panel"
             style={{
               width: '85%', maxWidth: 320,
               backgroundColor: 'rgb(var(--mdui-color-surface))',
-              borderRadius: 16, padding: 24,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              padding: 24,
+              boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)',
             }}
           >
             <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 12 }}>

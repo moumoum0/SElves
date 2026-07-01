@@ -39,7 +39,7 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <div style={{ width: 52, height: 52, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isRecording ? 'rgba(255,255,255,0.16)' : 'rgb(var(--mdui-color-primary))', color: isRecording ? 'inherit' : 'rgb(var(--mdui-color-on-primary))', flexShrink: 0 }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: isRecording ? 'rgba(var(--mdui-color-on-primary), 0.16)' : 'rgb(var(--mdui-color-primary))', color: isRecording ? 'inherit' : 'rgb(var(--mdui-color-on-primary))', flexShrink: 0 }}>
               <Icon style={{ fontSize: 28 }}>{isRecording ? 'navigation' : 'location_on'}</Icon>
             </div>
             <div style={{ flex: 1 }}>

@@ -31,7 +31,7 @@ export function SubPageScaffold({ title, subtitle, onBack, actions, children, no
               {title}
             </div>
             {subtitle ? (
-              <div style={{ fontSize: 12, opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {subtitle}
               </div>
             ) : null}

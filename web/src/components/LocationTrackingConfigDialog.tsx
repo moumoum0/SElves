@@ -35,10 +35,12 @@ export function LocationTrackingConfigDialog({ config, onConfigUpdate, onDismiss
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+      className="dialog-overlay"
+      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
+        className="dialog-panel"
         style={{ width: '92%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', backgroundColor: 'rgb(var(--mdui-color-surface-container))', borderRadius: 16, padding: 20 }}
         onClick={(e) => e.stopPropagation()}
       >

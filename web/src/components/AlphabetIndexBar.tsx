@@ -93,9 +93,9 @@ export function AlphabetIndexBar({ availableLetters, selectedLetter, onLetterSel
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: isSelected
-                  ? 'rgba(0,0,0,0.12)'
+                  ? 'rgba(var(--mdui-color-on-surface), 0.12)'
                   : isDragging && isAvailable
-                    ? 'rgba(0,0,0,0.06)'
+                    ? 'rgba(var(--mdui-color-on-surface), 0.06)'
                     : 'transparent',
                 fontSize: isSelected ? 11 : 10,
                 fontWeight: isSelected ? 700 : 400,

@@ -203,7 +203,7 @@ export function DiaryPage({
             style={{
               position: 'fixed',
               inset: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
+              backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
               zIndex: 50,
             }}
             onClick={() => setSelectedDiary(null)}

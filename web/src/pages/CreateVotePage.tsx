@@ -409,7 +409,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
             position: 'fixed',
             inset: 0,
             zIndex: 100,
-            backgroundColor: 'rgba(0,0,0,0.3)',
+            backgroundColor: 'rgba(var(--mdui-color-scrim), 0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

@@ -66,6 +66,7 @@ export function GroupDescriptionEditDialog({
 
   return (
     <div
+      className="dialog-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -73,18 +74,19 @@ export function GroupDescriptionEditDialog({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
+        className="dialog-panel"
         style={{
           width: '92%',
           maxWidth: 400,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderRadius: 12,
           padding: 24,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -152,7 +154,7 @@ export function GroupDescriptionEditDialog({
                   zIndex: 11,
                   backgroundColor: 'rgb(var(--mdui-color-surface-container))',
                   borderRadius: 8,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                  boxShadow: '0 4px 16px rgba(var(--mdui-color-scrim), 0.2)',
                   marginTop: 4,
                   maxHeight: 200,
                   overflowY: 'auto',

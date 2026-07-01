@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { Member, Todo, TodoPriority } from '../types/models';
 import { formatTimestamp } from '../lib/utils';
 import { IconButton } from '../ui/components/IconButton';
@@ -130,74 +130,44 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
             {/* 待完成 */}
             {pendingTodos.length > 0 ? (
               <div>
-                <div style={{ padding: '4px 0' }}>
-                  <IconButton
-                    onClick={() => setShowPendingTodos((v) => !v)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 0',
-                      cursor: 'pointer',
-                      transform: showPendingTodos ? 'rotate(0deg)' : 'rotate(-90deg)',
-                      transition: 'transform 0.2s ease',
-                      fontSize: 16,
-                      fontWeight: 600,
-                    }}
-                  ><md-icon>keyboard_arrow_down</md-icon>
-                    <span>待完成 ({pendingTodos.length})</span>
-                  </IconButton>
-                </div>
-                {showPendingTodos && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {pendingTodos.map((todo) => (
-                      <TodoCard
-                        key={todo.id}
-                        todo={todo}
-                        members={members}
-                        onLongPress={() => handleLongPress(todo)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <TodoSectionHeader
+                  label="待完成"
+                  count={pendingTodos.length}
+                  expanded={showPendingTodos}
+                  onToggle={() => setShowPendingTodos((v) => !v)}
+                />
+                <TodoCollapsibleList expanded={showPendingTodos}>
+                  {pendingTodos.map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      members={members}
+                      onLongPress={() => handleLongPress(todo)}
+                    />
+                  ))}
+                </TodoCollapsibleList>
               </div>
             ) : null}
 
             {/* 已完成 */}
             {completedTodos.length > 0 ? (
               <div>
-                <div style={{ padding: '4px 0' }}>
-                  <IconButton
-                    onClick={() => setShowCompletedTodos((v) => !v)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 0',
-                      cursor: 'pointer',
-                      transform: showCompletedTodos ? 'rotate(0deg)' : 'rotate(-90deg)',
-                      transition: 'transform 0.2s ease',
-                      fontSize: 16,
-                      fontWeight: 600,
-                    }}
-                  ><md-icon>keyboard_arrow_down</md-icon>
-                    <span>已完成 ({completedTodos.length})</span>
-                  </IconButton>
-                </div>
-                {showCompletedTodos && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {completedTodos.map((todo) => (
-                      <TodoCard
-                        key={todo.id}
-                        todo={todo}
-                        members={members}
-                        onLongPress={() => handleLongPress(todo)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <TodoSectionHeader
+                  label="已完成"
+                  count={completedTodos.length}
+                  expanded={showCompletedTodos}
+                  onToggle={() => setShowCompletedTodos((v) => !v)}
+                />
+                <TodoCollapsibleList expanded={showCompletedTodos}>
+                  {completedTodos.map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      members={members}
+                      onLongPress={() => handleLongPress(todo)}
+                    />
+                  ))}
+                </TodoCollapsibleList>
               </div>
             ) : null}
           </div>
@@ -234,6 +204,75 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
           }}
         />
       )}
+    </div>
+  );
+}
+
+// ─── TodoSectionHeader / TodoCollapsibleList ────────────────
+
+function TodoSectionHeader({
+  label,
+  count,
+  expanded,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div style={{ padding: '4px 0' }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 0',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'rgb(var(--mdui-color-on-surface))',
+          }}
+        >
+          {label} ({count})
+        </span>
+        <Icon
+          style={{
+            fontSize: 24,
+            color: 'rgb(var(--mdui-color-primary))',
+            transform: `rotate(${expanded ? 180 : 0}deg)`,
+            transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          keyboard_arrow_down
+        </Icon>
+      </button>
+    </div>
+  );
+}
+
+function TodoCollapsibleList({
+  expanded,
+  children,
+}: {
+  expanded: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`todo-collapsible${expanded ? ' todo-collapsible--expanded' : ''}`}>
+      <div className="todo-collapsible__inner">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
+      </div>
     </div>
   );
 }
@@ -454,7 +493,7 @@ function CreateTodoDialog({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.32)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.32)',
       }}
     >
       <div
@@ -533,7 +572,7 @@ function CreateTodoDialog({
                 zIndex: 10,
                 backgroundColor: 'rgb(var(--mdui-color-surface-container))',
                 borderRadius: 8,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                boxShadow: '0 4px 16px rgba(var(--mdui-color-scrim), 0.12)',
                 marginTop: 4,
                 overflow: 'hidden',
               }}
@@ -626,7 +665,7 @@ function TodoDetailBottomSheet({
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.32)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.32)',
       }}
       onClick={onDismiss}
     >

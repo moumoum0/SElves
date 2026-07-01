@@ -96,7 +96,7 @@ export function GroupChatPage({
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: groupColorFromName(group.name),
-                        color: '#fff',
+                        color: 'rgb(var(--mdui-color-surface))',
                         fontWeight: 700,
                         fontSize: 20,
                       }}

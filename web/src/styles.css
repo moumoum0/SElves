@@ -16,7 +16,7 @@ body,
 
 body {
   overscroll-behavior-y: none;
-  background-color: rgb(var(--mdui-color-surface-container));
+  background-color: rgb(var(--mdui-color-background));
   font-family: 'Noto Sans SC', 'Roboto', sans-serif;
 }
 
@@ -100,7 +100,7 @@ md-icon {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background-color: rgb(var(--mdui-color-surface));
+  background-color: rgb(var(--mdui-color-background));
   position: relative;
   overflow: hidden;
 }
@@ -112,7 +112,7 @@ md-icon {
     height: min(860px, 95vh);
     height: min(860px, 95svh);
     border-radius: 28px;
-    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 8px 48px rgba(var(--mdui-color-scrim), 0.18);
   }
 }
 
@@ -158,7 +158,7 @@ md-icon {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  background-color: rgb(var(--mdui-color-surface));
+  background-color: rgb(var(--mdui-color-background));
 }
 
 .page-transition-layer {
@@ -166,7 +166,7 @@ md-icon {
   inset: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: rgb(var(--mdui-color-surface));
+  background-color: rgb(var(--mdui-color-background));
   will-change: transform;
 }
 
@@ -207,6 +207,29 @@ md-icon {
   animation: scrim-fade-out 300ms cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
+/* === 对话框入场动画（遮罩渐显变暗 + 面板弹出） === */
+@keyframes dialog-overlay-in {
+  from { background-color: rgba(var(--mdui-color-scrim), 0); }
+}
+@keyframes dialog-panel-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.dialog-overlay {
+  animation: dialog-overlay-in 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.dialog-panel {
+  animation: dialog-panel-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* 对齐 Android Material3 AlertDialog / md-dialog — ExtraLarge 28dp */
+.alert-dialog-panel {
+  border-radius: 28px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay, .dialog-panel { animation: none; }
+}
+
 /* 无动画态（首次加载）：保持 absolute 撑满容器，
    使页面根 div 的 height:100% 能正确解析（FAB 定位依赖于此） */
 .page-transition-layer.no-transition {
@@ -239,4 +262,20 @@ mdui-navigation-bar {
   position: relative !important;
   flex-shrink: 0;
   z-index: 10;
+}
+
+/* 待办页折叠列表 — 对齐 Android expandVertically / shrinkVertically */
+.todo-collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.todo-collapsible--expanded {
+  grid-template-rows: 1fr;
+}
+
+.todo-collapsible__inner {
+  overflow: hidden;
+  min-height: 0;
 }
