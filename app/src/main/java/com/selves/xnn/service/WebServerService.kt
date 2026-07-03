@@ -228,235 +228,236 @@ class WebServerService : Service() {
 
     private fun Application.setupRoutes() {
         routing {
+            // 首页和静态资源不需要token
             get("/") {
                 if (!call.respondWebIndex()) {
                     call.respondApiLandingPage()
                 }
             }
 
-            // ===== 状态 =====
-            get("/api/status") {
-                call.respond(mapOf(
-                    "status" to "ok",
-                    "version" to "1.0",
-                    "port" to SERVER_PORT,
-                    "connectedClients" to WebSocketManager.connectedCount
-                ))
-            }
-
-            // ===== 系统信息 =====
-            get("/api/system") {
-                val entity = database.systemDao().getCurrentSystem().first()
-                if (entity != null) {
-                    call.respond(entity.toDto())
-                } else {
-                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "No system found"))
+            // ===== 所有API操作都需要token验证 =====
+            authenticate("api-token") {
+                // ===== 状态 =====
+                get("/api/status") {
+                    call.respond(mapOf(
+                        "status" to "ok",
+                        "version" to "1.0",
+                        "port" to SERVER_PORT,
+                        "connectedClients" to WebSocketManager.connectedCount
+                    ))
                 }
-            }
 
-            // ===== 成员 =====
-            get("/api/members") {
-                val entities = database.memberDao().getAllMembersSync()
-                    .filter { !it.isDeleted }
-                call.respond(entities.map { it.toDto() })
-            }
+                // ===== 系统信息 =====
+                get("/api/system") {
+                    val entity = database.systemDao().getCurrentSystem().first()
+                    if (entity != null) {
+                        call.respond(entity.toDto())
+                    } else {
+                        call.respond(HttpStatusCode.NotFound, mapOf("error" to "No system found"))
+                    }
+                }
 
-            get("/api/members/{id}") {
-                val id = call.parameters["id"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
-                val entity = database.memberDao().getMemberById(id)
-                if (entity != null && !entity.isDeleted) call.respond(entity.toDto())
-                else call.respond(HttpStatusCode.NotFound, mapOf("error" to "Member not found"))
-            }
-
-            // ===== 群聊 =====
-            get("/api/groups") {
-                val entities = database.chatGroupDao().getAllGroupsSync()
-                call.respond(entities.map { it.toDto(database.memberDao()) })
-            }
-
-            get("/api/groups/{groupId}") {
-                val groupId = call.parameters["groupId"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing groupId"))
-                val entity = database.chatGroupDao().getGroupById(groupId)
-                if (entity != null) call.respond(entity.toDto(database.memberDao()))
-                else call.respond(HttpStatusCode.NotFound, mapOf("error" to "Group not found"))
-            }
-
-            get("/api/groups/{groupId}/messages") {
-                val groupId = call.parameters["groupId"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing groupId"))
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
-                val entities = database.messageDao().getRecentMessagesByGroupId(groupId, limit).first()
-                call.respond(entities.map { it.toDto() })
-            }
-
-            // ===== 待办 =====
-            get("/api/todos") {
-                val entities = database.todoDao().getAllTodos().first()
-                call.respond(entities.map { it.toDto() })
-            }
-
-            get("/api/todos/{id}") {
-                val id = call.parameters["id"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
-                val entity = database.todoDao().getTodoById(id)
-                if (entity != null) call.respond(entity.toDto())
-                else call.respond(HttpStatusCode.NotFound, mapOf("error" to "Todo not found"))
-            }
-
-            // ===== 动态 =====
-            get("/api/dynamics") {
-                val entities = database.dynamicDao().getAllDynamics().first()
-                call.respond(entities.map { it.toDto() })
-            }
-
-            // ===== 日记 =====
-            get("/api/diaries") {
-                val memberId = call.request.queryParameters["memberId"]
-                if (memberId != null) {
-                    val entities = database.memberDiaryDao().getDiariesByMember(memberId).first()
-                    call.respond(entities.map { it.toDto() })
-                } else {
-                    val entities = database.memberDiaryDao().getAllDiariesSync()
+                // ===== 成员 =====
+                get("/api/members") {
+                    val entities = database.memberDao().getAllMembersSync()
+                        .filter { !it.isDeleted }
                     call.respond(entities.map { it.toDto() })
                 }
-            }
 
-            // ===== 投票 =====
-            get("/api/votes") {
-                val userId = call.request.queryParameters["userId"]
-                val voteEntities = database.voteDao().getAllVotesSync()
-                val dtos = voteEntities.map { entity ->
-                    val options = database.voteDao().getVoteOptionsSync(entity.id)
-                    val userRecords = if (userId != null) database.voteDao().getUserVoteRecords(entity.id, userId) else emptyList()
-                    val optionDtos = options.map { it.toDto(entity.totalVotes, userRecords.any { r -> r.optionId == it.id }) }
-                    entity.toDto(optionDtos, userRecords.isNotEmpty())
+                get("/api/members/{id}") {
+                    val id = call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+                    val entity = database.memberDao().getMemberById(id)
+                    if (entity != null && !entity.isDeleted) call.respond(entity.toDto())
+                    else call.respond(HttpStatusCode.NotFound, mapOf("error" to "Member not found"))
                 }
-                call.respond(dtos)
-            }
 
-            // ===== 位置记录 =====
-            get("/api/location/summary") {
-                val memberId = call.request.queryParameters["memberId"]
-                val records = database.locationRecordDao().getAllLocationRecordsSync()
-                    .let { all -> if (memberId.isNullOrBlank()) all else all.filter { it.memberId == memberId } }
-                val todayStart = LocalDate.now().atStartOfDay()
-                call.respond(LocationSummaryResponse(
-                    status = "STOPPED",
-                    todayRecords = records.count { !it.timestamp.isBefore(todayStart) },
-                    totalRecords = records.size,
-                    lastRecordTime = records.maxByOrNull { it.timestamp }?.timestamp?.toString()
-                ))
-            }
-
-            get("/api/location/records") {
-                val memberId = call.request.queryParameters["memberId"]
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 500) ?: 100
-                val from = call.request.queryParameters["from"]?.let { parseLocalDateTimeParam(it) }
-                val to = call.request.queryParameters["to"]?.let { parseLocalDateTimeParam(it) }
-                val records = database.locationRecordDao().getAllLocationRecordsSync()
-                    .asSequence()
-                    .filter { memberId.isNullOrBlank() || it.memberId == memberId }
-                    .filter { from == null || !it.timestamp.isBefore(from) }
-                    .filter { to == null || !it.timestamp.isAfter(to) }
-                    .sortedByDescending { it.timestamp }
-                    .take(limit)
-                    .map { it.toLocationRecordResponse() }
-                    .toList()
-                call.respond(records)
-            }
-
-            // ===== 在线统计 =====
-            get("/api/online/status") {
-                val members = database.memberDao().getAllMembersSync().filter { !it.isDeleted }
-                val lastActiveMap = database.onlineStatusDao().getLastActiveTimeForAllMembers().associateBy { it.memberId }
-                val now = System.currentTimeMillis()
-                val todayStart = todayStartMillis()
-                val stats = members.map { member ->
-                    val current = database.onlineStatusDao().getCurrentOnlineStatus(member.id)
-                    OnlineMemberStatusResponse(
-                        member = member.toDto(),
-                        isOnline = current != null,
-                        todayOnlineMinutes = ((database.onlineStatusDao().getTodayOnlineTime(member.id, now, todayStart) ?: 0L) / 60000L).toInt(),
-                        lastActiveTime = lastActiveMap[member.id]?.lastActiveTime ?: 0L
-                    )
+                // ===== 群聊 =====
+                get("/api/groups") {
+                    val entities = database.chatGroupDao().getAllGroupsSync()
+                    call.respond(entities.map { it.toDto(database.memberDao()) })
                 }
-                call.respond(OnlineStatusResponse(
-                    onlineCount = stats.count { it.isOnline },
-                    memberStats = stats
-                ))
-            }
 
-            get("/api/online/logs") {
-                val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 500) ?: 100
-                val memberId = call.request.queryParameters["memberId"]
-                val from = call.request.queryParameters["from"]?.toLongOrNull()
-                val to = call.request.queryParameters["to"]?.toLongOrNull()
-                val memberMap = database.memberDao().getAllMembersSync().associateBy { it.id }
-                val logs = database.onlineStatusDao().getAllLoginLogs(limit = 500)
-                    .asSequence()
-                    .filter { memberId.isNullOrBlank() || it.memberId == memberId }
-                    .filter { from == null || it.loginTime >= from }
-                    .filter { to == null || it.loginTime <= to }
-                    .take(limit)
-                    .map { log ->
-                        val member = memberMap[log.memberId]
-                        OnlineLogResponse(
-                            id = log.id,
-                            memberId = log.memberId,
-                            memberName = member?.name ?: "未知成员",
-                            memberAvatar = member?.avatarUrl,
-                            isOnline = log.logoutTime == null,
-                            loginTime = log.loginTime,
-                            logoutTime = log.logoutTime,
-                            duration = if (log.logoutTime == null) System.currentTimeMillis() - log.loginTime else log.duration
+                get("/api/groups/{groupId}") {
+                    val groupId = call.parameters["groupId"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing groupId"))
+                    val entity = database.chatGroupDao().getGroupById(groupId)
+                    if (entity != null) call.respond(entity.toDto(database.memberDao()))
+                    else call.respond(HttpStatusCode.NotFound, mapOf("error" to "Group not found"))
+                }
+
+                get("/api/groups/{groupId}/messages") {
+                    val groupId = call.parameters["groupId"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing groupId"))
+                    val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 50
+                    val entities = database.messageDao().getRecentMessagesByGroupId(groupId, limit).first()
+                    call.respond(entities.map { it.toDto() })
+                }
+
+                // ===== 待办 =====
+                get("/api/todos") {
+                    val entities = database.todoDao().getAllTodos().first()
+                    call.respond(entities.map { it.toDto() })
+                }
+
+                get("/api/todos/{id}") {
+                    val id = call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+                    val entity = database.todoDao().getTodoById(id)
+                    if (entity != null) call.respond(entity.toDto())
+                    else call.respond(HttpStatusCode.NotFound, mapOf("error" to "Todo not found"))
+                }
+
+                // ===== 动态 =====
+                get("/api/dynamics") {
+                    val entities = database.dynamicDao().getAllDynamics().first()
+                    call.respond(entities.map { it.toDto() })
+                }
+
+                // ===== 日记 =====
+                get("/api/diaries") {
+                    val memberId = call.request.queryParameters["memberId"]
+                    if (memberId != null) {
+                        val entities = database.memberDiaryDao().getDiariesByMember(memberId).first()
+                        call.respond(entities.map { it.toDto() })
+                    } else {
+                        val entities = database.memberDiaryDao().getAllDiariesSync()
+                        call.respond(entities.map { it.toDto() })
+                    }
+                }
+
+                // ===== 投票 =====
+                get("/api/votes") {
+                    val userId = call.request.queryParameters["userId"]
+                    val voteEntities = database.voteDao().getAllVotesSync()
+                    val dtos = voteEntities.map { entity ->
+                        val options = database.voteDao().getVoteOptionsSync(entity.id)
+                        val userRecords = if (userId != null) database.voteDao().getUserVoteRecords(entity.id, userId) else emptyList()
+                        val optionDtos = options.map { it.toDto(entity.totalVotes, userRecords.any { r -> r.optionId == it.id }) }
+                        entity.toDto(optionDtos, userRecords.isNotEmpty())
+                    }
+                    call.respond(dtos)
+                }
+
+                // ===== 位置记录 =====
+                get("/api/location/summary") {
+                    val memberId = call.request.queryParameters["memberId"]
+                    val records = database.locationRecordDao().getAllLocationRecordsSync()
+                        .let { all -> if (memberId.isNullOrBlank()) all else all.filter { it.memberId == memberId } }
+                    val todayStart = LocalDate.now().atStartOfDay()
+                    call.respond(LocationSummaryResponse(
+                        status = "STOPPED",
+                        todayRecords = records.count { !it.timestamp.isBefore(todayStart) },
+                        totalRecords = records.size,
+                        lastRecordTime = records.maxByOrNull { it.timestamp }?.timestamp?.toString()
+                    ))
+                }
+
+                get("/api/location/records") {
+                    val memberId = call.request.queryParameters["memberId"]
+                    val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 500) ?: 100
+                    val from = call.request.queryParameters["from"]?.let { parseLocalDateTimeParam(it) }
+                    val to = call.request.queryParameters["to"]?.let { parseLocalDateTimeParam(it) }
+                    val records = database.locationRecordDao().getAllLocationRecordsSync()
+                        .asSequence()
+                        .filter { memberId.isNullOrBlank() || it.memberId == memberId }
+                        .filter { from == null || !it.timestamp.isBefore(from) }
+                        .filter { to == null || !it.timestamp.isAfter(to) }
+                        .sortedByDescending { it.timestamp }
+                        .take(limit)
+                        .map { it.toLocationRecordResponse() }
+                        .toList()
+                    call.respond(records)
+                }
+
+                // ===== 在线统计 =====
+                get("/api/online/status") {
+                    val members = database.memberDao().getAllMembersSync().filter { !it.isDeleted }
+                    val lastActiveMap = database.onlineStatusDao().getLastActiveTimeForAllMembers().associateBy { it.memberId }
+                    val now = System.currentTimeMillis()
+                    val todayStart = todayStartMillis()
+                    val stats = members.map { member ->
+                        val current = database.onlineStatusDao().getCurrentOnlineStatus(member.id)
+                        OnlineMemberStatusResponse(
+                            member = member.toDto(),
+                            isOnline = current != null,
+                            todayOnlineMinutes = ((database.onlineStatusDao().getTodayOnlineTime(member.id, now, todayStart) ?: 0L) / 60000L).toInt(),
+                            lastActiveTime = lastActiveMap[member.id]?.lastActiveTime ?: 0L
                         )
                     }
-                    .toList()
-                call.respond(logs)
-            }
+                    call.respond(OnlineStatusResponse(
+                        onlineCount = stats.count { it.isOnline },
+                        memberStats = stats
+                    ))
+                }
 
-            get("/api/online/summary") {
-                val now = System.currentTimeMillis()
-                val todayStart = call.request.queryParameters["from"]?.toLongOrNull() ?: todayStartMillis()
-                call.respond(OnlineSummaryResponse(
-                    totalLogins = database.onlineStatusDao().getTotalLoginCount(),
-                    todayLogins = database.onlineStatusDao().getTodayLoginCount(todayStart),
-                    currentOnlineCount = database.onlineStatusDao().getCurrentOnlineCount(),
-                    averageOnlineTime = database.onlineStatusDao().getAverageOnlineTime(now, todayStart) ?: 0L
-                ))
-            }
+                get("/api/online/logs") {
+                    val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 500) ?: 100
+                    val memberId = call.request.queryParameters["memberId"]
+                    val from = call.request.queryParameters["from"]?.toLongOrNull()
+                    val to = call.request.queryParameters["to"]?.toLongOrNull()
+                    val memberMap = database.memberDao().getAllMembersSync().associateBy { it.id }
+                    val logs = database.onlineStatusDao().getAllLoginLogs(limit = 500)
+                        .asSequence()
+                        .filter { memberId.isNullOrBlank() || it.memberId == memberId }
+                        .filter { from == null || it.loginTime >= from }
+                        .filter { to == null || it.loginTime <= to }
+                        .take(limit)
+                        .map { log ->
+                            val member = memberMap[log.memberId]
+                            OnlineLogResponse(
+                                id = log.id,
+                                memberId = log.memberId,
+                                memberName = member?.name ?: "未知成员",
+                                memberAvatar = member?.avatarUrl,
+                                isOnline = log.logoutTime == null,
+                                loginTime = log.loginTime,
+                                logoutTime = log.logoutTime,
+                                duration = if (log.logoutTime == null) System.currentTimeMillis() - log.loginTime else log.duration
+                            )
+                        }
+                        .toList()
+                    call.respond(logs)
+                }
 
-            get("/api/votes/{id}") {
-                val id = call.parameters["id"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
-                val userId = call.request.queryParameters["userId"]
-                val entity = database.voteDao().getVoteById(id)
-                    ?: return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "Vote not found"))
-                val options = database.voteDao().getVoteOptionsSync(id)
-                val userRecords = if (userId != null) database.voteDao().getUserVoteRecords(id, userId) else emptyList()
-                val optionDtos = options.map { it.toDto(entity.totalVotes, userRecords.any { r -> r.optionId == it.id }) }
-                call.respond(entity.toDto(optionDtos, userRecords.isNotEmpty()))
-            }
+                get("/api/online/summary") {
+                    val now = System.currentTimeMillis()
+                    val todayStart = call.request.queryParameters["from"]?.toLongOrNull() ?: todayStartMillis()
+                    call.respond(OnlineSummaryResponse(
+                        totalLogins = database.onlineStatusDao().getTotalLoginCount(),
+                        todayLogins = database.onlineStatusDao().getTodayLoginCount(todayStart),
+                        currentOnlineCount = database.onlineStatusDao().getCurrentOnlineCount(),
+                        averageOnlineTime = database.onlineStatusDao().getAverageOnlineTime(now, todayStart) ?: 0L
+                    ))
+                }
 
-            get("/api/votes/{id}/records") {
-                val id = call.parameters["id"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
-                val records = database.voteDao().getVoteRecords(id).first()
-                call.respond(records.map { it.toDto() })
-            }
+                get("/api/votes/{id}") {
+                    val id = call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+                    val userId = call.request.queryParameters["userId"]
+                    val entity = database.voteDao().getVoteById(id)
+                        ?: return@get call.respond(HttpStatusCode.NotFound, mapOf("error" to "Vote not found"))
+                    val options = database.voteDao().getVoteOptionsSync(id)
+                    val userRecords = if (userId != null) database.voteDao().getUserVoteRecords(id, userId) else emptyList()
+                    val optionDtos = options.map { it.toDto(entity.totalVotes, userRecords.any { r -> r.optionId == it.id }) }
+                    call.respond(entity.toDto(optionDtos, userRecords.isNotEmpty()))
+                }
 
-            // ===== 动态评论 =====
-            get("/api/dynamics/{id}/comments") {
-                val id = call.parameters["id"]
-                    ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
-                val comments = database.dynamicDao().getCommentsByDynamicId(id).first()
-                call.respond(comments.map { it.toDto() })
-            }
+                get("/api/votes/{id}/records") {
+                    val id = call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+                    val records = database.voteDao().getVoteRecords(id).first()
+                    call.respond(records.map { it.toDto() })
+                }
 
-            // ===== 需要鉴权的写入路由 =====
-            authenticate("api-token") {
+                // ===== 动态评论 =====
+                get("/api/dynamics/{id}/comments") {
+                    val id = call.parameters["id"]
+                        ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
+                    val comments = database.dynamicDao().getCommentsByDynamicId(id).first()
+                    call.respond(comments.map { it.toDto() })
+                }
+
                 // --- 备份 ---
                 get("/api/backup/export") {
                     val (result, bytes) = backupService.exportBackupBytes()

@@ -4,6 +4,14 @@ import type { AppData, ChatGroup, Dynamic, DynamicComment, LocationRecord, Locat
 const API_BASE_URL_KEY = 'selves-api-base-url';
 const API_TOKEN_KEY = 'selves-api-token';
 
+// 认证错误类，用于标识token失效
+export class AuthError extends Error {
+  constructor(message = 'Authentication failed') {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
 export function getApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
   const fromStorage = window.localStorage.getItem(API_BASE_URL_KEY);
@@ -147,7 +155,12 @@ export function castVote(
 }
 
 async function fetchJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`);
+  const token = getApiToken();
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
   if (!response.ok) {
     throw new Error(`${response.status} ${response.statusText}`);
   }
@@ -157,15 +170,41 @@ async function fetchJson<T>(path: string): Promise<T> {
 async function fetchWithFallback<T>(path: string, fallback: T, timeoutMs = 8000): Promise<{ data: T; live: boolean }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  // 判断是否为开发环境：localhost 或 DEV 模式
+  const isDev = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
   try {
-    const response = await fetch(`${getApiBaseUrl()}${path}`, { signal: controller.signal });
+    const token = getApiToken();
+    const response = await fetch(`${getApiBaseUrl()}${path}`, {
+      signal: controller.signal,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
     clearTimeout(timer);
-    if (!response.ok) throw new Error(`${response.status}`);
+    if (!response.ok) {
+      // 401认证失败：直接抛出AuthError，不要fallback
+      if (response.status === 401) {
+        throw new AuthError('Token无效或已过期');
+      }
+      throw new Error(`${response.status}`);
+    }
     const data = (await response.json()) as T;
     return { data, live: true };
-  } catch {
+  } catch (error) {
     clearTimeout(timer);
-    return { data: fallback, live: false };
+    // 认证错误：不fallback，直接抛出
+    if (error instanceof AuthError) {
+      throw error;
+    }
+    // 其他错误（网络问题、超时等）：
+    // - 开发环境：fallback到示例数据
+    // - 生产环境：也抛出错误
+    if (isDev) {
+      return { data: fallback, live: false };
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -187,6 +226,7 @@ function buildUnreadCounts(groups: ChatGroup[], messageMap: Record<string, Messa
 export interface AppDataResponse {
   data: AppData;
   isFallback: boolean;
+  authError?: boolean;
   baseUrl: string;
 }
 

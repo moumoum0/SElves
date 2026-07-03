@@ -10,6 +10,7 @@ export function useSelvesData() {
   const [data, setData] = useState<AppData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState(false);
   const [isFallback, setIsFallback] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
   const [currentMemberId, setCurrentMemberId] = useState<string>(() => window.localStorage.getItem(CURRENT_MEMBER_KEY) ?? '');
@@ -21,6 +22,7 @@ export function useSelvesData() {
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setAuthError(false);
     try {
       const response = await loadAppData(currentMemberIdRef.current || undefined);
       setData(response.data);
@@ -30,7 +32,13 @@ export function useSelvesData() {
         setCurrentMemberId(response.data.members[0].id);
       }
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : '数据加载失败');
+      // 检查是否为认证错误
+      if (loadError instanceof Error && loadError.name === 'AuthError') {
+        setAuthError(true);
+        setError('认证失败，请重新输入令牌');
+      } else {
+        setError(loadError instanceof Error ? loadError.message : '数据加载失败');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,6 +93,7 @@ export function useSelvesData() {
     data,
     loading,
     error,
+    authError,
     isFallback,
     baseUrl,
     currentMember,

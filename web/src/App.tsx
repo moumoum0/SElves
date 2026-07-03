@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSelvesData } from './hooks/useSelvesData';
+import { TextField } from './ui/components/TextField';
 import {
   fetchJson,
   postJson,
@@ -80,9 +81,11 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const navBarRef = useRef<HTMLElement>(null);
-  const { data, loading, error, baseUrl, currentMember, setCurrentMember, reload } = useSelvesData();
+  const { data, loading, error, authError, baseUrl, currentMember, setCurrentMember, reload } = useSelvesData();
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
+  const [tokenValidating, setTokenValidating] = useState(false);
+  const [tokenError, setTokenError] = useState('');
 
   const currentTab = useMemo(() => {
     if (location.pathname.startsWith('/chat')) return '/chat';
@@ -148,22 +151,61 @@ export default function App() {
     }
   }, [loading]);
 
-  const handleTokenSubmit = () => {
+  // 监听认证错误：token失效时清除缓存并弹出输入框
+  useEffect(() => {
+    if (authError) {
+      setApiToken('');
+      localStorage.removeItem('selves-token-configured');
+      setShowTokenDialog(true);
+      setTokenInput('');
+      setTokenError('');
+    }
+  }, [authError]);
+
+  const handleTokenSubmit = async () => {
     const trimmedToken = tokenInput.trim().toUpperCase();
-    if (trimmedToken.length === 6) {
+    if (trimmedToken.length !== 6) return;
+
+    setTokenValidating(true);
+    setTokenError('');
+
+    try {
+      // 临时设置 token 用于验证
       setApiToken(trimmedToken);
-      // 标记用户已配置过 token
+      
+      // 等待 2 秒，给 Android 端的 DataStore 足够时间完成持久化
+      // DataStore 写入是异步的，需要时间将数据刷新到磁盘
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 尝试调用 API 验证 token 是否有效
+      console.log('验证 token:', trimmedToken);
+      console.log('API Base URL:', baseUrl);
+      await fetchJson('/api/system');
+      
+      // 验证成功：标记用户已配置过 token，关闭弹窗
       localStorage.setItem('selves-token-configured', 'true');
       setShowTokenDialog(false);
       setTokenInput('');
-      // 刷新数据以测试 token
-      reload();
+      setTokenError('');
+      
+      // 刷新数据
+      await reload();
+    } catch (error) {
+      // 验证失败：清除 token，显示错误信息，保持弹窗打开
+      console.error('Token 验证失败:', error);
+      setApiToken('');
+      localStorage.removeItem('selves-token-configured');
+      setTokenError(`令牌无效，请检查后重试 (${error instanceof Error ? error.message : '未知错误'})`);
+      setShowTokenDialog(true);
+    } finally {
+      setTokenValidating(false);
     }
   };
 
   const handleTokenSkip = () => {
     setShowTokenDialog(false);
     setTokenInput('');
+    setTokenError('');
   };
 
   useEffect(() => {
@@ -292,9 +334,9 @@ export default function App() {
               // TODO: 调用 API 创建成员
               console.log('Create member:', name, avatarUrl);
             }}
+            // ⚠️ 导入备份功能已停用 - 请勿尝试打开此功能
             onImportBackup={() => {
-              // TODO: 触发备份导入
-              console.log('Import backup');
+              // 已停用：不执行任何操作
             }}
             onCompleteGuide={() => {
               navigate('/');
@@ -387,53 +429,32 @@ export default function App() {
               <mdui-dialog open headline="配置访问令牌" close-on-esc={false} close-on-overlay-click={false}>
                 <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {/* 说明文字 */}
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                    <mdui-icon name="lock" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-primary))', marginTop: 2, flexShrink: 0 }} />
-                    <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.6 }}>
-                      访问令牌用于验证身份，必须配置后才能使用
-                    </div>
+                  <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.6 }}>
+                    访问令牌用于验证身份，必须配置后才能使用
                   </div>
 
                   {/* Token 输入框 */}
-                  <mdui-text-field
+                  <TextField
+                    variant="outlined"
                     label="访问令牌"
                     placeholder="A3B7K9"
                     value={tokenInput}
-                    onInput={(e) => setTokenInput((e.target as HTMLInputElement).value.trim().toUpperCase())}
-                    maxlength={6}
+                    error={!!tokenError}
+                    errorText={tokenError}
                     style={{ width: '100%', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}
+                    onChange={(val) => {
+                      setTokenInput(val.trim().toUpperCase());
+                      setTokenError('');
+                    }}
                   />
-
-                  {/* 获取步骤卡片 */}
-                  <mdui-card variant="outlined" style={{ padding: 16, backgroundColor: 'rgb(var(--mdui-color-surface-variant) / 0.4)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))', display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <mdui-icon name="phone_android" style={{ fontSize: 18 }} />
-                        如何获取令牌
-                      </div>
-                      <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.6, paddingLeft: 26 }}>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                          <span style={{ color: 'rgb(var(--mdui-color-primary))', fontWeight: 600 }}>1</span>
-                          <span>打开 Android 应用 → 系统 → 设置</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                          <span style={{ color: 'rgb(var(--mdui-color-primary))', fontWeight: 600 }}>2</span>
-                          <span>开启"Web 访问"开关</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                          <span style={{ color: 'rgb(var(--mdui-color-primary))', fontWeight: 600 }}>3</span>
-                          <span>复制显示的 6 位令牌</span>
-                        </div>
-                      </div>
-                    </div>
-                  </mdui-card>
                 </div>
 
                 <mdui-button
                   slot="action"
                   variant="filled"
                   onClick={handleTokenSubmit}
-                  disabled={tokenInput.trim().length !== 6}
+                  disabled={tokenInput.trim().length !== 6 || tokenValidating}
+                  loading={tokenValidating}
                 >
                   确认
                 </mdui-button>
