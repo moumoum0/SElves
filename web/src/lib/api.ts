@@ -1,5 +1,5 @@
 import { sampleData } from '../data/sampleData';
-import type { AppData, ChatGroup, Dynamic, Member, MemberDiary, Message, SystemInfo, Todo, Vote, VoteRecord } from '../types/models';
+import type { AppData, ChatGroup, Dynamic, DynamicComment, LocationRecord, LocationRecordQuery, LocationSummary, Member, MemberDiary, Message, OnlineLog, OnlineLogQuery, OnlineStatus, OnlineSummary, SystemInfo, Todo, Vote, VoteRecord } from '../types/models';
 
 const API_BASE_URL_KEY = 'selves-api-base-url';
 const API_TOKEN_KEY = 'selves-api-token';
@@ -44,6 +44,107 @@ export { fetchJson };
 export const postJson = <T>(path: string, body: unknown) => mutate<T>('POST', path, body);
 export const putJson = <T>(path: string, body: unknown) => mutate<T>('PUT', path, body);
 export const deleteApi = (path: string) => mutate<void>('DELETE', path);
+
+const TODO_PRIORITY_VALUE: Record<Todo['priority'], number> = {
+  LOW: 0,
+  NORMAL: 1,
+  HIGH: 2,
+};
+
+export function createTodo(params: Pick<Todo, 'title' | 'description' | 'priority' | 'createdBy'>): Promise<Todo> {
+  return postJson<Todo>('/api/todos', {
+    title: params.title,
+    description: params.description,
+    createdBy: params.createdBy,
+    priority: TODO_PRIORITY_VALUE[params.priority],
+  });
+}
+
+export function updateTodoStatus(todoId: string, isCompleted: boolean): Promise<Todo> {
+  return putJson<Todo>(`/api/todos/${todoId}`, { isCompleted });
+}
+
+export function deleteTodo(todoId: string): Promise<void> {
+  return deleteApi(`/api/todos/${todoId}`);
+}
+
+export function getDynamicComments(dynamicId: string): Promise<DynamicComment[]> {
+  return fetchJson<DynamicComment[]>(`/api/dynamics/${dynamicId}/comments`);
+}
+
+export function createDynamicComment(
+  dynamicId: string,
+  body: Pick<DynamicComment, 'content' | 'authorId' | 'authorName' | 'authorAvatar'> & { parentCommentId?: string | null },
+): Promise<DynamicComment> {
+  return postJson<DynamicComment>(`/api/dynamics/${dynamicId}/comments`, body);
+}
+
+export function deleteDynamicComment(dynamicId: string, commentId: string): Promise<void> {
+  return deleteApi(`/api/dynamics/${dynamicId}/comments/${commentId}`);
+}
+
+export function getVoteRecords(voteId: string): Promise<VoteRecord[]> {
+  return fetchJson<VoteRecord[]>(`/api/votes/${voteId}/records`);
+}
+
+function toQueryString(params: object): string {
+  const query = Object.entries(params as Record<string, string | number | undefined>)
+    .filter(([, value]) => value !== undefined && value !== '')
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    .join('&');
+  return query ? `?${query}` : '';
+}
+
+export function getLocationSummary(memberId?: string): Promise<LocationSummary> {
+  return fetchJson<LocationSummary>(`/api/location/summary${toQueryString({ memberId })}`);
+}
+
+export function getLocationRecords(params: LocationRecordQuery = {}): Promise<LocationRecord[]> {
+  return fetchJson<LocationRecord[]>(`/api/location/records${toQueryString(params)}`);
+}
+
+export function getOnlineStatus(): Promise<OnlineStatus> {
+  return fetchJson<OnlineStatus>('/api/online/status');
+}
+
+export function getOnlineLogs(params: OnlineLogQuery = {}): Promise<OnlineLog[]> {
+  return fetchJson<OnlineLog[]>(`/api/online/logs${toQueryString(params)}`);
+}
+
+export function getOnlineSummary(params: Pick<OnlineLogQuery, 'from' | 'to'> = {}): Promise<OnlineSummary> {
+  return fetchJson<OnlineSummary>(`/api/online/summary${toQueryString(params)}`);
+}
+
+export async function exportBackup(): Promise<Blob> {
+  const token = getApiToken();
+  const response = await fetch(`${getApiBaseUrl()}/api/backup/export`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  });
+  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  return response.blob();
+}
+
+export function importBackup(file: File): Promise<{ status: string }> {
+  const token = getApiToken();
+  return fetch(`${getApiBaseUrl()}/api/backup/import`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: file,
+  }).then(async (response) => {
+    if (!response.ok) {
+      const error = await response.json().catch(() => null) as { error?: string } | null;
+      throw new Error(error?.error || `${response.status} ${response.statusText}`);
+    }
+    return response.json() as Promise<{ status: string }>;
+  });
+}
+
+export function castVote(
+  voteId: string,
+  body: Pick<VoteRecord, 'userId' | 'userName' | 'userAvatar'> & { optionIds: string[] },
+): Promise<Vote> {
+  return postJson<Vote>(`/api/votes/${voteId}/vote`, body);
+}
 
 async function fetchJson<T>(path: string): Promise<T> {
   const response = await fetch(`${getApiBaseUrl()}${path}`);

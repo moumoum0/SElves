@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MemberAvatar } from './MemberAvatar';
 import type { Member } from '../types/models';
 import { Icon } from '../ui/components/Icon';
@@ -34,7 +35,7 @@ export function CreateMemberDialog({
     onConfirm(trimmed, bio.trim(), pronouns.trim(), groups);
   };
 
-  return (
+  return createPortal(
     <div
       className="dialog-overlay"
       style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
@@ -67,7 +68,7 @@ export function CreateMemberDialog({
           <TextField
             label="成员名"
             value={name}
-            error-text={nameError}
+            errorText={nameError}
             style={{ width: '100%' }}
             onChange={(val) => { setName(val); setNameError(''); }}
           />
@@ -172,6 +173,7 @@ export function CreateMemberDialog({
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

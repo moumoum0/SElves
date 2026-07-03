@@ -113,7 +113,7 @@ export function DiaryPage({
         title={`${currentMember.name} 的日记`}
         onBack={onBack}
         noPadding
-        fab={<FAB icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={openCreateDialog} />}
+        fab={<FAB icon="add" onClick={openCreateDialog} />}
       >
         <div style={{ padding: '0 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
           {memberDiaries.length === 0 ? (

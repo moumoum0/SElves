@@ -60,7 +60,7 @@ export function MemberManagementPage({ members, currentMember, onBack, onCreateM
       <SubPageScaffold
         title="成员管理"
         onBack={onBack}
-        fab={<FAB icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreate(true)} />}
+        fab={<FAB icon="add" onClick={() => setShowCreate(true)} />}
         actions={
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {!showSearchBar ? (

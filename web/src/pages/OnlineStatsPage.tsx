@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getOnlineLogs, getOnlineStatus, getOnlineSummary } from '../lib/api';
 import { MemberAvatar } from '../components/MemberAvatar';
-import type { Member } from '../types/models';
+import type { Member, OnlineLog, OnlineMemberStatus, OnlineStatus, OnlineSummary } from '../types/models';
 import { Card } from '../ui/components/Card';
 import { Chip } from '../ui/components/Chip';
 import { CircularProgress } from '../ui/components/Progress';
@@ -13,65 +14,18 @@ interface OnlineStatsPageProps {
   onBack: () => void;
 }
 
-interface MemberOnlineStat {
-  member: Member;
-  isOnline: boolean;
-  todayOnlineMinutes: number;
-  lastActiveTime: number;
-}
+type MemberOnlineStat = OnlineMemberStatus;
+type OnlineStats = OnlineStatus;
+type LoginLog = OnlineLog;
+type LoginLogSummary = OnlineSummary;
 
-interface OnlineStats {
-  onlineCount: number;
-  memberStats: MemberOnlineStat[];
-}
-
-interface LoginLog {
-  memberName: string;
-  memberAvatar: string | null;
-  isOnline: boolean;
-  loginTime: number;
-  logoutTime?: number | null;
-  duration?: number;
-}
-
-interface LoginLogSummary {
-  totalLogins: number;
-  todayLogins: number;
-  currentOnlineCount: number;
-  averageOnlineTime: number;
-}
-
-function generateMockData(members: Member[]): {
-  onlineStats: OnlineStats;
-  logs: LoginLog[];
-  summary: LoginLogSummary;
-} {
-  const memberStats = members.map((m, i) => ({
-    member: m,
-    isOnline: i === 0,
-    todayOnlineMinutes: Math.max(0, 120 - i * 25),
-    lastActiveTime: Date.now() - (i === 0 ? 0 : i * 3600000),
-  }));
-  const logs: LoginLog[] = members.slice(0, 4).map((m, i) => ({
-    memberName: m.name,
-    memberAvatar: m.avatarUrl,
-    isOnline: i === 0,
-    loginTime: Date.now() - (i + 1) * 7200000,
-    logoutTime: i === 0 ? undefined : Date.now() - i * 3600000,
-    duration: i === 0 ? undefined : 3600000,
-  }));
-  const summary: LoginLogSummary = {
-    totalLogins: logs.length,
-    todayLogins: logs.filter((_, i) => i < 2).length,
-    currentOnlineCount: memberStats.filter(s => s.isOnline).length,
-    averageOnlineTime: 1800000,
-  };
-  return {
-    onlineStats: { onlineCount: memberStats.filter(s => s.isOnline).length, memberStats },
-    logs,
-    summary,
-  };
-}
+const EMPTY_ONLINE_STATS: OnlineStats = { onlineCount: 0, memberStats: [] };
+const EMPTY_SUMMARY: LoginLogSummary = {
+  totalLogins: 0,
+  todayLogins: 0,
+  currentOnlineCount: 0,
+  averageOnlineTime: 0,
+};
 
 function formatOnlineTime(minutes: number): string {
   if (minutes === 0) return '从未在线';
@@ -103,6 +57,7 @@ function formatDetailDateTime(ts: number): string {
 }
 
 function formatLastActiveTime(ts: number): string {
+  if (!ts) return '从未在线';
   const diff = Date.now() - ts;
   if (diff < 60000) return '刚刚';
   if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
@@ -113,9 +68,45 @@ function formatLastActiveTime(ts: number): string {
 export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsPageProps) {
   const [tab, setTab] = useState(0);
   const [filter, setFilter] = useState<'ALL' | 'TODAY'>('ALL');
-  const { onlineStats, logs, summary } = useMemo(() => generateMockData(members), [members]);
-  const isLoading = false;
-  const isLoadingLogs = false;
+  const [onlineStats, setOnlineStats] = useState<OnlineStats>(EMPTY_ONLINE_STATS);
+  const [logs, setLogs] = useState<LoginLog[]>([]);
+  const [summary, setSummary] = useState<LoginLogSummary>(EMPTY_SUMMARY);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setIsLoadingLogs(true);
+    setError(null);
+    Promise.all([
+      getOnlineStatus(),
+      getOnlineLogs({ limit: 100 }),
+      getOnlineSummary(),
+    ])
+      .then(([nextStatus, nextLogs, nextSummary]) => {
+        if (cancelled) return;
+        setOnlineStats(nextStatus);
+        setLogs(nextLogs);
+        setSummary(nextSummary);
+      })
+      .catch((loadError) => {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : '在线统计加载失败');
+        setOnlineStats({ onlineCount: 0, memberStats: members.map(member => ({ member, isOnline: false, todayOnlineMinutes: 0, lastActiveTime: 0 })) });
+        setLogs([]);
+        setSummary(EMPTY_SUMMARY);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsLoading(false);
+        setIsLoadingLogs(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [members]);
 
   const filteredLogs = useMemo(
     () => (filter === 'TODAY' ? logs.filter(l => Date.now() - l.loginTime < 86400000) : logs),
@@ -138,6 +129,11 @@ export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsP
             </div>
           ) : (
             <div style={{ padding: 16 }}>
+              {error && (
+                <div style={{ padding: 12, marginBottom: 12, borderRadius: 12, backgroundColor: 'rgb(var(--mdui-color-error-container))', color: 'rgb(var(--mdui-color-on-error-container))', fontSize: 13 }}>
+                  {error}
+                </div>
+              )}
               {tab === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {onlineStats.memberStats.map(stat => (

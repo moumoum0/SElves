@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import type { Member, TrackingSummary } from '../types/models';
+import { useEffect, useState } from 'react';
+import type { LocationRecord, Member, TrackingSummary } from '../types/models';
+import { getLocationRecords, getLocationSummary } from '../lib/api';
 import { SubPageScaffold } from './SubPageScaffold';
 import { LocationTrackingConfigDialog } from '../components/LocationTrackingConfigDialog';
 import { Icon } from '../ui/components/Icon';
@@ -13,16 +14,48 @@ interface LocationPageProps {
   onBack: () => void;
 }
 
-const MOCK_RECORDS = [
-  { id: '1', title: '晨间记录', address: '系统空间 · 起点', time: '08:12', distance: '0.8 km' },
-  { id: '2', title: '午间记录', address: '系统空间 · 中段', time: '12:35', distance: '2.4 km' },
-  { id: '3', title: '最近记录', address: '系统空间 · 当前附近', time: '09:42', distance: '4.6 km' },
-];
+function formatRecordTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return '未知时间';
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function formatLastRecordTime(value: string | null): string {
+  if (!value) return '暂无';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
 
 export function LocationPage({ tracking, currentMember, onBack }: LocationPageProps) {
-  const isRecording = tracking.status === 'RECORDING';
+  const [summary, setSummary] = useState<TrackingSummary>(tracking);
+  const isRecording = summary.status === 'RECORDING';
+  const [records, setRecords] = useState<LocationRecord[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [showConfig, setShowConfig] = useState(false);
   const [trackingConfig, setTrackingConfig] = useState({ recordingInterval: 60, enableAutoStart: false, autoRestartDelay: 300 });
+
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    Promise.all([
+      getLocationSummary(currentMember.id),
+      getLocationRecords({ memberId: currentMember.id, limit: 20 }),
+    ])
+      .then(([nextSummary, nextRecords]) => {
+        if (cancelled) return;
+        setSummary(nextSummary);
+        setRecords(nextRecords);
+      })
+      .catch((loadError) => {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : '位置记录加载失败');
+        setRecords([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [currentMember.id]);
 
   return (
     <>
@@ -53,7 +86,7 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
 
         {/* 统计数据 */}
         <div style={{ display: 'flex', gap: 12 }}>
-          {[{ label: '今日', value: String(tracking.todayRecords) }, { label: '总计', value: String(tracking.totalRecords) }, { label: '最后', value: tracking.lastRecordTime }].map((s) => (
+          {[{ label: '今日', value: String(summary.todayRecords) }, { label: '总计', value: String(summary.totalRecords) }, { label: '最后', value: formatLastRecordTime(summary.lastRecordTime) }].map((s) => (
             <Card key={s.label} variant="filled" style={{ flex: 1, padding: 12, borderRadius: 12, textAlign: 'center' }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: 'rgb(var(--mdui-color-primary))' }}>{s.value}</div>
               <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{s.label}</div>
@@ -80,19 +113,29 @@ export function LocationPage({ tracking, currentMember, onBack }: LocationPagePr
             <Icon style={{ color: 'rgb(var(--mdui-color-primary))' }}>history</Icon>
             <span style={{ fontWeight: 600, fontSize: 15 }}>今日记录</span>
           </div>
-          {MOCK_RECORDS.map((r, i) => (
-            <div key={r.id} style={{ display: 'flex', gap: 12, paddingBottom: 12, borderBottom: i < MOCK_RECORDS.length - 1 ? '1px solid rgb(var(--mdui-color-outline-variant))' : 'none', marginBottom: i < MOCK_RECORDS.length - 1 ? 12 : 0 }}>
+          {error && (
+            <div style={{ padding: 12, marginBottom: 12, borderRadius: 12, backgroundColor: 'rgb(var(--mdui-color-error-container))', color: 'rgb(var(--mdui-color-on-error-container))', fontSize: 13 }}>
+              {error}
+            </div>
+          )}
+          {records.map((r, i) => (
+            <div key={r.id} style={{ display: 'flex', gap: 12, paddingBottom: 12, borderBottom: i < records.length - 1 ? '1px solid rgb(var(--mdui-color-outline-variant))' : 'none', marginBottom: i < records.length - 1 ? 12 : 0 }}>
               <div style={{ paddingTop: 4 }}><div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'rgb(var(--mdui-color-primary))' }} /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 500, fontSize: 14 }}>{r.title}</span>
-                  <span style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{r.time}</span>
+                  <span style={{ fontWeight: 500, fontSize: 14 }}>{r.note || '位置记录'}</span>
+                  <span style={{ fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{formatRecordTime(r.timestamp)}</span>
                 </div>
-                <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{r.address}</div>
-                <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-primary))' }}>{r.distance}</div>
+                <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{r.address || `${r.latitude.toFixed(5)}, ${r.longitude.toFixed(5)}`}</div>
+                <div style={{ fontSize: 12, color: 'rgb(var(--mdui-color-primary))' }}>{r.accuracy != null ? `精度 ${Math.round(r.accuracy)}m` : '真实记录'}</div>
               </div>
             </div>
           ))}
+          {!error && records.length === 0 && (
+            <div style={{ padding: 24, textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))', fontSize: 14 }}>
+              暂无位置记录
+            </div>
+          )}
         </Card>
       </div>
     </SubPageScaffold>

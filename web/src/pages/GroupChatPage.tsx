@@ -16,6 +16,7 @@ interface GroupChatPageProps {
   onMemberSelected?: (member: Member) => void;
   onOpenGroup: (groupId: string) => void;
   onCreateGroup?: (name: string, members: Member[]) => void;
+  onCreateMember?: (name: string, bio: string, pronouns: string, groups: string[]) => void;
 }
 
 export function GroupChatPage({
@@ -28,6 +29,7 @@ export function GroupChatPage({
   onMemberSelected,
   onOpenGroup,
   onCreateGroup,
+  onCreateMember,
 }: GroupChatPageProps) {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const sortedGroups = [...groups].sort((a, b) => {
@@ -43,6 +45,7 @@ export function GroupChatPage({
         members={members}
         onMemberSwitch={onMemberSwitch}
         onMemberSelected={onMemberSelected}
+        onCreateMember={onCreateMember}
       />
 
       {sortedGroups.length === 0 ? (

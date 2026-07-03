@@ -43,7 +43,11 @@ export function SubPageScaffold({ title, subtitle, onBack, actions, children, no
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: noPadding ? 0 : '16px' }}>
         {children}
       </div>
-      {fab}
+      {fab ? (
+        <div style={{ position: 'absolute', right: 16, bottom: 16, zIndex: 10 }}>
+          {fab}
+        </div>
+      ) : null}
     </div>
   );
 }

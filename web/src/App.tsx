@@ -1,7 +1,22 @@
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSelvesData } from './hooks/useSelvesData';
-import { fetchJson, postJson, putJson, deleteApi, getApiToken, setApiToken } from './lib/api';
+import {
+  fetchJson,
+  postJson,
+  putJson,
+  deleteApi,
+  getApiToken,
+  setApiToken,
+  createTodo,
+  updateTodoStatus,
+  deleteTodo,
+  getDynamicComments,
+  createDynamicComment,
+  deleteDynamicComment,
+  getVoteRecords,
+  castVote,
+} from './lib/api';
 import { ChatDetailPage } from './pages/ChatDetailPage';
 import { CreateDynamicPage } from './pages/CreateDynamicPage';
 import { DiaryPage } from './pages/DiaryPage';
@@ -118,6 +133,10 @@ export default function App() {
     setCurrentMember(next.id);
   };
 
+  const handleCreateMember = useCallback((name: string, bio: string, pronouns: string, _groups: string[]) => {
+    postJson('/api/members', { name, bio, pronouns }).then(() => void reload()).catch(() => {});
+  }, [reload]);
+
   // 检查 token 是否存在，首次访问时弹窗提示
   useEffect(() => {
     const token = getApiToken();
@@ -169,6 +188,7 @@ export default function App() {
               currentMember={currentMember}
               onMemberSwitch={handleMemberSwitch}
               onNavigate={navigate}
+              onCreateMember={handleCreateMember}
             />
           ) : <div />
         }
@@ -186,6 +206,7 @@ export default function App() {
               onMemberSwitch={handleMemberSwitch}
               onMemberSelected={(m) => setCurrentMember(m.id)}
               onOpenGroup={(id: string) => navigate(`/chat/${id}`)}
+              onCreateMember={handleCreateMember}
             />
           ) : <div />
         }
@@ -218,16 +239,43 @@ export default function App() {
           ) : <div />
         }
       />
-      <Route path="/todo" element={data && currentMember ? <TodoPage todos={data.todos} members={data.members} currentMember={currentMember} onBack={() => navigate('/')} /> : <div />} />
+      <Route
+        path="/todo"
+        element={
+          data && currentMember ? (
+            <TodoPage
+              todos={data.todos}
+              members={data.members}
+              currentMember={currentMember}
+              onBack={() => navigate('/')}
+              onCreateTodo={(title, description, priority) => {
+                createTodo({ title, description, priority, createdBy: currentMember.id })
+                  .then(() => void reload())
+                  .catch(() => {});
+              }}
+              onToggleTodo={(todo, isCompleted) => {
+                updateTodoStatus(todo.id, isCompleted)
+                  .then(() => void reload())
+                  .catch(() => {});
+              }}
+              onDeleteTodo={(todo) => {
+                deleteTodo(todo.id)
+                  .then(() => void reload())
+                  .catch(() => {});
+              }}
+            />
+          ) : <div />
+        }
+      />
       <Route path="/dynamic" element={data && currentMember ? <DynamicPage dynamics={data.dynamics} currentMember={currentMember} onBack={() => navigate('/')} onDynamicClick={(id: string) => navigate(`/dynamic/${id}`)} onNavigateToCreateDynamic={() => navigate('/dynamic/create')} /> : <div />} />
       <Route path="/dynamic/create" element={data && currentMember ? <CreateDynamicPage currentMember={currentMember} onBack={() => navigate('/dynamic')} onSubmit={(params) => { postJson('/api/dynamics', { title: params.title, content: params.content, authorId: currentMember.id, authorName: params.authorName, authorAvatar: params.authorAvatar, images: params.images, tags: params.tags }).then(() => navigate('/dynamic')).catch(() => {}); }} /> : <div />} />
-      <Route path="/dynamic/:dynamicId" element={data && currentMember ? <DynamicDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/dynamic')} /> : <div />} />
+      <Route path="/dynamic/:dynamicId" element={data && currentMember ? <DynamicDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/dynamic')} reload={reload} /> : <div />} />
       <Route path="/vote" element={data && currentMember ? <VotePage votes={data.votes} currentMember={currentMember} onBack={() => navigate('/')} onVoteClick={(id: string) => navigate(`/vote/${id}`)} onNavigateToCreateVote={() => navigate('/vote/create')} /> : <div />} />
       <Route path="/vote/create" element={data && currentMember ? <CreateVotePage currentMember={currentMember} onBack={() => navigate('/vote')} onSubmit={(params) => { postJson('/api/votes', { title: params.title, description: params.description, authorId: currentMember.id, authorName: params.authorName, authorAvatar: params.authorAvatar, options: params.options, allowMultipleChoice: params.allowMultipleChoice, isAnonymous: params.isAnonymous }).then(() => navigate('/vote')).catch(() => {}); }} /> : <div />} />
-      <Route path="/vote/:voteId" element={data && currentMember ? <VoteDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/vote')} /> : <div />} />
+      <Route path="/vote/:voteId" element={data && currentMember ? <VoteDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/vote')} reload={reload} /> : <div />} />
       <Route path="/diary" element={data && currentMember ? <DiaryPage diaries={data.diaries} currentMember={currentMember} onBack={() => navigate('/')} onCreateDiary={(title, content) => { postJson('/api/diaries', { memberId: currentMember.id, title, content }).catch(() => {}); }} onDeleteDiary={(id) => { deleteApi(`/api/diaries/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
       <Route path="/location" element={data && currentMember ? <LocationPage tracking={data.tracking} currentMember={currentMember} onBack={() => navigate('/')} /> : <div />} />
-      <Route path="/member-management" element={data && currentMember ? <MemberManagementPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} onCreateMember={(name, bio, pronouns) => { postJson('/api/members', { name, bio, pronouns }).then(() => void reload()).catch(() => {}); }} onEditMember={(id, name, bio, pronouns) => { putJson(`/api/members/${id}`, { name, bio, pronouns }).then(() => void reload()).catch(() => {}); }} onDeleteMember={(id) => { deleteApi(`/api/members/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
+      <Route path="/member-management" element={data && currentMember ? <MemberManagementPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} onCreateMember={handleCreateMember} onEditMember={(id, name, bio, pronouns) => { putJson(`/api/members/${id}`, { name, bio, pronouns }).then(() => void reload()).catch(() => {}); }} onDeleteMember={(id) => { deleteApi(`/api/members/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
       <Route path="/online-stats" element={data && currentMember ? <OnlineStatsPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} /> : <div />} />
       <Route path="/settings" element={<SettingsPage baseUrl={baseUrl} onBack={() => navigate('/system')} onNavigateToAbout={() => navigate('/about')} />} />
       <Route path="/about" element={<AboutPage onBack={() => navigate('/system')} onDeveloperModeUnlocked={() => setDeveloperModeArmed(true)} />} />
@@ -444,14 +492,24 @@ function ChatDetailRoute({ data, currentMember, onBack, developerModeArmed, onDe
   );
 }
 
-function DynamicDetailRoute({ data, currentMember, onBack }: { data: AppData; currentMember: Member; onBack: () => void }) {
+function DynamicDetailRoute({
+  data,
+  currentMember,
+  onBack,
+  reload,
+}: {
+  data: AppData;
+  currentMember: Member;
+  onBack: () => void;
+  reload: () => Promise<void>;
+}) {
   const { dynamicId } = useParams();
   const [comments, setComments] = useState<DynamicComment[]>([]);
 
   useEffect(() => {
     if (!dynamicId) return;
     setComments([]);
-    fetchJson<DynamicComment[]>(`/api/dynamics/${dynamicId}/comments`)
+    getDynamicComments(dynamicId)
       .then((list) => setComments(list))
       .catch(() => {
         // 网络不通时用本地缓存兜底
@@ -471,26 +529,40 @@ function DynamicDetailRoute({ data, currentMember, onBack }: { data: AppData; cu
   }
 
   const handleSendComment = (content: string, parentCommentId?: string | null) => {
-    postJson(`/api/dynamics/${dynamic.id}/comments`, {
+    createDynamicComment(dynamic.id, {
       content,
       authorId: currentMember.id,
       authorName: currentMember.name,
       authorAvatar: currentMember.avatarUrl,
       parentCommentId: parentCommentId ?? null,
-    }).catch(() => {});
+    })
+      .then(() => getDynamicComments(dynamic.id))
+      .then((list) => setComments(list))
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleDeleteComment = (commentId: string) => {
-    deleteApi(`/api/dynamics/${dynamic.id}/comments/${commentId}`).catch(() => {});
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    deleteDynamicComment(dynamic.id, commentId)
+      .then(() => getDynamicComments(dynamic.id))
+      .then((list) => setComments(list))
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleLike = () => {
-    postJson(`/api/dynamics/${dynamic.id}/like`, { userId: currentMember.id }).catch(() => {});
+    postJson(`/api/dynamics/${dynamic.id}/like`, { userId: currentMember.id })
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleDelete = () => {
-    deleteApi(`/api/dynamics/${dynamic.id}`).then(() => onBack()).catch(() => {});
+    deleteApi(`/api/dynamics/${dynamic.id}`)
+      .then(() => {
+        void reload();
+        onBack();
+      })
+      .catch(() => {});
   };
 
   return (
@@ -507,7 +579,17 @@ function DynamicDetailRoute({ data, currentMember, onBack }: { data: AppData; cu
   );
 }
 
-function VoteDetailRoute({ data, currentMember, onBack }: { data: AppData; currentMember: Member; onBack: () => void }) {
+function VoteDetailRoute({
+  data,
+  currentMember,
+  onBack,
+  reload,
+}: {
+  data: AppData;
+  currentMember: Member;
+  onBack: () => void;
+  reload: () => Promise<void>;
+}) {
   const { voteId } = useParams();
   const vote = data.votes.find((v) => v.id === voteId) ?? data.votes[0];
   const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
@@ -515,7 +597,7 @@ function VoteDetailRoute({ data, currentMember, onBack }: { data: AppData; curre
   useEffect(() => {
     if (!voteId) return;
     setVoteRecords([]);
-    fetchJson<VoteRecord[]>(`/api/votes/${voteId}/records`)
+    getVoteRecords(voteId)
       .then((list) => setVoteRecords(list))
       .catch(() => {
         setVoteRecords((data.voteRecords ?? []).filter((r) => r.voteId === voteId));
@@ -533,20 +615,31 @@ function VoteDetailRoute({ data, currentMember, onBack }: { data: AppData; curre
   const voteRecords_fromData = (data.voteRecords ?? []).filter((r) => r.voteId === vote.id);
 
   const handleVote = (optionIds: string[]) => {
-    postJson(`/api/votes/${vote.id}/vote`, {
+    castVote(vote.id, {
       userId: currentMember.id,
       userName: currentMember.name,
       userAvatar: currentMember.avatarUrl,
       optionIds,
-    }).catch(() => {});
+    })
+      .then(() => getVoteRecords(vote.id))
+      .then((list) => setVoteRecords(list))
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleEndVote = () => {
-    putJson(`/api/votes/${vote.id}/end`, {}).catch(() => {});
+    putJson(`/api/votes/${vote.id}/end`, {})
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleDeleteVote = () => {
-    deleteApi(`/api/votes/${vote.id}`).then(() => onBack()).catch(() => {});
+    deleteApi(`/api/votes/${vote.id}`)
+      .then(() => {
+        void reload();
+        onBack();
+      })
+      .catch(() => {});
   };
 
   return (

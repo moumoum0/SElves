@@ -1,9 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { SubPageScaffold } from './SubPageScaffold';
 import { applyAndroidColorScheme, type ColorSchemeName } from '../theme/androidColors';
 import { setThemeMode as applyThemeMode } from '../ui/theme/themeManager';
 import { ImportBackupWarningDialog } from '../components/BackupDialogs';
-import { getApiToken, setApiToken, getApiBaseUrl, setApiBaseUrl } from '../lib/api';
+import { exportBackup, getApiToken, importBackup as importBackupFile, setApiToken, getApiBaseUrl, setApiBaseUrl } from '../lib/api';
 import { Switch } from '../ui/components/Switch';
 import { Radio } from '../ui/components/Radio';
 import { TextField } from '../ui/components/TextField';
@@ -47,6 +47,9 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
   const [showColorDialog, setShowColorDialog] = useState(false);
   const [isBackupLoading, setIsBackupLoading] = useState(false);
   const [showImportWarning, setShowImportWarning] = useState(false);
+  const [pendingImportFile, setPendingImportFile] = useState<File | null>(null);
+  const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSpImportLoading, setIsSpImportLoading] = useState(false);
   const [apiToken, setApiTokenState] = useState(() => getApiToken());
   const [apiUrl, setApiUrlState] = useState(() => getApiBaseUrl());
@@ -70,6 +73,49 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
     setShowLangDialog(false);
   };
 
+  const handleExportBackup = async () => {
+    setIsBackupLoading(true);
+    setBackupMessage(null);
+    try {
+      const blob = await exportBackup();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `selves-backup-${Date.now()}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setBackupMessage('备份已开始下载');
+    } catch (error) {
+      setBackupMessage(error instanceof Error ? error.message : '导出备份失败');
+    } finally {
+      setIsBackupLoading(false);
+    }
+  };
+
+  const handleImportFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    setPendingImportFile(file);
+    setShowImportWarning(true);
+  };
+
+  const handleConfirmImportBackup = async () => {
+    if (!pendingImportFile) return;
+    setShowImportWarning(false);
+    setIsBackupLoading(true);
+    setBackupMessage(null);
+    try {
+      await importBackupFile(pendingImportFile);
+      setBackupMessage('备份导入成功，请刷新页面查看最新数据');
+    } catch (error) {
+      setBackupMessage(error instanceof Error ? error.message : '导入备份失败');
+    } finally {
+      setPendingImportFile(null);
+      setIsBackupLoading(false);
+    }
+  };
+
   return (
     <SubPageScaffold title="设置" onBack={onBack}>
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -80,13 +126,22 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
         <SettingsItem icon="palette" title="颜色与个性化" subtitle={COLOR_LABELS[colorScheme] ?? '应用默认'} onClick={() => setShowColorDialog(true)} />
         <SettingsSwitchItem icon="swap_horiz" title="快捷切换成员" subtitle="在投票和聊天界面显示快捷成员切换" checked={quickSwitch} onChange={setQuickSwitch} />
 
-        {/* ===== 数据与备份（已注释） ===== */}
-        {/* <div style={{ height: 16 }} />
+        <div style={{ height: 16 }} />
         <SettingsGroupTitle>数据与备份</SettingsGroupTitle>
-        <SettingsItem icon="schedule" title="定时备份" subtitle="设置自动备份频率和时间" onClick={() => {}} />
-        <SettingsItemWithProgress icon="file_upload" title="导出备份" subtitle="备份应用数据到文件" isLoading={isBackupLoading} onClick={() => setIsBackupLoading(true)} />
-        <SettingsItemWithProgress icon="file_download" title="导入备份" subtitle="从文件恢复应用数据" isLoading={isBackupLoading} onClick={() => setShowImportWarning(true)} />
-        <SettingsItemWithProgress icon="file_download" title="从 SimplyPlural 导入" subtitle="导入 SimplyPlural 导出的 JSON 文件" isLoading={isSpImportLoading} onClick={() => setIsSpImportLoading(true)} /> */}
+        <SettingsItemWithProgress icon="file_upload" title="导出备份" subtitle="备份应用数据到 ZIP 文件" isLoading={isBackupLoading} onClick={handleExportBackup} />
+        <SettingsItemWithProgress icon="file_download" title="导入备份" subtitle="从 ZIP 文件恢复应用数据" isLoading={isBackupLoading} onClick={() => fileInputRef.current?.click()} />
+        {backupMessage && (
+          <div style={{ padding: '8px 4px', fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
+            {backupMessage}
+          </div>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".zip,application/zip"
+          style={{ display: 'none' }}
+          onChange={handleImportFileSelected}
+        />
 
         {/* ===== Web 访问（已注释） ===== */}
         {/* <div style={{ height: 16 }} />
@@ -163,8 +218,11 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
       </Dialog>
       {showImportWarning && (
         <ImportBackupWarningDialog
-          onConfirm={() => { setShowImportWarning(false); setIsBackupLoading(true); }}
-          onDismiss={() => setShowImportWarning(false)}
+          onConfirm={handleConfirmImportBackup}
+          onDismiss={() => {
+            setPendingImportFile(null);
+            setShowImportWarning(false);
+          }}
         />
       )}
     </SubPageScaffold>

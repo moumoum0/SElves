@@ -117,7 +117,65 @@ export interface TrackingSummary {
   status: 'RECORDING' | 'STOPPED';
   todayRecords: number;
   totalRecords: number;
-  lastRecordTime: string;
+  lastRecordTime: string | null;
+}
+
+export type LocationSummary = TrackingSummary;
+
+export interface LocationRecord {
+  id: string;
+  latitude: number;
+  longitude: number;
+  altitude?: number | null;
+  accuracy?: number | null;
+  address?: string | null;
+  timestamp: string;
+  memberId: string;
+  note?: string | null;
+}
+
+export interface LocationRecordQuery {
+  memberId?: string;
+  limit?: number;
+  from?: string | number;
+  to?: string | number;
+}
+
+export interface OnlineMemberStatus {
+  member: Member;
+  isOnline: boolean;
+  todayOnlineMinutes: number;
+  lastActiveTime: number;
+}
+
+export interface OnlineStatus {
+  onlineCount: number;
+  memberStats: OnlineMemberStatus[];
+}
+
+export interface OnlineLog {
+  id: number;
+  memberId: string;
+  memberName: string;
+  memberAvatar: string | null;
+  isOnline: boolean;
+  loginTime: number;
+  logoutTime?: number | null;
+  duration?: number;
+}
+
+export interface OnlineLogQuery {
+  memberId?: string;
+  from?: number;
+  to?: number;
+  limit?: number;
+}
+
+export interface OnlineSummary {
+  totalLogins: number;
+  todayLogins: number;
+  currentOnlineCount: number;
+  averageOnlineTime: number;
 }
 
 export interface ApiStatus {

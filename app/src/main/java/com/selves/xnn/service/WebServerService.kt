@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat
 import com.selves.xnn.MainActivity
 import com.selves.xnn.R
 import com.selves.xnn.data.AppDatabase
+import com.selves.xnn.data.BackupResult
+import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.data.Mappers.toDto
 import com.selves.xnn.data.repository.ChatGroupRepository
@@ -50,6 +52,10 @@ import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -67,6 +73,7 @@ class WebServerService : Service() {
     @Inject lateinit var voteRepository: VoteRepository
     @Inject lateinit var database: AppDatabase
     @Inject lateinit var memberPreferences: MemberPreferences
+    @Inject lateinit var backupService: BackupService
 
     @Volatile
     private var server: EmbeddedServer<*, *>? = null
@@ -329,6 +336,98 @@ class WebServerService : Service() {
                 call.respond(dtos)
             }
 
+            // ===== 位置记录 =====
+            get("/api/location/summary") {
+                val memberId = call.request.queryParameters["memberId"]
+                val records = database.locationRecordDao().getAllLocationRecordsSync()
+                    .let { all -> if (memberId.isNullOrBlank()) all else all.filter { it.memberId == memberId } }
+                val todayStart = LocalDate.now().atStartOfDay()
+                call.respond(LocationSummaryResponse(
+                    status = "STOPPED",
+                    todayRecords = records.count { !it.timestamp.isBefore(todayStart) },
+                    totalRecords = records.size,
+                    lastRecordTime = records.maxByOrNull { it.timestamp }?.timestamp?.toString()
+                ))
+            }
+
+            get("/api/location/records") {
+                val memberId = call.request.queryParameters["memberId"]
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 500) ?: 100
+                val from = call.request.queryParameters["from"]?.let { parseLocalDateTimeParam(it) }
+                val to = call.request.queryParameters["to"]?.let { parseLocalDateTimeParam(it) }
+                val records = database.locationRecordDao().getAllLocationRecordsSync()
+                    .asSequence()
+                    .filter { memberId.isNullOrBlank() || it.memberId == memberId }
+                    .filter { from == null || !it.timestamp.isBefore(from) }
+                    .filter { to == null || !it.timestamp.isAfter(to) }
+                    .sortedByDescending { it.timestamp }
+                    .take(limit)
+                    .map { it.toLocationRecordResponse() }
+                    .toList()
+                call.respond(records)
+            }
+
+            // ===== 在线统计 =====
+            get("/api/online/status") {
+                val members = database.memberDao().getAllMembersSync().filter { !it.isDeleted }
+                val lastActiveMap = database.onlineStatusDao().getLastActiveTimeForAllMembers().associateBy { it.memberId }
+                val now = System.currentTimeMillis()
+                val todayStart = todayStartMillis()
+                val stats = members.map { member ->
+                    val current = database.onlineStatusDao().getCurrentOnlineStatus(member.id)
+                    OnlineMemberStatusResponse(
+                        member = member.toDto(),
+                        isOnline = current != null,
+                        todayOnlineMinutes = ((database.onlineStatusDao().getTodayOnlineTime(member.id, now, todayStart) ?: 0L) / 60000L).toInt(),
+                        lastActiveTime = lastActiveMap[member.id]?.lastActiveTime ?: 0L
+                    )
+                }
+                call.respond(OnlineStatusResponse(
+                    onlineCount = stats.count { it.isOnline },
+                    memberStats = stats
+                ))
+            }
+
+            get("/api/online/logs") {
+                val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 500) ?: 100
+                val memberId = call.request.queryParameters["memberId"]
+                val from = call.request.queryParameters["from"]?.toLongOrNull()
+                val to = call.request.queryParameters["to"]?.toLongOrNull()
+                val memberMap = database.memberDao().getAllMembersSync().associateBy { it.id }
+                val logs = database.onlineStatusDao().getAllLoginLogs(limit = 500)
+                    .asSequence()
+                    .filter { memberId.isNullOrBlank() || it.memberId == memberId }
+                    .filter { from == null || it.loginTime >= from }
+                    .filter { to == null || it.loginTime <= to }
+                    .take(limit)
+                    .map { log ->
+                        val member = memberMap[log.memberId]
+                        OnlineLogResponse(
+                            id = log.id,
+                            memberId = log.memberId,
+                            memberName = member?.name ?: "未知成员",
+                            memberAvatar = member?.avatarUrl,
+                            isOnline = log.logoutTime == null,
+                            loginTime = log.loginTime,
+                            logoutTime = log.logoutTime,
+                            duration = if (log.logoutTime == null) System.currentTimeMillis() - log.loginTime else log.duration
+                        )
+                    }
+                    .toList()
+                call.respond(logs)
+            }
+
+            get("/api/online/summary") {
+                val now = System.currentTimeMillis()
+                val todayStart = call.request.queryParameters["from"]?.toLongOrNull() ?: todayStartMillis()
+                call.respond(OnlineSummaryResponse(
+                    totalLogins = database.onlineStatusDao().getTotalLoginCount(),
+                    todayLogins = database.onlineStatusDao().getTodayLoginCount(todayStart),
+                    currentOnlineCount = database.onlineStatusDao().getCurrentOnlineCount(),
+                    averageOnlineTime = database.onlineStatusDao().getAverageOnlineTime(now, todayStart) ?: 0L
+                ))
+            }
+
             get("/api/votes/{id}") {
                 val id = call.parameters["id"]
                     ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
@@ -358,6 +457,47 @@ class WebServerService : Service() {
 
             // ===== 需要鉴权的写入路由 =====
             authenticate("api-token") {
+                // --- 备份 ---
+                get("/api/backup/export") {
+                    val (result, bytes) = backupService.exportBackupBytes()
+                    when (result) {
+                        is BackupResult.Success -> {
+                            call.response.header(
+                                HttpHeaders.ContentDisposition,
+                                ContentDisposition.Attachment.withParameter(
+                                    ContentDisposition.Parameters.FileName,
+                                    "selves-backup-${System.currentTimeMillis()}.zip"
+                                ).toString()
+                            )
+                            call.respondBytes(
+                                bytes ?: ByteArray(0),
+                                contentType = ContentType.Application.OctetStream,
+                                status = HttpStatusCode.OK
+                            )
+                        }
+                        is BackupResult.Error -> call.respond(HttpStatusCode.InternalServerError, mapOf("error" to result.message))
+                    }
+                }
+
+                post("/api/backup/import") {
+                    val bytes = call.receive<ByteArray>()
+                    if (bytes.isEmpty()) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "备份文件为空"))
+                        return@post
+                    }
+                    if (bytes.size > 50 * 1024 * 1024) {
+                        call.respond(HttpStatusCode.PayloadTooLarge, mapOf("error" to "备份文件超过 50MB 限制"))
+                        return@post
+                    }
+                    when (val result = backupService.importBackupBytes(bytes)) {
+                        is BackupResult.Success -> {
+                            WebSocketManager.broadcast("BACKUP_IMPORTED", mapOf("timestamp" to System.currentTimeMillis()))
+                            call.respond(mapOf("status" to "ok"))
+                        }
+                        is BackupResult.Error -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to result.message))
+                    }
+                }
+
                 // --- 消息 ---
                 post("/api/groups/{groupId}/messages") {
                     val groupId = call.parameters["groupId"]
@@ -831,6 +971,85 @@ class WebServerService : Service() {
         nm.notify(NOTIFICATION_ID, buildNotification(url))
     }
 }
+
+private fun todayStartMillis(): Long {
+    return java.util.Calendar.getInstance().apply {
+        timeInMillis = System.currentTimeMillis()
+        set(java.util.Calendar.HOUR_OF_DAY, 0)
+        set(java.util.Calendar.MINUTE, 0)
+        set(java.util.Calendar.SECOND, 0)
+        set(java.util.Calendar.MILLISECOND, 0)
+    }.timeInMillis
+}
+
+private fun parseLocalDateTimeParam(value: String): LocalDateTime? {
+    return runCatching { LocalDateTime.parse(value) }.getOrNull()
+        ?: value.toLongOrNull()?.let { millis ->
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault())
+        }
+        ?: runCatching { LocalDate.parse(value).atStartOfDay() }.getOrNull()
+}
+
+private fun com.selves.xnn.data.entity.LocationRecordEntity.toLocationRecordResponse() = LocationRecordResponse(
+    id = id,
+    latitude = latitude,
+    longitude = longitude,
+    altitude = altitude,
+    accuracy = accuracy,
+    address = address,
+    timestamp = timestamp.toString(),
+    memberId = memberId,
+    note = note
+)
+
+data class LocationSummaryResponse(
+    val status: String,
+    val todayRecords: Int,
+    val totalRecords: Int,
+    val lastRecordTime: String?
+)
+
+data class LocationRecordResponse(
+    val id: String,
+    val latitude: Double,
+    val longitude: Double,
+    val altitude: Double? = null,
+    val accuracy: Float? = null,
+    val address: String? = null,
+    val timestamp: String,
+    val memberId: String,
+    val note: String? = null
+)
+
+data class OnlineStatusResponse(
+    val onlineCount: Int,
+    val memberStats: List<OnlineMemberStatusResponse>
+)
+
+data class OnlineMemberStatusResponse(
+    val member: Any,
+    val isOnline: Boolean,
+    val todayOnlineMinutes: Int,
+    val lastActiveTime: Long
+)
+
+data class OnlineLogResponse(
+    val id: Long,
+    val memberId: String,
+    val memberName: String,
+    val memberAvatar: String?,
+    val isOnline: Boolean,
+    val loginTime: Long,
+    val logoutTime: Long? = null,
+    val duration: Long = 0
+)
+
+data class OnlineSummaryResponse(
+    val totalLogins: Int,
+    val todayLogins: Int,
+    val currentOnlineCount: Int,
+    val averageOnlineTime: Long
+)
 
 data class TodoCreateRequest(
     val title: String,

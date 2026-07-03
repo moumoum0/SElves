@@ -15,6 +15,7 @@ interface HomePageProps {
   currentMember: Member;
   onMemberSwitch: () => void;
   onNavigate: NavigateFunction;
+  onCreateMember?: (name: string, bio: string, pronouns: string, groups: string[]) => void;
 }
 
 const FUNCTION_MODULES = [
@@ -38,7 +39,7 @@ const MODULE_TITLES: Record<ModuleId, string> = {
   diary: '成员日记',
 };
 
-export function HomePage({ data, currentMember, onMemberSwitch, onNavigate }: HomePageProps) {
+export function HomePage({ data, currentMember, onMemberSwitch, onNavigate, onCreateMember }: HomePageProps) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [moduleVisibility, setModuleVisibility] = useState<Record<ModuleId, boolean>>({
     functions: true, location: true, todo: true, dynamic: true, vote: true, diary: true,
@@ -98,7 +99,7 @@ export function HomePage({ data, currentMember, onMemberSwitch, onNavigate }: Ho
         </div>
       )}
 
-      <MemberHeader member={currentMember} members={data.members} onMemberSwitch={onMemberSwitch} />
+      <MemberHeader member={currentMember} members={data.members} onMemberSwitch={onMemberSwitch} onCreateMember={onCreateMember} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: 16 }}>
         {visibleModules.map((moduleId) => {

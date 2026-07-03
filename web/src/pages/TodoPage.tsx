@@ -14,6 +14,9 @@ interface TodoPageProps {
   members: Member[];
   currentMember: Member;
   onBack: () => void;
+  onCreateTodo: (title: string, description: string, priority: TodoPriority) => void;
+  onToggleTodo: (todo: Todo, isCompleted: boolean) => void;
+  onDeleteTodo: (todo: Todo) => void;
 }
 
 const PRIORITY_LABEL: Record<TodoPriority, string> = {
@@ -28,7 +31,7 @@ const PRIORITY_COLOR: Record<TodoPriority, string> = {
   LOW: 'rgb(var(--mdui-color-tertiary))',
 };
 
-export function TodoPage({ todos, members, onBack }: TodoPageProps) {
+export function TodoPage({ todos, members, onBack, onCreateTodo, onToggleTodo, onDeleteTodo }: TodoPageProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPendingTodos, setShowPendingTodos] = useState(true);
   const [showCompletedTodos, setShowCompletedTodos] = useState(false);
@@ -143,6 +146,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
                       todo={todo}
                       members={members}
                       onLongPress={() => handleLongPress(todo)}
+                      onToggle={(isCompleted) => onToggleTodo(todo, isCompleted)}
                     />
                   ))}
                 </TodoCollapsibleList>
@@ -165,6 +169,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
                       todo={todo}
                       members={members}
                       onLongPress={() => handleLongPress(todo)}
+                      onToggle={(isCompleted) => onToggleTodo(todo, isCompleted)}
                     />
                   ))}
                 </TodoCollapsibleList>
@@ -188,7 +193,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
           onDismiss={() => setShowCreateDialog(false)}
           onConfirm={(title, description, priority) => {
             setShowCreateDialog(false);
-            // TODO: 实际创建逻辑
+            onCreateTodo(title, description, priority);
           }}
         />
       )}
@@ -199,6 +204,11 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
           todo={selectedTodo}
           members={members}
           onDismiss={() => {
+            setShowBottomSheet(false);
+            setSelectedTodo(null);
+          }}
+          onDelete={() => {
+            onDeleteTodo(selectedTodo);
             setShowBottomSheet(false);
             setSelectedTodo(null);
           }}
@@ -325,10 +335,12 @@ function TodoCard({
   todo,
   members,
   onLongPress,
+  onToggle,
 }: {
   todo: Todo;
   members: Member[];
   onLongPress: () => void;
+  onToggle: (isCompleted: boolean) => void;
 }) {
   const creator = members.find((m) => m.id === todo.createdBy);
   const timeLabel = todo.isCompleted
@@ -450,7 +462,7 @@ function TodoCard({
         <div style={{ width: 16 }} />
         <Checkbox
           checked={todo.isCompleted}
-          disabled
+          onChange={onToggle}
           style={{ flexShrink: 0 }}
         />
       </div>
@@ -649,10 +661,12 @@ function TodoDetailBottomSheet({
   todo,
   members,
   onDismiss,
+  onDelete,
 }: {
   todo: Todo;
   members: Member[];
   onDismiss: () => void;
+  onDelete: () => void;
 }) {
   const creator = members.find((m) => m.id === todo.createdBy);
 
@@ -874,14 +888,22 @@ function TodoDetailBottomSheet({
 
         {!todo.isCompleted && <div style={{ height: 16 }} />}
 
-        {/* 关闭按钮 */}
-        <Button
-          variant="filled"
-          onClick={onDismiss}
-          style={{ width: '100%' }}
-        >
-          关闭
-        </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            variant="text"
+            onClick={onDelete}
+            style={{ flex: 1, color: 'rgb(var(--mdui-color-error))' }}
+          >
+            删除
+          </Button>
+          <Button
+            variant="filled"
+            onClick={onDismiss}
+            style={{ flex: 1 }}
+          >
+            关闭
+          </Button>
+        </div>
       </div>
     </div>
   );

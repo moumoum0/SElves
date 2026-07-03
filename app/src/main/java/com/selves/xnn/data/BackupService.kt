@@ -167,6 +167,44 @@ class BackupService @Inject constructor(
     }
 
     /**
+     * 导出备份为 ZIP 字节流，供 Web 接口下载使用。
+     */
+    suspend fun exportBackupBytes(): Pair<BackupResult, ByteArray?> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "开始导出 Web 备份...")
+            val backupData = collectAllData()
+            val output = ByteArrayOutputStream()
+            ZipOutputStream(output).use { zipOut ->
+                val jsonData = gson.toJson(backupData)
+                zipOut.putNextEntry(ZipEntry(BACKUP_FILE_NAME))
+                zipOut.write(jsonData.toByteArray())
+                zipOut.closeEntry()
+                addImagesToZip(zipOut, backupData)
+                addOtherFilesToZip(zipOut)
+            }
+            BackupResult.Success to output.toByteArray()
+        } catch (e: Exception) {
+            Log.e(TAG, "Web 备份导出失败", e)
+            BackupResult.Error("导出失败: ${e.message}", e) to null
+        }
+    }
+
+    /**
+     * 从 ZIP 字节流导入备份，供 Web 接口上传使用。
+     */
+    suspend fun importBackupBytes(inputBytes: ByteArray): BackupResult = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "开始导入 Web 备份...")
+            importBackupFromStream(ByteArrayInputStream(inputBytes))
+            Log.d(TAG, "Web 备份导入成功")
+            BackupResult.Success
+        } catch (e: Exception) {
+            Log.e(TAG, "Web 备份导入失败", e)
+            BackupResult.Error("导入失败: ${e.message}", e)
+        }
+    }
+
+    /**
      * 导出备份到ZIP文件
      */
     suspend fun exportBackup(outputUri: Uri): BackupResult = withContext(Dispatchers.IO) {
@@ -275,116 +313,68 @@ class BackupService @Inject constructor(
     suspend fun importBackup(inputUri: Uri): BackupResult = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "开始导入备份...")
-            
             context.contentResolver.openInputStream(inputUri)?.use { inputStream ->
-                ZipInputStream(inputStream).use { zipIn ->
-                    var backupData: BackupData? = null
-                    val foundEntries = mutableListOf<String>()
-                    var jsonParseError: Exception? = null
-                    var jsonContent: String? = null
-                    
-                    // 读取ZIP文件内容
-                    var entry = zipIn.nextEntry
-                    while (entry != null) {
-                        foundEntries.add(entry.name)
-                        Log.d(TAG, "发现ZIP条目: ${entry.name}, 大小: ${entry.size}")
-                        
-                        when {
-                            entry.name == BACKUP_FILE_NAME -> {
-                                // 读取备份数据
-                                val jsonData = zipIn.readBytes().toString(Charsets.UTF_8)
-                                jsonContent = jsonData
-                                Log.d(TAG, "读取JSON数据，大小: ${jsonData.length} 字符")
-                                
-                                if (jsonData.isEmpty()) {
-                                    Log.e(TAG, "JSON文件为空")
-                                } else {
-                                    Log.d(TAG, "JSON片段预览: ${jsonData.take(500)}...")
-                                    
-                                    val upgradedJson = upgradeLegacyBackupJson(jsonData)
-                                    try {
-                                        backupData = gson.fromJson(upgradedJson, BackupData::class.java)
-                                        Log.d(TAG, "JSON反序列化成功 (升级后)")
-                                        
-                                        // 验证备份数据的基本结构
-                                        if (backupData != null) {
-                                            Log.d(TAG, "备份数据验证:")
-                                            Log.d(TAG, "  - 版本: ${backupData.version}")
-                                            Log.d(TAG, "  - 时间戳: ${backupData.timestamp}")
-                                            Log.d(TAG, "  - 成员数: ${backupData.members.size}")
-                                            Log.d(TAG, "  - 成员分组数: ${backupData.memberGroups.size}")
-                                            Log.d(TAG, "  - 群组数: ${backupData.chatGroups.size}")
-                                            Log.d(TAG, "  - 消息数: ${backupData.messages.size}")
-                                            Log.d(TAG, "  - 动态数: ${backupData.dynamics.size}")
-                                            Log.d(TAG, "  - 投票数: ${backupData.votes.size}")
-                                        }
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "JSON反序列化失败: ${e.message}", e)
-                                        jsonParseError = e
-                                        
-                                        // 尝试分析JSON内容问题
-                                        if (jsonData.startsWith("{") && jsonData.endsWith("}")) {
-                                            Log.d(TAG, "JSON格式看起来正确（以{}包围）")
-                                        } else {
-                                            Log.e(TAG, "JSON格式可能有问题，开头: ${jsonData.take(10)}, 结尾: ${jsonData.takeLast(10)}")
-                                        }
-                                    }
-                                }
-                            }
-                            entry.name.startsWith(IMAGES_FOLDER) -> {
-                                // 恢复图片文件
-                                restoreImageFile(entry.name, zipIn.readBytes())
-                            }
-                            entry.name.startsWith(OTHER_FILES_FOLDER) -> {
-                                // 恢复其他文件
-                                restoreOtherFile(entry.name, zipIn.readBytes())
-                            }
-                        }
-                        zipIn.closeEntry()
-                        entry = zipIn.nextEntry
-                    }
-                    
-                    Log.d(TAG, "ZIP文件解析完成，共找到 ${foundEntries.size} 个条目:")
-                    foundEntries.forEach { entryName ->
-                        Log.d(TAG, "  - $entryName")
-                    }
-                    
-                    // 导入数据到数据库
-                    when {
-                        backupData != null -> {
-                            Log.d(TAG, "找到有效的备份数据，开始导入...")
-                            importDataToDatabase(backupData)
-                        }
-                        jsonParseError != null -> {
-                            val errorMsg = "备份文件JSON解析失败: ${jsonParseError.message}"
-                            Log.e(TAG, errorMsg)
-                            Log.e(TAG, "JSON内容长度: ${jsonContent?.length ?: 0}")
-                            throw IllegalStateException(errorMsg, jsonParseError)
-                        }
-                        !foundEntries.contains(BACKUP_FILE_NAME) -> {
-                            val errorMsg = "备份文件中未找到数据文件 '$BACKUP_FILE_NAME'。找到的文件: ${foundEntries.joinToString()}"
-                            Log.e(TAG, errorMsg)
-                            throw IllegalStateException(errorMsg)
-                        }
-                        jsonContent.isNullOrEmpty() -> {
-                            val errorMsg = "备份数据文件 '$BACKUP_FILE_NAME' 为空"
-                            Log.e(TAG, errorMsg)
-                            throw IllegalStateException(errorMsg)
-                        }
-                        else -> {
-                            val errorMsg = "备份文件中未找到有效的备份数据，原因未知"
-                            Log.e(TAG, errorMsg)
-                            throw IllegalStateException(errorMsg)
-                        }
-                    }
-                }
+                importBackupFromStream(inputStream)
             } ?: throw IllegalStateException("无法打开备份文件输入流")
-            
             Log.d(TAG, "备份导入成功")
             BackupResult.Success
         } catch (e: Exception) {
             Log.e(TAG, "导入备份失败", e)
             BackupResult.Error("导入失败: ${e.message}", e)
+        }
+    }
+
+    private suspend fun importBackupFromStream(inputStream: InputStream) {
+        ZipInputStream(inputStream).use { zipIn ->
+            var backupData: BackupData? = null
+            val foundEntries = mutableListOf<String>()
+            var jsonParseError: Exception? = null
+            var jsonContent: String? = null
+
+            var entry = zipIn.nextEntry
+            while (entry != null) {
+                foundEntries.add(entry.name)
+                Log.d(TAG, "发现ZIP条目: ${entry.name}, 大小: ${entry.size}")
+
+                when {
+                    entry.name == BACKUP_FILE_NAME -> {
+                        val jsonData = zipIn.readBytes().toString(Charsets.UTF_8)
+                        jsonContent = jsonData
+                        Log.d(TAG, "读取JSON数据，大小: ${jsonData.length} 字符")
+
+                        if (jsonData.isEmpty()) {
+                            Log.e(TAG, "JSON文件为空")
+                        } else {
+                            val upgradedJson = upgradeLegacyBackupJson(jsonData)
+                            try {
+                                backupData = gson.fromJson(upgradedJson, BackupData::class.java)
+                                Log.d(TAG, "JSON反序列化成功 (升级后)")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "JSON反序列化失败: ${e.message}", e)
+                                jsonParseError = e
+                            }
+                        }
+                    }
+                    entry.name.startsWith(IMAGES_FOLDER) -> restoreImageFile(entry.name, zipIn.readBytes())
+                    entry.name.startsWith(OTHER_FILES_FOLDER) -> restoreOtherFile(entry.name, zipIn.readBytes())
+                }
+                zipIn.closeEntry()
+                entry = zipIn.nextEntry
+            }
+
+            when {
+                backupData != null -> importDataToDatabase(backupData)
+                jsonParseError != null -> {
+                    val errorMsg = "备份文件JSON解析失败: ${jsonParseError.message}"
+                    Log.e(TAG, "JSON内容长度: ${jsonContent?.length ?: 0}")
+                    throw IllegalStateException(errorMsg, jsonParseError)
+                }
+                !foundEntries.contains(BACKUP_FILE_NAME) -> {
+                    throw IllegalStateException("备份文件中未找到数据文件 '$BACKUP_FILE_NAME'。找到的文件: ${foundEntries.joinToString()}")
+                }
+                jsonContent.isNullOrEmpty() -> throw IllegalStateException("备份数据文件 '$BACKUP_FILE_NAME' 为空")
+                else -> throw IllegalStateException("备份文件中未找到有效的备份数据")
+            }
         }
     }
 
