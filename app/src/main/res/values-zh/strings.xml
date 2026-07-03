@@ -246,6 +246,11 @@
     <string name="settings_web_access_qr">扫描二维码快速访问</string>
     <string name="settings_web_access_tip">确保设备与手机在同一局域网</string>
     <string name="settings_web_access_copied">已复制访问地址</string>
+    <string name="settings_web_battery_title">后台保活设置</string>
+    <string name="settings_web_battery_desc">为保证网页端能持续访问，请将本应用的耗电管理设置为「无限制」，允许后台一直运行。否则系统可能在息屏后杀掉服务，导致网页无法连接。</string>
+    <string name="settings_web_battery_action">去设置</string>
+    <string name="settings_web_battery_done">已允许后台无限制运行</string>
+    <string name="settings_web_battery_open_failed">无法打开系统电池设置，请手动前往「设置-应用-耗电管理」</string>
 
     <string name="settings_other">其他</string>
     <string name="settings_about">关于</string>

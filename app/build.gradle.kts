@@ -222,7 +222,7 @@ dependencies {
     
     // ZXing for QR code generation
     implementation(libs.zxing.core)
-    
+
     // SLF4J no-op to suppress Ktor logging warnings on Android
     implementation(libs.slf4j.nop)
     

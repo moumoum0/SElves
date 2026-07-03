@@ -239,6 +239,11 @@
     <string name="settings_web_access_qr">Scan QR code for quick access</string>
     <string name="settings_web_access_tip">Make sure your device is on the same network</string>
     <string name="settings_web_access_copied">URL copied</string>
+    <string name="settings_web_battery_title">Background Running</string>
+    <string name="settings_web_battery_desc">To keep web access available, set this app\'s battery usage to \"Unrestricted\" so it can run in the background. Otherwise the system may kill the service after the screen turns off, breaking web connectivity.</string>
+    <string name="settings_web_battery_action">Set up</string>
+    <string name="settings_web_battery_done">Unrestricted background running is allowed</string>
+    <string name="settings_web_battery_open_failed">Cannot open system battery settings. Please go to Settings - Apps - Battery manually</string>
 
     <string name="settings_other">Other</string>
     <string name="settings_about">About</string>

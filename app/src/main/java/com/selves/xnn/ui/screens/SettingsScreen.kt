@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +22,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileDownload
@@ -276,6 +279,10 @@ fun SettingsScreen(
             }
 
             if (webServerEnabled) {
+                item {
+                    BatteryOptimizationGuideCard(context = context)
+                }
+
                 item {
                     WebAccessInfoCard(
                         url = viewModel.webServerUrl,
@@ -570,6 +577,114 @@ fun SettingsItemWithProgress(
                 modifier = Modifier.size(20.dp),
                 strokeWidth = 2.dp
             )
+        }
+    }
+}
+
+@Composable
+private fun BatteryOptimizationGuideCard(context: Context) {
+    val packageName = context.packageName
+    val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
+
+    // 进入页面时检测当前是否已在电池优化白名单中
+    var isIgnoring by remember {
+        mutableStateOf(powerManager.isIgnoringBatteryOptimizations(packageName))
+    }
+
+    val openFailedText = stringResource(R.string.settings_web_battery_open_failed)
+
+    // 从系统设置页返回后重新检测状态，刷新 UI
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        isIgnoring = powerManager.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    // 已完成设置后，整个卡片消失
+    if (isIgnoring) return
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    // 三角形感叹号警告图标
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.settings_web_battery_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 未授权：展示说明 + 跳转按钮
+            Text(
+                text = stringResource(R.string.settings_web_battery_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 查看教程按钮
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("us.xnncsj.xyz"))
+                            //链接等待填充
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "无法打开浏览器", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text(text = "查看教程")
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 系统设置按钮
+                Button(
+                    onClick = {
+                        val requestIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        try {
+                            launcher.launch(requestIntent)
+                        } catch (e: Exception) {
+                            try {
+                                launcher.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                            } catch (e2: Exception) {
+                                Toast.makeText(context, openFailedText, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(text = stringResource(R.string.settings_web_battery_action))
+                }
+            }
         }
     }
 }
