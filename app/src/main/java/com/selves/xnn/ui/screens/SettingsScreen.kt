@@ -57,6 +57,7 @@ import com.selves.xnn.ui.components.ImportBackupWarningDialog
 import com.selves.xnn.ui.components.SpOwnerSelectionDialog
 import com.selves.xnn.data.ImportMode
 import com.selves.xnn.ui.components.LanguageDialog
+import com.selves.xnn.ui.components.AutoBackupConfigDialog
 import com.selves.xnn.model.getDisplayName
 import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
@@ -96,6 +97,10 @@ fun SettingsScreen(
     val showSpModeDialog by viewModel.showSpModeDialog.collectAsState()
     val showSpOwnerDialog by viewModel.showSpOwnerDialog.collectAsState()
     val spOwnerCandidates by viewModel.spOwnerCandidates.collectAsState()
+    val autoBackupEnabled by viewModel.autoBackupEnabled.collectAsState()
+    val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
+    val autoBackupHour by viewModel.autoBackupHour.collectAsState()
+    val showAutoBackupDialog by viewModel.showAutoBackupDialog.collectAsState()
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -218,8 +223,18 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Default.Schedule,
                     title = stringResource(R.string.settings_backup_auto),
-                    subtitle = stringResource(R.string.settings_backup_auto_desc),
-                    onClick = { /* TODO: 实现定时备份设置 */ }
+                    subtitle = if (autoBackupEnabled) {
+                        val freqText = when (autoBackupFrequency) {
+                            "daily" -> stringResource(R.string.settings_backup_auto_daily)
+                            "weekly" -> stringResource(R.string.settings_backup_auto_weekly)
+                            "monthly" -> stringResource(R.string.settings_backup_auto_monthly)
+                            else -> stringResource(R.string.settings_backup_auto_daily)
+                        }
+                        "$freqText · ${String.format("%02d:00", autoBackupHour)}"
+                    } else {
+                        stringResource(R.string.settings_backup_auto_desc)
+                    },
+                    onClick = { viewModel.showAutoBackupDialog() }
                 )
             }
             
@@ -337,6 +352,18 @@ fun SettingsScreen(
                 viewModel.setLanguage(selectedLanguage)
             },
             onDismiss = { viewModel.hideLanguageDialog() }
+        )
+        
+        // 自动备份配置对话框
+        AutoBackupConfigDialog(
+            isOpen = showAutoBackupDialog,
+            enabled = autoBackupEnabled,
+            frequency = autoBackupFrequency,
+            hour = autoBackupHour,
+            onConfirm = { enabled, frequency, hour ->
+                viewModel.setAutoBackupConfig(enabled, frequency, hour)
+            },
+            onDismiss = { viewModel.hideAutoBackupDialog() }
         )
         
         // 备份进度对话框

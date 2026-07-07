@@ -38,6 +38,12 @@ class MemberPreferences(private val context: Context) {
         // Web 访问服务
         private val WEB_SERVER_ENABLED = booleanPreferencesKey("web_server_enabled")
         private val WEB_API_TOKEN = stringPreferencesKey("web_api_token")
+        
+        // 自动备份配置
+        private val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
+        private val AUTO_BACKUP_FREQUENCY = stringPreferencesKey("auto_backup_frequency")
+        private val AUTO_BACKUP_HOUR = intPreferencesKey("auto_backup_hour")
+        private val AUTO_BACKUP_PATH = stringPreferencesKey("auto_backup_path")
     }
     
     /**
@@ -235,5 +241,69 @@ class MemberPreferences(private val context: Context) {
         val token = (1..6).map { chars.random() }.joinToString("")
         saveWebApiToken(token)
         return token
+    }
+    
+    /**
+     * 获取自动备份启用状态
+     */
+    val autoBackupEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_ENABLED] ?: false }
+    
+    /**
+     * 保存自动备份启用状态
+     */
+    suspend fun saveAutoBackupEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_ENABLED] = enabled
+        }
+    }
+    
+    /**
+     * 获取自动备份频率（daily, weekly, monthly）
+     */
+    val autoBackupFrequency: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_FREQUENCY] ?: "daily" }
+    
+    /**
+     * 保存自动备份频率
+     */
+    suspend fun saveAutoBackupFrequency(frequency: String) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_FREQUENCY] = frequency
+        }
+    }
+    
+    /**
+     * 获取自动备份时间（小时，0-23）
+     */
+    val autoBackupHour: Flow<Int> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_HOUR] ?: 3 }
+    
+    /**
+     * 保存自动备份时间
+     */
+    suspend fun saveAutoBackupHour(hour: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_HOUR] = hour
+        }
+    }
+    
+    /**
+     * 获取自动备份路径
+     */
+    val autoBackupPath: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_PATH] }
+    
+    /**
+     * 保存自动备份路径
+     */
+    suspend fun saveAutoBackupPath(path: String?) {
+        context.dataStore.edit { preferences ->
+            if (path != null) {
+                preferences[AUTO_BACKUP_PATH] = path
+            } else {
+                preferences.remove(AUTO_BACKUP_PATH)
+            }
+        }
     }
 }

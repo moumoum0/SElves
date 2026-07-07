@@ -167,6 +167,12 @@ class BackupService @Inject constructor(
     }
 
     /**
+     * 序列化当前应用状态
+     * 供内部数据管理使用
+     */
+    suspend fun serializeCurrentState(): Pair<BackupResult, ByteArray?> = exportBackupBytes()
+
+    /**
      * 导出备份为 ZIP 字节流，供 Web 接口下载使用。
      */
     suspend fun exportBackupBytes(): Pair<BackupResult, ByteArray?> = withContext(Dispatchers.IO) {

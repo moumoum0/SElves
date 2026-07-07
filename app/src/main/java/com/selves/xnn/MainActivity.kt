@@ -90,6 +90,26 @@ class MainActivity : ComponentActivity() {
                     WebServerService.start(this@MainActivity)
                 }
             }
+
+            // 图片资源缓存任务，保持相册缩略图索引更新
+            LaunchedEffect(Unit) {
+                com.selves.xnn.util.MediaIndexScheduler.schedule(this@MainActivity)
+            }
+            
+            // 应用启动时检查并设置自动备份任务
+            LaunchedEffect(Unit) {
+                val autoBackupEnabled = memberPreferences.autoBackupEnabled.first()
+                if (autoBackupEnabled) {
+                    val frequency = memberPreferences.autoBackupFrequency.first()
+                    val hour = memberPreferences.autoBackupHour.first()
+                    com.selves.xnn.util.AutoBackupScheduler.scheduleAutoBackup(
+                        this@MainActivity,
+                        frequency,
+                        hour,
+                        replaceExisting = false
+                    )
+                }
+            }
             
             SelvesTheme(
                 themeMode = themeMode,

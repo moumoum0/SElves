@@ -226,6 +226,16 @@
     <string name="settings_data_backup">数据与备份</string>
     <string name="settings_backup_auto">定时备份</string>
     <string name="settings_backup_auto_desc">设置自动备份频率和时间</string>
+    <string name="settings_backup_auto_enable">启用自动备份</string>
+    <string name="settings_backup_auto_frequency">备份频率</string>
+    <string name="settings_backup_auto_daily">每天</string>
+    <string name="settings_backup_auto_weekly">每周</string>
+    <string name="settings_backup_auto_monthly">每月</string>
+    <string name="settings_backup_auto_time">备份时间</string>
+    <string name="settings_backup_auto_time_desc">时间</string>
+    <string name="settings_backup_auto_max_count">保留备份</string>
+    <string name="settings_backup_auto_max_count_value">%1$d 份</string>
+    <string name="settings_backup_auto_note">智能备份</string>
     <string name="settings_backup_export">导出备份</string>
     <string name="settings_backup_export_desc">备份应用数据到文件</string>
     <string name="settings_backup_import">导入备份</string>
@@ -570,6 +580,7 @@
     <!-- 关于 -->
     <string name="about_version">版本 %1$s</string>
     <string name="about_developer">开发者</string>
+    <string name="about_qq_group">QQ 群</string>
     <string name="about_third_party">使用的第三方库</string>
     <string name="about_thanks">感谢所有开源项目的贡献者</string>
     <string name="about_library_version">版本 %1$s</string>

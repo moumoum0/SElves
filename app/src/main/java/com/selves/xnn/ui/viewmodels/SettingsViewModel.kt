@@ -12,6 +12,7 @@ import com.selves.xnn.data.ImportMode
 import com.selves.xnn.data.SpImportMemberPreview
 import com.selves.xnn.data.SpImportResult
 import com.selves.xnn.service.WebServerService
+import com.selves.xnn.util.AutoBackupScheduler
 import kotlinx.coroutines.Dispatchers
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
@@ -76,6 +77,19 @@ class SettingsViewModel @Inject constructor(
     // 存储待导入的URI，等用户确认后使用
     private var pendingImportUri: Uri? = null
     
+    // 自动备份配置
+    private val _autoBackupEnabled = MutableStateFlow(false)
+    val autoBackupEnabled: StateFlow<Boolean> = _autoBackupEnabled.asStateFlow()
+    
+    private val _autoBackupFrequency = MutableStateFlow("daily")
+    val autoBackupFrequency: StateFlow<String> = _autoBackupFrequency.asStateFlow()
+    
+    private val _autoBackupHour = MutableStateFlow(3)
+    val autoBackupHour: StateFlow<Int> = _autoBackupHour.asStateFlow()
+    
+    private val _showAutoBackupDialog = MutableStateFlow(false)
+    val showAutoBackupDialog: StateFlow<Boolean> = _showAutoBackupDialog.asStateFlow()
+    
     init {
         viewModelScope.launch {
             memberPreferences.themeMode.collect { mode ->
@@ -119,6 +133,24 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             memberPreferences.webApiToken.collect { token ->
                 _webApiToken.value = token
+            }
+        }
+        
+        viewModelScope.launch {
+            memberPreferences.autoBackupEnabled.collect { enabled ->
+                _autoBackupEnabled.value = enabled
+            }
+        }
+        
+        viewModelScope.launch {
+            memberPreferences.autoBackupFrequency.collect { frequency ->
+                _autoBackupFrequency.value = frequency
+            }
+        }
+        
+        viewModelScope.launch {
+            memberPreferences.autoBackupHour.collect { hour ->
+                _autoBackupHour.value = hour
             }
         }
     }
@@ -448,6 +480,31 @@ class SettingsViewModel @Inject constructor(
             } finally {
                 _spImportInProgress.value = false
                 _spImportProgress.value = null
+            }
+        }
+    }
+    
+    // ==================== 自动备份 ====================
+    
+    fun showAutoBackupDialog() {
+        _showAutoBackupDialog.value = true
+    }
+    
+    fun hideAutoBackupDialog() {
+        _showAutoBackupDialog.value = false
+    }
+    
+    fun setAutoBackupConfig(enabled: Boolean, frequency: String, hour: Int) {
+        viewModelScope.launch {
+            memberPreferences.saveAutoBackupEnabled(enabled)
+            memberPreferences.saveAutoBackupFrequency(frequency)
+            memberPreferences.saveAutoBackupHour(hour)
+            
+            // 更新调度
+            if (enabled) {
+                AutoBackupScheduler.scheduleAutoBackup(context, frequency, hour)
+            } else {
+                AutoBackupScheduler.cancelAutoBackup(context)
             }
         }
     }
