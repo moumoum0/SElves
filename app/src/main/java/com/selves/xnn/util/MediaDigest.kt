@@ -5,6 +5,7 @@ import com.selves.xnn.data.AppDatabase
 import com.selves.xnn.data.MemberPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.reflect.full.callSuspend
 
 /**
  * 媒体资源摘要生成器

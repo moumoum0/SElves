@@ -14,7 +14,7 @@ object ImageFormatValidator {
 
     // PNG 文件签名（8 字节魔数）
     private val PNG_SIGNATURE = byteArrayOf(
-        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+        0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
     )
 
     // PNG IHDR chunk 的最小骨架（长度4 + 类型4 + 数据13 + CRC4 = 25 字节）
@@ -48,7 +48,7 @@ object ImageFormatValidator {
         // chunk type = "IEND"
         0x49, 0x45, 0x4E, 0x44,
         // CRC
-        0xAE, 0x42, 0x60, 0x82
+        0xAE.toByte(), 0x42, 0x60, 0x82.toByte()
     )
 
     // ZIP 本地文件头魔数（PK\x03\x04）

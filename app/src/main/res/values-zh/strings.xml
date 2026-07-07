@@ -233,8 +233,6 @@
     <string name="settings_backup_auto_monthly">每月</string>
     <string name="settings_backup_auto_time">备份时间</string>
     <string name="settings_backup_auto_time_desc">时间</string>
-    <string name="settings_backup_auto_max_count">保留备份</string>
-    <string name="settings_backup_auto_max_count_value">%1$d 份</string>
     <string name="settings_backup_auto_note">智能备份</string>
     <string name="settings_backup_export">导出备份</string>
     <string name="settings_backup_export_desc">备份应用数据到文件</string>
