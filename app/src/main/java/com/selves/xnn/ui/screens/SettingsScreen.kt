@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.TextFormat
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -76,6 +77,7 @@ fun SettingsScreen(
     val themeMode by viewModel.themeMode.collectAsState()
     val showThemeModeDialog by viewModel.showThemeModeDialog.collectAsState()
     val quickMemberSwitchEnabled by viewModel.quickMemberSwitchEnabled.collectAsState()
+    val chatLayoutOptimizationEnabled by viewModel.chatLayoutOptimizationEnabled.collectAsState()
     val dynamicColorEnabled by viewModel.dynamicColorEnabled.collectAsState()
     val colorScheme by viewModel.colorScheme.collectAsState()
     val showColorSchemeDialog by viewModel.showColorSchemeDialog.collectAsState()
@@ -198,6 +200,18 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_color),
                     subtitle = colorScheme.getDisplayName(context),
                     onClick = { viewModel.showColorSchemeDialog() }
+                )
+            }
+            
+            item {
+                SettingsSwitchItem(
+                    icon = Icons.Default.TextFormat,
+                    title = stringResource(R.string.settings_chat_layout_optimization),
+                    subtitle = stringResource(R.string.settings_chat_layout_optimization_desc),
+                    checked = chatLayoutOptimizationEnabled,
+                    onCheckedChange = { enabled ->
+                        viewModel.setChatLayoutOptimizationEnabled(enabled)
+                    }
                 )
             }
             

@@ -26,6 +26,7 @@ class MemberPreferences(private val context: Context) {
         private val CURRENT_MEMBER_ID = stringPreferencesKey("current_member_id")
         private val THEME_MODE = stringPreferencesKey("theme_mode")
         private val QUICK_MEMBER_SWITCH_ENABLED = booleanPreferencesKey("quick_member_switch_enabled")
+        private val CHAT_LAYOUT_OPTIMIZATION_ENABLED = booleanPreferencesKey("chat_layout_optimization_enabled")
         private val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
         private val COLOR_SCHEME = stringPreferencesKey("color_scheme")
         private val LANGUAGE = stringPreferencesKey("language")
@@ -108,6 +109,23 @@ class MemberPreferences(private val context: Context) {
     suspend fun saveQuickMemberSwitchEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[QUICK_MEMBER_SWITCH_ENABLED] = enabled
+        }
+    }
+    
+    /**
+     * 获取群聊排版优化是否启用
+     */
+    val chatLayoutOptimizationEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences ->
+            preferences[CHAT_LAYOUT_OPTIMIZATION_ENABLED] ?: false
+        }
+    
+    /**
+     * 保存群聊排版优化启用状态
+     */
+    suspend fun saveChatLayoutOptimizationEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[CHAT_LAYOUT_OPTIMIZATION_ENABLED] = enabled
         }
     }
     

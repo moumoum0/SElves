@@ -98,6 +98,7 @@ fun ChatScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val memberPreferences = remember { MemberPreferences(context) }
     val quickMemberSwitchEnabled by memberPreferences.quickMemberSwitchEnabled.collectAsState(initial = false)
+    val chatLayoutOptimizationEnabled by memberPreferences.chatLayoutOptimizationEnabled.collectAsState(initial = false)
     var messageText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     var previewImagePath by remember { mutableStateOf<String?>(null) }
@@ -155,7 +156,8 @@ fun ChatScreen(
                         previewImageSize = size
                     },
                     currentMember = currentMember,
-                    members = members
+                    members = members,
+                    optimizeLayout = chatLayoutOptimizationEnabled
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -277,11 +279,10 @@ fun MessageItem(
     onDeleteMessage: (String) -> Unit,
     onImageClick: (String, Offset, DpSize) -> Unit = { _, _, _ -> },
     currentMember: Member,
-    members: List<Member>
+    members: List<Member>,
+    optimizeLayout: Boolean = false
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    var pressPosition by remember { mutableStateOf(DpOffset.Zero) }
-    val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     
     Column(
@@ -306,7 +307,9 @@ fun MessageItem(
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 // 成员名和消息内容
-                Column {
+                Column(
+                    modifier = if (optimizeLayout) Modifier.weight(1f, fill = false) else Modifier
+                ) {
                     // 成员名
                     Text(
                         text = sender?.name ?: stringResource(R.string.unknown_member),
@@ -339,9 +342,19 @@ fun MessageItem(
                         )
                     }
                 }
+                
+                if (optimizeLayout) {
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
             } else {
+                if (optimizeLayout) {
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
+                
                 // 消息气泡
-                Box {
+                Box(
+                    modifier = if (optimizeLayout) Modifier.weight(1f, fill = false) else Modifier
+                ) {
                     MessageBubble(
                         message = message,
                         isFromCurrentMember = true,

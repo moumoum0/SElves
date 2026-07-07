@@ -223,6 +223,8 @@
     <string name="settings_color_wallpaper_desc">根据系统壁纸自动调整配色 (Android 12+)</string>
     <string name="settings_color_cloud_field">云野</string>
     <string name="settings_color_cloud_field_desc">云野 - 自然清新的绿色主题</string>
+    <string name="settings_chat_layout_optimization">群聊排版优化</string>
+    <string name="settings_chat_layout_optimization_desc">可以避免聊天框遮挡头像</string>
     <string name="settings_data_backup">数据与备份</string>
     <string name="settings_backup_auto">定时备份</string>
     <string name="settings_backup_auto_desc">设置自动备份频率和时间</string>

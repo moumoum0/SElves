@@ -78,7 +78,8 @@ class LocalDateTimeAdapter : JsonSerializer<LocalDateTime>, JsonDeserializer<Loc
 data class PreferencesBackupData(
     val currentMemberId: String? = null,
     val themeMode: String = "SYSTEM",
-    val quickMemberSwitchEnabled: Boolean = false
+    val quickMemberSwitchEnabled: Boolean = false,
+    val chatLayoutOptimizationEnabled: Boolean = false
 )
 
 /**
@@ -394,7 +395,8 @@ class BackupService @Inject constructor(
         val preferences = PreferencesBackupData(
             currentMemberId = memberPreferences.currentMemberId.first(),
             themeMode = memberPreferences.themeMode.first().name,
-            quickMemberSwitchEnabled = memberPreferences.quickMemberSwitchEnabled.first()
+            quickMemberSwitchEnabled = memberPreferences.quickMemberSwitchEnabled.first(),
+            chatLayoutOptimizationEnabled = memberPreferences.chatLayoutOptimizationEnabled.first()
         )
         Log.d(TAG, "收集用户偏好设置完成: currentMemberId=${preferences.currentMemberId}")
         
@@ -839,6 +841,10 @@ class BackupService @Inject constructor(
             // 恢复快捷切换成员设置
             memberPreferences.saveQuickMemberSwitchEnabled(preferences.quickMemberSwitchEnabled)
             Log.d(TAG, "恢复快捷切换成员设置: ${preferences.quickMemberSwitchEnabled}")
+            
+            // 恢复群聊排版优化设置
+            memberPreferences.saveChatLayoutOptimizationEnabled(preferences.chatLayoutOptimizationEnabled)
+            Log.d(TAG, "恢复群聊排版优化设置: ${preferences.chatLayoutOptimizationEnabled}")
             
         } catch (e: Exception) {
             Log.e(TAG, "恢复用户偏好设置失败: ${e.message}", e)

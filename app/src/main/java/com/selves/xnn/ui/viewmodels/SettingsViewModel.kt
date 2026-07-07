@@ -41,6 +41,9 @@ class SettingsViewModel @Inject constructor(
     private val _quickMemberSwitchEnabled = MutableStateFlow(false)
     val quickMemberSwitchEnabled: StateFlow<Boolean> = _quickMemberSwitchEnabled.asStateFlow()
     
+    private val _chatLayoutOptimizationEnabled = MutableStateFlow(false)
+    val chatLayoutOptimizationEnabled: StateFlow<Boolean> = _chatLayoutOptimizationEnabled.asStateFlow()
+    
     private val _dynamicColorEnabled = MutableStateFlow(false)
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
     
@@ -100,6 +103,12 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             memberPreferences.quickMemberSwitchEnabled.collect { enabled ->
                 _quickMemberSwitchEnabled.value = enabled
+            }
+        }
+        
+        viewModelScope.launch {
+            memberPreferences.chatLayoutOptimizationEnabled.collect { enabled ->
+                _chatLayoutOptimizationEnabled.value = enabled
             }
         }
         
@@ -172,6 +181,12 @@ class SettingsViewModel @Inject constructor(
     fun setQuickMemberSwitchEnabled(enabled: Boolean) {
         viewModelScope.launch {
             memberPreferences.saveQuickMemberSwitchEnabled(enabled)
+        }
+    }
+    
+    fun setChatLayoutOptimizationEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            memberPreferences.saveChatLayoutOptimizationEnabled(enabled)
         }
     }
     

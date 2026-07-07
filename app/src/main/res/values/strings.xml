@@ -216,6 +216,8 @@
     <string name="settings_color_wallpaper_desc">Auto from wallpaper (12+)</string>
     <string name="settings_color_cloud_field">Cloud Field</string>
     <string name="settings_color_cloud_field_desc">Cloud Field - Fresh natural green theme</string>
+    <string name="settings_chat_layout_optimization">Group Chat Layout Optimization</string>
+    <string name="settings_chat_layout_optimization_desc">Limit right-side message width to keep the left avatar area visible</string>
     <string name="settings_data_backup">Data &amp; Backup</string>
     <string name="settings_backup_auto">Scheduled Backup</string>
     <string name="settings_backup_auto_desc">Auto backup frequency &amp; time</string>
