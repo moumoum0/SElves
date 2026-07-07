@@ -22,6 +22,9 @@
     <!-- 网络权限（Web 访问服务需要） -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- 电池优化白名单权限（引导用户允许 Web 服务后台无限制运行） -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     
     <!-- 精确闹钟权限（Android 12+需要，用于自动重启功能） -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -65,6 +68,16 @@
         tools:targetApi="31"
         android:requestLegacyExternalStorage="true">
         
+        <!-- 使用 ChatApplication 提供 WorkManager 配置时，移除默认自动初始化入口 -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                tools:node="remove" />
+        </provider>
+        
         <!-- 声明支持16KB页面大小（Android 15+） -->
         <property
             android:name="android.app.16kb_page_size"
@@ -104,6 +117,17 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- FileProvider for auto backup -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { getOnlineLogs, getOnlineStatus, getOnlineSummary } from '../lib/api';
 import { MemberAvatar } from '../components/MemberAvatar';
-import type { Member } from '../types/models';
+import type { Member, OnlineLog, OnlineMemberStatus, OnlineStatus, OnlineSummary } from '../types/models';
+import { Card } from '../ui/components/Card';
+import { Chip } from '../ui/components/Chip';
+import { CircularProgress } from '../ui/components/Progress';
+import { Tab, Tabs } from '../ui/components/Tabs';
 import { SubPageScaffold } from './SubPageScaffold';
 
 interface OnlineStatsPageProps {
@@ -9,65 +14,18 @@ interface OnlineStatsPageProps {
   onBack: () => void;
 }
 
-interface MemberOnlineStat {
-  member: Member;
-  isOnline: boolean;
-  todayOnlineMinutes: number;
-  lastActiveTime: number;
-}
+type MemberOnlineStat = OnlineMemberStatus;
+type OnlineStats = OnlineStatus;
+type LoginLog = OnlineLog;
+type LoginLogSummary = OnlineSummary;
 
-interface OnlineStats {
-  onlineCount: number;
-  memberStats: MemberOnlineStat[];
-}
-
-interface LoginLog {
-  memberName: string;
-  memberAvatar: string | null;
-  isOnline: boolean;
-  loginTime: number;
-  logoutTime?: number | null;
-  duration?: number;
-}
-
-interface LoginLogSummary {
-  totalLogins: number;
-  todayLogins: number;
-  currentOnlineCount: number;
-  averageOnlineTime: number;
-}
-
-function generateMockData(members: Member[]): {
-  onlineStats: OnlineStats;
-  logs: LoginLog[];
-  summary: LoginLogSummary;
-} {
-  const memberStats = members.map((m, i) => ({
-    member: m,
-    isOnline: i === 0,
-    todayOnlineMinutes: Math.max(0, 120 - i * 25),
-    lastActiveTime: Date.now() - (i === 0 ? 0 : i * 3600000),
-  }));
-  const logs: LoginLog[] = members.slice(0, 4).map((m, i) => ({
-    memberName: m.name,
-    memberAvatar: m.avatarUrl,
-    isOnline: i === 0,
-    loginTime: Date.now() - (i + 1) * 7200000,
-    logoutTime: i === 0 ? undefined : Date.now() - i * 3600000,
-    duration: i === 0 ? undefined : 3600000,
-  }));
-  const summary: LoginLogSummary = {
-    totalLogins: logs.length,
-    todayLogins: logs.filter((_, i) => i < 2).length,
-    currentOnlineCount: memberStats.filter(s => s.isOnline).length,
-    averageOnlineTime: 1800000,
-  };
-  return {
-    onlineStats: { onlineCount: memberStats.filter(s => s.isOnline).length, memberStats },
-    logs,
-    summary,
-  };
-}
+const EMPTY_ONLINE_STATS: OnlineStats = { onlineCount: 0, memberStats: [] };
+const EMPTY_SUMMARY: LoginLogSummary = {
+  totalLogins: 0,
+  todayLogins: 0,
+  currentOnlineCount: 0,
+  averageOnlineTime: 0,
+};
 
 function formatOnlineTime(minutes: number): string {
   if (minutes === 0) return '从未在线';
@@ -99,6 +57,7 @@ function formatDetailDateTime(ts: number): string {
 }
 
 function formatLastActiveTime(ts: number): string {
+  if (!ts) return '从未在线';
   const diff = Date.now() - ts;
   if (diff < 60000) return '刚刚';
   if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
@@ -109,43 +68,72 @@ function formatLastActiveTime(ts: number): string {
 export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsPageProps) {
   const [tab, setTab] = useState(0);
   const [filter, setFilter] = useState<'ALL' | 'TODAY'>('ALL');
-  const { onlineStats, logs, summary } = useMemo(() => generateMockData(members), [members]);
-  const isLoading = false;
-  const isLoadingLogs = false;
+  const [onlineStats, setOnlineStats] = useState<OnlineStats>(EMPTY_ONLINE_STATS);
+  const [logs, setLogs] = useState<LoginLog[]>([]);
+  const [summary, setSummary] = useState<LoginLogSummary>(EMPTY_SUMMARY);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setIsLoadingLogs(true);
+    setError(null);
+    Promise.all([
+      getOnlineStatus(),
+      getOnlineLogs({ limit: 100 }),
+      getOnlineSummary(),
+    ])
+      .then(([nextStatus, nextLogs, nextSummary]) => {
+        if (cancelled) return;
+        setOnlineStats(nextStatus);
+        setLogs(nextLogs);
+        setSummary(nextSummary);
+      })
+      .catch((loadError) => {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : '在线统计加载失败');
+        setOnlineStats({ onlineCount: 0, memberStats: members.map(member => ({ member, isOnline: false, todayOnlineMinutes: 0, lastActiveTime: 0 })) });
+        setLogs([]);
+        setSummary(EMPTY_SUMMARY);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsLoading(false);
+        setIsLoadingLogs(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [members]);
 
   const filteredLogs = useMemo(
     () => (filter === 'TODAY' ? logs.filter(l => Date.now() - l.loginTime < 86400000) : logs),
     [filter, logs]
   );
 
-  const tabsRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const el = tabsRef.current;
-    if (!el) return;
-    const handler = (e: Event) => {
-      const val = Number((e.target as any).value);
-      if (!Number.isNaN(val)) setTab(val);
-    };
-    el.addEventListener('change', handler);
-    return () => el.removeEventListener('change', handler);
-  }, []);
-
   return (
     <SubPageScaffold title="在线统计" onBack={onBack}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <mdui-tabs ref={tabsRef} value={String(tab)}>
-          <mdui-tab value="0">在线状态</mdui-tab>
-          <mdui-tab value="1">在线时长</mdui-tab>
-          <mdui-tab value="2">登录日志</mdui-tab>
-        </mdui-tabs>
+        <Tabs activeIndex={tab} onChange={setTab}>
+          <Tab>在线状态</Tab>
+          <Tab>在线时长</Tab>
+          <Tab>登录日志</Tab>
+        </Tabs>
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {isLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-              <mdui-circular-progress />
+              <CircularProgress />
             </div>
           ) : (
             <div style={{ padding: 16 }}>
+              {error && (
+                <div style={{ padding: 12, marginBottom: 12, borderRadius: 12, backgroundColor: 'rgb(var(--mdui-color-error-container))', color: 'rgb(var(--mdui-color-on-error-container))', fontSize: 13 }}>
+                  {error}
+                </div>
+              )}
               {tab === 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   {onlineStats.memberStats.map(stat => (
@@ -170,7 +158,7 @@ export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsP
                   <FilterChips selected={filter} onChange={setFilter} />
                   {isLoadingLogs ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-                      <mdui-circular-progress />
+                      <CircularProgress />
                     </div>
                   ) : (
                     <>
@@ -178,11 +166,11 @@ export function OnlineStatsPage({ members, currentMember, onBack }: OnlineStatsP
                         <LoginLogItem key={idx} log={log} />
                       ))}
                       {filteredLogs.length === 0 && (
-                        <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
+                        <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
                           <div style={{ padding: 32, textAlign: 'center', color: 'rgb(var(--mdui-color-on-surface-variant))', fontSize: 14 }}>
                             暂无登录日志
                           </div>
-                        </mdui-card>
+                        </Card>
                       )}
                     </>
                   )}
@@ -243,7 +231,7 @@ function OnlineStatItem({ stat, isCurrent }: { stat: MemberOnlineStat; isCurrent
 
 function OnlineTimeStatItem({ stat, isCurrent }: { stat: MemberOnlineStat; isCurrent: boolean }) {
   return (
-    <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
+    <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
         <MemberAvatar name={stat.member.name} avatarUrl={stat.member.avatarUrl} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -269,13 +257,13 @@ function OnlineTimeStatItem({ stat, isCurrent }: { stat: MemberOnlineStat; isCur
           {formatOnlineTime(stat.todayOnlineMinutes)}
         </span>
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
 function LoginLogSummaryCard({ summary }: { summary: LoginLogSummary }) {
   return (
-    <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))', padding: 16 }}>
+    <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))', padding: 16 }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 12 }}>登录统计</div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <SummaryItem title="总登录" value={String(summary.totalLogins)} color="rgb(var(--mdui-color-primary))" />
@@ -285,7 +273,7 @@ function LoginLogSummaryCard({ summary }: { summary: LoginLogSummary }) {
       <div style={{ marginTop: 8, fontSize: 12, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
         今日平均在线时长: {formatDuration(summary.averageOnlineTime)}
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -301,15 +289,15 @@ function SummaryItem({ title, value, color }: { title: string; value: string; co
 function FilterChips({ selected, onChange }: { selected: 'ALL' | 'TODAY'; onChange: (v: 'ALL' | 'TODAY') => void }) {
   return (
     <div style={{ display: 'flex', gap: 8 }}>
-      <mdui-chip selectable selected={selected === 'ALL'} onClick={() => onChange('ALL')}>全部</mdui-chip>
-      <mdui-chip selectable selected={selected === 'TODAY'} onClick={() => onChange('TODAY')}>今天</mdui-chip>
+      <Chip selectable selected={selected === 'ALL'} onClick={() => onChange('ALL')}>全部</Chip>
+      <Chip selectable selected={selected === 'TODAY'} onClick={() => onChange('TODAY')}>今天</Chip>
     </div>
   );
 }
 
 function LoginLogItem({ log }: { log: LoginLog }) {
   return (
-    <mdui-card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
+    <Card variant="filled" style={{ borderRadius: 16, backgroundColor: 'rgb(var(--mdui-color-surface-container))' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 16 }}>
         <MemberAvatar name={log.memberName} avatarUrl={log.memberAvatar} size={40} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -338,6 +326,6 @@ function LoginLogItem({ log }: { log: LoginLog }) {
           ) : null}
         </div>
       </div>
-    </mdui-card>
+    </Card>
   );
 }

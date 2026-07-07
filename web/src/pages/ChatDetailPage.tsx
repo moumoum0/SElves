@@ -3,6 +3,9 @@ import { MemberAvatar } from '../components/MemberAvatar';
 import { GroupManagementDialog } from '../components/GroupManagementDialog';
 import { formatMessageTime } from '../lib/utils';
 import type { ChatGroup, Member, Message } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
+import { TextField } from '../ui/components/TextField';
 
 interface ChatDetailPageProps {
   currentMember: Member;
@@ -79,7 +82,7 @@ export function ChatDetailPage({
           backgroundColor: 'rgb(var(--mdui-color-surface))',
         }}
       >
-        <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+        <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
         <mdui-top-app-bar-title>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
             <span
@@ -104,7 +107,7 @@ export function ChatDetailPage({
             </span>
           </div>
         </mdui-top-app-bar-title>
-        <mdui-button-icon icon="more_vert" onClick={() => setShowManagement(true)}></mdui-button-icon>
+        <IconButton onClick={() => setShowManagement(true)}><md-icon>more_vert</md-icon></IconButton>
       </mdui-top-app-bar>
 
       {showManagement && (
@@ -176,31 +179,27 @@ export function ChatDetailPage({
           }}
         >
           {/* 图片按钮 */}
-          <mdui-button-icon
-            icon="image"
+          <IconButton
             style={{ color: 'rgb(var(--mdui-color-primary))', flexShrink: 0 }}
-          ></mdui-button-icon>
+          ><md-icon>image</md-icon></IconButton>
 
           {/* 文本输入框 */}
-          <mdui-text-field
+          <TextField
             variant="outlined"
             placeholder="发送消息..."
             value={messageText}
             style={{ flex: 1 }}
-            max-rows="5"
-            onInput={(e: Event) =>
-              setMessageText((e.target as HTMLInputElement).value)
-            }
-            onKeyDown={handleKeyDown as unknown as (e: Event) => void}
-          ></mdui-text-field>
+            max-rows={5}
+            onChange={(val) => setMessageText(val)}
+            onKeyDown={handleKeyDown}
+          />
 
           {/* 发送按钮 */}
-          <mdui-button-icon
-            icon="send"
+          <IconButton
             style={{ color: 'rgb(var(--mdui-color-primary))', flexShrink: 0 }}
             disabled={!messageText.trim()}
             onClick={handleSend}
-          ></mdui-button-icon>
+          ><md-icon>send</md-icon></IconButton>
         </div>
       </div>
     </div>
@@ -323,7 +322,7 @@ function MessageItem({
             zIndex: 1000,
             backgroundColor: 'rgb(var(--mdui-color-surface-container))',
             borderRadius: 8,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            boxShadow: '0 2px 12px rgba(var(--mdui-color-scrim), 0.15)',
             padding: '4px 0',
             minWidth: 120,
           }}
@@ -355,7 +354,7 @@ function MessageItem({
               (e.target as HTMLElement).style.backgroundColor = 'transparent';
             }}
           >
-            <mdui-icon name="content_copy" style={{ fontSize: 18 }}></mdui-icon>
+            <Icon style={{ fontSize: 18 }}>content_copy</Icon>
             复制
           </button>
           {/* 删除 */}
@@ -385,7 +384,7 @@ function MessageItem({
               (e.target as HTMLElement).style.backgroundColor = 'transparent';
             }}
           >
-            <mdui-icon name="delete" style={{ fontSize: 18 }}></mdui-icon>
+            <Icon style={{ fontSize: 18 }}>delete</Icon>
             删除
           </button>
         </div>
@@ -405,11 +404,11 @@ function MessageBubble({
 }) {
   const bubbleColor = isFromCurrentMember
     ? 'rgb(var(--mdui-color-primary))'
-    : 'rgb(var(--mdui-color-surface-container-high))';
+    : 'rgb(var(--mdui-color-surface-variant))';
 
   const contentColor = isFromCurrentMember
     ? 'rgb(var(--mdui-color-on-primary))'
-    : 'rgb(var(--mdui-color-on-surface))';
+    : 'rgb(var(--mdui-color-on-surface-variant))';
 
   // 气泡圆角：current → topStart=16, topEnd=0, bottomStart=16, bottomEnd=16
   // other → topStart=0, topEnd=16, bottomStart=16, bottomEnd=16
@@ -458,8 +457,8 @@ function MessageBubble({
           fontSize: 11,
           lineHeight: 1.3,
           color: isFromCurrentMember
-            ? 'rgba(255,255,255,0.7)'
-            : 'rgba(var(--mdui-color-on-surface), 0.5)',
+            ? 'rgba(var(--mdui-color-on-primary), 0.7)'
+            : 'rgba(var(--mdui-color-on-surface-variant), 0.7)',
           marginTop: 4,
           textAlign: 'right',
         }}

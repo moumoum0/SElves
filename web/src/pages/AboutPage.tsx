@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { Icon } from '../ui/components/Icon';
 import { SubPageScaffold } from './SubPageScaffold';
 
 interface AboutPageProps {
@@ -63,13 +64,13 @@ export function AboutPage({ onBack, onDeveloperModeUnlocked }: AboutPageProps) {
             overflow: 'hidden',
             cursor: 'pointer',
             position: 'relative',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, rgb(var(--mdui-color-primary)) 0%, rgb(var(--mdui-color-tertiary)) 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <mdui-icon name="diversity_3" style={{ fontSize: 64, color: '#fff' }} />
+          <Icon style={{ fontSize: 64, color: 'rgb(var(--mdui-color-on-primary))' }}>diversity_3</Icon>
         </div>
 
         <div style={{ height: 24 }} />
@@ -127,7 +128,7 @@ export function AboutPage({ onBack, onDeveloperModeUnlocked }: AboutPageProps) {
               color: 'inherit',
             }}
           >
-            <mdui-icon name="smart_display" style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }} />
+            <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }}>smart_display</Icon>
             <span style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>Bilibili</span>
           </a>
 
@@ -145,7 +146,7 @@ export function AboutPage({ onBack, onDeveloperModeUnlocked }: AboutPageProps) {
               color: 'inherit',
             }}
           >
-            <mdui-icon name="code" style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }} />
+            <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }}>code</Icon>
             <span style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>GitHub</span>
           </a>
         </div>

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { Icon } from '../ui/components/Icon';
 
 interface MemberAvatarProps {
   name: string;
@@ -58,13 +59,12 @@ export function MemberAvatar({ name, avatarUrl, size = 40 }: MemberAvatarProps) 
       )}
 
       {!shouldShowImage && (
-        <mdui-icon
-          name="person"
+        <Icon
           style={{
             fontSize: size - placeholderPadding * 2,
             color: 'rgb(var(--mdui-color-on-surface-variant))',
           }}
-        ></mdui-icon>
+        >person</Icon>
       )}
     </div>
   );

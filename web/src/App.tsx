@@ -1,6 +1,23 @@
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSelvesData } from './hooks/useSelvesData';
+import { TextField } from './ui/components/TextField';
+import {
+  fetchJson,
+  postJson,
+  putJson,
+  deleteApi,
+  getApiToken,
+  setApiToken,
+  createTodo,
+  updateTodoStatus,
+  deleteTodo,
+  getDynamicComments,
+  createDynamicComment,
+  deleteDynamicComment,
+  getVoteRecords,
+  castVote,
+} from './lib/api';
 import { ChatDetailPage } from './pages/ChatDetailPage';
 import { CreateDynamicPage } from './pages/CreateDynamicPage';
 import { DiaryPage } from './pages/DiaryPage';
@@ -64,7 +81,11 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const navBarRef = useRef<HTMLElement>(null);
-  const { data, loading, error, isFallback, baseUrl, currentMember, setCurrentMember, reload } = useSelvesData();
+  const { data, loading, error, authError, baseUrl, currentMember, setCurrentMember, reload } = useSelvesData();
+  const [showTokenDialog, setShowTokenDialog] = useState(false);
+  const [tokenInput, setTokenInput] = useState('');
+  const [tokenValidating, setTokenValidating] = useState(false);
+  const [tokenError, setTokenError] = useState('');
 
   const currentTab = useMemo(() => {
     if (location.pathname.startsWith('/chat')) return '/chat';
@@ -115,6 +136,78 @@ export default function App() {
     setCurrentMember(next.id);
   };
 
+  const handleCreateMember = useCallback((name: string, bio: string, pronouns: string, _groups: string[]) => {
+    postJson('/api/members', { name, bio, pronouns }).then(() => void reload()).catch(() => {});
+  }, [reload]);
+
+  // 检查 token 是否存在，首次访问时弹窗提示
+  useEffect(() => {
+    const token = getApiToken();
+    const hasConfiguredToken = localStorage.getItem('selves-token-configured');
+
+    // 只有当用户已配置过有效 token 时才不再提示
+    if (!token && !hasConfiguredToken && !loading) {
+      setShowTokenDialog(true);
+    }
+  }, [loading]);
+
+  // 监听认证错误：token失效时清除缓存并弹出输入框
+  useEffect(() => {
+    if (authError) {
+      setApiToken('');
+      localStorage.removeItem('selves-token-configured');
+      setShowTokenDialog(true);
+      setTokenInput('');
+      setTokenError('');
+    }
+  }, [authError]);
+
+  const handleTokenSubmit = async () => {
+    const trimmedToken = tokenInput.trim().toUpperCase();
+    if (trimmedToken.length !== 6) return;
+
+    setTokenValidating(true);
+    setTokenError('');
+
+    try {
+      // 临时设置 token 用于验证
+      setApiToken(trimmedToken);
+      
+      // 等待 2 秒，给 Android 端的 DataStore 足够时间完成持久化
+      // DataStore 写入是异步的，需要时间将数据刷新到磁盘
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 尝试调用 API 验证 token 是否有效
+      console.log('验证 token:', trimmedToken);
+      console.log('API Base URL:', baseUrl);
+      await fetchJson('/api/system');
+      
+      // 验证成功：标记用户已配置过 token，关闭弹窗
+      localStorage.setItem('selves-token-configured', 'true');
+      setShowTokenDialog(false);
+      setTokenInput('');
+      setTokenError('');
+      
+      // 刷新数据
+      await reload();
+    } catch (error) {
+      // 验证失败：清除 token，显示错误信息，保持弹窗打开
+      console.error('Token 验证失败:', error);
+      setApiToken('');
+      localStorage.removeItem('selves-token-configured');
+      setTokenError(`令牌无效，请检查后重试 (${error instanceof Error ? error.message : '未知错误'})`);
+      setShowTokenDialog(true);
+    } finally {
+      setTokenValidating(false);
+    }
+  };
+
+  const handleTokenSkip = () => {
+    setShowTokenDialog(false);
+    setTokenInput('');
+    setTokenError('');
+  };
+
   useEffect(() => {
     const el = navBarRef.current;
     if (!el) return;
@@ -137,6 +230,7 @@ export default function App() {
               currentMember={currentMember}
               onMemberSwitch={handleMemberSwitch}
               onNavigate={navigate}
+              onCreateMember={handleCreateMember}
             />
           ) : <div />
         }
@@ -154,6 +248,7 @@ export default function App() {
               onMemberSwitch={handleMemberSwitch}
               onMemberSelected={(m) => setCurrentMember(m.id)}
               onOpenGroup={(id: string) => navigate(`/chat/${id}`)}
+              onCreateMember={handleCreateMember}
             />
           ) : <div />
         }
@@ -186,16 +281,43 @@ export default function App() {
           ) : <div />
         }
       />
-      <Route path="/todo" element={data && currentMember ? <TodoPage todos={data.todos} members={data.members} currentMember={currentMember} onBack={() => navigate('/')} /> : <div />} />
+      <Route
+        path="/todo"
+        element={
+          data && currentMember ? (
+            <TodoPage
+              todos={data.todos}
+              members={data.members}
+              currentMember={currentMember}
+              onBack={() => navigate('/')}
+              onCreateTodo={(title, description, priority) => {
+                createTodo({ title, description, priority, createdBy: currentMember.id })
+                  .then(() => void reload())
+                  .catch(() => {});
+              }}
+              onToggleTodo={(todo, isCompleted) => {
+                updateTodoStatus(todo.id, isCompleted)
+                  .then(() => void reload())
+                  .catch(() => {});
+              }}
+              onDeleteTodo={(todo) => {
+                deleteTodo(todo.id)
+                  .then(() => void reload())
+                  .catch(() => {});
+              }}
+            />
+          ) : <div />
+        }
+      />
       <Route path="/dynamic" element={data && currentMember ? <DynamicPage dynamics={data.dynamics} currentMember={currentMember} onBack={() => navigate('/')} onDynamicClick={(id: string) => navigate(`/dynamic/${id}`)} onNavigateToCreateDynamic={() => navigate('/dynamic/create')} /> : <div />} />
-      <Route path="/dynamic/create" element={data && currentMember ? <CreateDynamicPage currentMember={currentMember} onBack={() => navigate('/dynamic')} /> : <div />} />
-      <Route path="/dynamic/:dynamicId" element={data && currentMember ? <DynamicDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/dynamic')} /> : <div />} />
+      <Route path="/dynamic/create" element={data && currentMember ? <CreateDynamicPage currentMember={currentMember} onBack={() => navigate('/dynamic')} onSubmit={(params) => { postJson('/api/dynamics', { title: params.title, content: params.content, authorId: currentMember.id, authorName: params.authorName, authorAvatar: params.authorAvatar, images: params.images, tags: params.tags }).then(() => navigate('/dynamic')).catch(() => {}); }} /> : <div />} />
+      <Route path="/dynamic/:dynamicId" element={data && currentMember ? <DynamicDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/dynamic')} reload={reload} /> : <div />} />
       <Route path="/vote" element={data && currentMember ? <VotePage votes={data.votes} currentMember={currentMember} onBack={() => navigate('/')} onVoteClick={(id: string) => navigate(`/vote/${id}`)} onNavigateToCreateVote={() => navigate('/vote/create')} /> : <div />} />
-      <Route path="/vote/create" element={data && currentMember ? <CreateVotePage currentMember={currentMember} onBack={() => navigate('/vote')} /> : <div />} />
-      <Route path="/vote/:voteId" element={data && currentMember ? <VoteDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/vote')} /> : <div />} />
-      <Route path="/diary" element={data && currentMember ? <DiaryPage diaries={data.diaries} currentMember={currentMember} onBack={() => navigate('/')} /> : <div />} />
+      <Route path="/vote/create" element={data && currentMember ? <CreateVotePage currentMember={currentMember} onBack={() => navigate('/vote')} onSubmit={(params) => { postJson('/api/votes', { title: params.title, description: params.description, authorId: currentMember.id, authorName: params.authorName, authorAvatar: params.authorAvatar, options: params.options, allowMultipleChoice: params.allowMultipleChoice, isAnonymous: params.isAnonymous }).then(() => navigate('/vote')).catch(() => {}); }} /> : <div />} />
+      <Route path="/vote/:voteId" element={data && currentMember ? <VoteDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/vote')} reload={reload} /> : <div />} />
+      <Route path="/diary" element={data && currentMember ? <DiaryPage diaries={data.diaries} currentMember={currentMember} onBack={() => navigate('/')} onCreateDiary={(title, content) => { postJson('/api/diaries', { memberId: currentMember.id, title, content }).catch(() => {}); }} onDeleteDiary={(id) => { deleteApi(`/api/diaries/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
       <Route path="/location" element={data && currentMember ? <LocationPage tracking={data.tracking} currentMember={currentMember} onBack={() => navigate('/')} /> : <div />} />
-      <Route path="/member-management" element={data && currentMember ? <MemberManagementPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} /> : <div />} />
+      <Route path="/member-management" element={data && currentMember ? <MemberManagementPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} onCreateMember={handleCreateMember} onEditMember={(id, name, bio, pronouns) => { putJson(`/api/members/${id}`, { name, bio, pronouns }).then(() => void reload()).catch(() => {}); }} onDeleteMember={(id) => { deleteApi(`/api/members/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
       <Route path="/online-stats" element={data && currentMember ? <OnlineStatsPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} /> : <div />} />
       <Route path="/settings" element={<SettingsPage baseUrl={baseUrl} onBack={() => navigate('/system')} onNavigateToAbout={() => navigate('/about')} />} />
       <Route path="/about" element={<AboutPage onBack={() => navigate('/system')} onDeveloperModeUnlocked={() => setDeveloperModeArmed(true)} />} />
@@ -212,9 +334,9 @@ export default function App() {
               // TODO: 调用 API 创建成员
               console.log('Create member:', name, avatarUrl);
             }}
+            // ⚠️ 导入备份功能已停用 - 请勿尝试打开此功能
             onImportBackup={() => {
-              // TODO: 触发备份导入
-              console.log('Import backup');
+              // 已停用：不执行任何操作
             }}
             onCompleteGuide={() => {
               navigate('/');
@@ -301,6 +423,43 @@ export default function App() {
                 <mdui-navigation-bar-item icon="manage_accounts" value="/system">系统</mdui-navigation-bar-item>
               </mdui-navigation-bar>
             )}
+
+            {/* Token 配置弹窗 */}
+            {showTokenDialog && (
+              <mdui-dialog open headline="配置访问令牌" close-on-esc={false} close-on-overlay-click={false}>
+                <div style={{ padding: '0 24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  {/* 说明文字 */}
+                  <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', lineHeight: 1.6 }}>
+                    访问令牌用于验证身份，必须配置后才能使用
+                  </div>
+
+                  {/* Token 输入框 */}
+                  <TextField
+                    variant="outlined"
+                    label="访问令牌"
+                    placeholder="A3B7K9"
+                    value={tokenInput}
+                    error={!!tokenError}
+                    errorText={tokenError}
+                    style={{ width: '100%', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 600 }}
+                    onChange={(val) => {
+                      setTokenInput(val.trim().toUpperCase());
+                      setTokenError('');
+                    }}
+                  />
+                </div>
+
+                <mdui-button
+                  slot="action"
+                  variant="filled"
+                  onClick={handleTokenSubmit}
+                  disabled={tokenInput.trim().length !== 6 || tokenValidating}
+                  loading={tokenValidating}
+                >
+                  确认
+                </mdui-button>
+              </mdui-dialog>
+            )}
           </>
         )}
       </div>
@@ -329,10 +488,17 @@ function ChatDetailRoute({ data, currentMember, onBack, developerModeArmed, onDe
   const handleSendMessage = (content: string) => {
     const isDevCommand = content.trim().toLowerCase() === 'selves';
     if (developerModeArmed && isDevCommand) {
-      onDeveloperModeArm(); // reset armed state is handled by navigating away
+      onDeveloperModeArm();
       onNavigateDeveloper();
       return;
     }
+    postJson(`/api/groups/${group.id}/messages`, {
+      senderId: currentMember.id,
+      content,
+      type: 'TEXT',
+    }).catch(() => {
+      // 发送失败：消息不追加到本地，等待 WebSocket 或 reload 同步
+    });
   };
 
   return (
@@ -347,16 +513,31 @@ function ChatDetailRoute({ data, currentMember, onBack, developerModeArmed, onDe
   );
 }
 
-function DynamicDetailRoute({ data, currentMember, onBack }: { data: AppData; currentMember: Member; onBack: () => void }) {
+function DynamicDetailRoute({
+  data,
+  currentMember,
+  onBack,
+  reload,
+}: {
+  data: AppData;
+  currentMember: Member;
+  onBack: () => void;
+  reload: () => Promise<void>;
+}) {
   const { dynamicId } = useParams();
   const [comments, setComments] = useState<DynamicComment[]>([]);
 
   useEffect(() => {
-    if (dynamicId && data.dynamicComments) {
-      setComments(data.dynamicComments.filter((c) => c.dynamicId === dynamicId));
-    } else {
-      setComments([]);
-    }
+    if (!dynamicId) return;
+    setComments([]);
+    getDynamicComments(dynamicId)
+      .then((list) => setComments(list))
+      .catch(() => {
+        // 网络不通时用本地缓存兜底
+        if (data.dynamicComments) {
+          setComments(data.dynamicComments.filter((c) => c.dynamicId === dynamicId));
+        }
+      });
   }, [dynamicId, data.dynamicComments]);
 
   const dynamic = data.dynamics.find((d) => d.id === dynamicId);
@@ -369,21 +550,40 @@ function DynamicDetailRoute({ data, currentMember, onBack }: { data: AppData; cu
   }
 
   const handleSendComment = (content: string, parentCommentId?: string | null) => {
-    const newComment: DynamicComment = {
-      id: `comment-${Date.now()}`,
-      dynamicId: dynamic.id,
+    createDynamicComment(dynamic.id, {
       content,
       authorId: currentMember.id,
       authorName: currentMember.name,
       authorAvatar: currentMember.avatarUrl,
-      createdAt: Date.now(),
       parentCommentId: parentCommentId ?? null,
-    };
-    setComments((prev) => [...prev, newComment]);
+    })
+      .then(() => getDynamicComments(dynamic.id))
+      .then((list) => setComments(list))
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleDeleteComment = (commentId: string) => {
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    deleteDynamicComment(dynamic.id, commentId)
+      .then(() => getDynamicComments(dynamic.id))
+      .then((list) => setComments(list))
+      .then(() => void reload())
+      .catch(() => {});
+  };
+
+  const handleLike = () => {
+    postJson(`/api/dynamics/${dynamic.id}/like`, { userId: currentMember.id })
+      .then(() => void reload())
+      .catch(() => {});
+  };
+
+  const handleDelete = () => {
+    deleteApi(`/api/dynamics/${dynamic.id}`)
+      .then(() => {
+        void reload();
+        onBack();
+      })
+      .catch(() => {});
   };
 
   return (
@@ -392,17 +592,39 @@ function DynamicDetailRoute({ data, currentMember, onBack }: { data: AppData; cu
       currentMember={currentMember}
       comments={comments}
       onBack={onBack}
-      onLikeClick={() => {}}
-      onDeleteClick={() => {}}
+      onLikeClick={handleLike}
+      onDeleteClick={handleDelete}
       onSendComment={handleSendComment}
       onDeleteComment={handleDeleteComment}
     />
   );
 }
 
-function VoteDetailRoute({ data, currentMember, onBack }: { data: AppData; currentMember: Member; onBack: () => void }) {
+function VoteDetailRoute({
+  data,
+  currentMember,
+  onBack,
+  reload,
+}: {
+  data: AppData;
+  currentMember: Member;
+  onBack: () => void;
+  reload: () => Promise<void>;
+}) {
   const { voteId } = useParams();
   const vote = data.votes.find((v) => v.id === voteId) ?? data.votes[0];
+  const [voteRecords, setVoteRecords] = useState<VoteRecord[]>([]);
+
+  useEffect(() => {
+    if (!voteId) return;
+    setVoteRecords([]);
+    getVoteRecords(voteId)
+      .then((list) => setVoteRecords(list))
+      .catch(() => {
+        setVoteRecords((data.voteRecords ?? []).filter((r) => r.voteId === voteId));
+      });
+  }, [voteId, data.voteRecords]);
+
   if (!vote) {
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -411,19 +633,34 @@ function VoteDetailRoute({ data, currentMember, onBack }: { data: AppData; curre
     );
   }
 
-  const voteRecords = (data.voteRecords ?? []).filter((r) => r.voteId === vote.id);
+  const voteRecords_fromData = (data.voteRecords ?? []).filter((r) => r.voteId === vote.id);
 
-  const handleVote = (_optionIds: string[]) => {
-    // In demo mode, vote action is handled locally
+  const handleVote = (optionIds: string[]) => {
+    castVote(vote.id, {
+      userId: currentMember.id,
+      userName: currentMember.name,
+      userAvatar: currentMember.avatarUrl,
+      optionIds,
+    })
+      .then(() => getVoteRecords(vote.id))
+      .then((list) => setVoteRecords(list))
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleEndVote = () => {
-    // In demo mode, end vote action is handled locally
+    putJson(`/api/votes/${vote.id}/end`, {})
+      .then(() => void reload())
+      .catch(() => {});
   };
 
   const handleDeleteVote = () => {
-    // In demo mode, delete vote action is handled locally
-    onBack();
+    deleteApi(`/api/votes/${vote.id}`)
+      .then(() => {
+        void reload();
+        onBack();
+      })
+      .catch(() => {});
   };
 
   return (
@@ -435,7 +672,7 @@ function VoteDetailRoute({ data, currentMember, onBack }: { data: AppData; curre
       onVote={handleVote}
       onEndVote={handleEndVote}
       onDeleteVote={handleDeleteVote}
-      voteRecords={voteRecords}
+      voteRecords={voteRecords.length > 0 ? voteRecords : voteRecords_fromData}
     />
   );
 }

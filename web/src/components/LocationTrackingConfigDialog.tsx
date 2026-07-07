@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Icon } from '../ui/components/Icon';
+import { Switch } from '../ui/components/Switch';
 
 interface TrackingConfig {
   recordingInterval: number;
@@ -33,10 +35,12 @@ export function LocationTrackingConfigDialog({ config, onConfigUpdate, onDismiss
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+      className="dialog-overlay"
+      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
+        className="dialog-panel"
         style={{ width: '92%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', backgroundColor: 'rgb(var(--mdui-color-surface-container))', borderRadius: 16, padding: 20 }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -44,7 +48,7 @@ export function LocationTrackingConfigDialog({ config, onConfigUpdate, onDismiss
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <span style={{ fontSize: 16, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))' }}>记录设置</span>
           <button type="button" onClick={onDismiss} style={{ border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <mdui-icon name="close" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface-variant))' }}></mdui-icon>
+            <Icon style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>close</Icon>
           </button>
         </div>
 
@@ -73,9 +77,10 @@ export function LocationTrackingConfigDialog({ config, onConfigUpdate, onDismiss
           onClick={() => setTemp(t => ({ ...t, enableAutoStart: !t.enableAutoStart }))}
           style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, cursor: 'pointer' }}
         >
-          <mdui-switch
-            checked={temp.enableAutoStart || undefined}
-          ></mdui-switch>
+          <Switch
+            selected={temp.enableAutoStart}
+            onChange={(val) => setTemp(t => ({ ...t, enableAutoStart: val }))}
+          />
           <span style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface))' }}>启动时自动开始记录</span>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FAB } from '../ui/components/FAB';
 import { MemberHeader } from '../components/MemberHeader';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { CreateGroupDialog } from '../components/CreateGroupDialog';
@@ -15,6 +16,7 @@ interface GroupChatPageProps {
   onMemberSelected?: (member: Member) => void;
   onOpenGroup: (groupId: string) => void;
   onCreateGroup?: (name: string, members: Member[]) => void;
+  onCreateMember?: (name: string, bio: string, pronouns: string, groups: string[]) => void;
 }
 
 export function GroupChatPage({
@@ -27,6 +29,7 @@ export function GroupChatPage({
   onMemberSelected,
   onOpenGroup,
   onCreateGroup,
+  onCreateMember,
 }: GroupChatPageProps) {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const sortedGroups = [...groups].sort((a, b) => {
@@ -36,20 +39,21 @@ export function GroupChatPage({
   });
 
   return (
-    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(var(--mdui-color-surface))', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'rgb(var(--mdui-color-surface))', position: 'relative', overflow: 'hidden' }}>
       <MemberHeader
         member={currentMember}
         members={members}
         onMemberSwitch={onMemberSwitch}
         onMemberSelected={onMemberSelected}
+        onCreateMember={onCreateMember}
       />
 
       {sortedGroups.length === 0 ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--mdui-color-on-surface))' }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--mdui-color-on-surface))' }}>
           暂无群聊，请点击右下角创建
         </div>
       ) : (
-        <div>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
           {sortedGroups.map((group, index) => {
             const msgs = groupMessages[group.id] ?? [];
             const latest = msgs.at(-1);
@@ -95,7 +99,7 @@ export function GroupChatPage({
                         alignItems: 'center',
                         justifyContent: 'center',
                         backgroundColor: groupColorFromName(group.name),
-                        color: '#fff',
+                        color: 'rgb(var(--mdui-color-surface))',
                         fontWeight: 700,
                         fontSize: 20,
                       }}
@@ -149,7 +153,7 @@ export function GroupChatPage({
         </div>
       )}
 
-      <mdui-fab icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreateGroup(true)}></mdui-fab>
+      <FAB icon="add" style={{ position: 'absolute', right: 16, bottom: 16 }} onClick={() => setShowCreateGroup(true)} />
 
       {showCreateGroup && (
         <CreateGroupDialog

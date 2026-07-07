@@ -219,6 +219,14 @@
     <string name="settings_data_backup">Data &amp; Backup</string>
     <string name="settings_backup_auto">Scheduled Backup</string>
     <string name="settings_backup_auto_desc">Auto backup frequency &amp; time</string>
+    <string name="settings_backup_auto_enable">Enable Auto Backup</string>
+    <string name="settings_backup_auto_frequency">Backup Frequency</string>
+    <string name="settings_backup_auto_daily">Daily</string>
+    <string name="settings_backup_auto_weekly">Weekly</string>
+    <string name="settings_backup_auto_monthly">Monthly</string>
+    <string name="settings_backup_auto_time">Backup Time</string>
+    <string name="settings_backup_auto_time_desc">Time</string>
+    <string name="settings_backup_auto_note">Smart retention strategy: dense retention for recent backups, sparse for older ones. Daily for last 7 days, weekly for 8-30 days, monthly for 31-365 days, yearly for over 1 year</string>
     <string name="settings_backup_export">Export Backup</string>
     <string name="settings_backup_export_desc">Backup app data to file</string>
     <string name="settings_backup_import">Import Backup</string>
@@ -239,6 +247,11 @@
     <string name="settings_web_access_qr">Scan QR code for quick access</string>
     <string name="settings_web_access_tip">Make sure your device is on the same network</string>
     <string name="settings_web_access_copied">URL copied</string>
+    <string name="settings_web_battery_title">Background Running</string>
+    <string name="settings_web_battery_desc">To keep web access available, set this app\'s battery usage to \"Unrestricted\" so it can run in the background. Otherwise the system may kill the service after the screen turns off, breaking web connectivity.</string>
+    <string name="settings_web_battery_action">Set up</string>
+    <string name="settings_web_battery_done">Unrestricted background running is allowed</string>
+    <string name="settings_web_battery_open_failed">Cannot open system battery settings. Please go to Settings - Apps - Battery manually</string>
 
     <string name="settings_other">Other</string>
     <string name="settings_about">About</string>
@@ -563,6 +576,7 @@
     <!-- About -->
     <string name="about_version">Version %1$s</string>
     <string name="about_developer">Developer</string>
+    <string name="about_qq_group">QQ Group</string>
     <string name="about_third_party">Third-party Libraries</string>
     <string name="about_thanks">Thanks to all open source contributors</string>
     <string name="about_library_version">Version %1$s</string>

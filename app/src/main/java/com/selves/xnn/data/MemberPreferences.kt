@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.TrackingConfig
@@ -36,6 +37,13 @@ class MemberPreferences(private val context: Context) {
         
         // Web 访问服务
         private val WEB_SERVER_ENABLED = booleanPreferencesKey("web_server_enabled")
+        private val WEB_API_TOKEN = stringPreferencesKey("web_api_token")
+        
+        // 自动备份配置
+        private val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
+        private val AUTO_BACKUP_FREQUENCY = stringPreferencesKey("auto_backup_frequency")
+        private val AUTO_BACKUP_HOUR = intPreferencesKey("auto_backup_hour")
+        private val AUTO_BACKUP_PATH = stringPreferencesKey("auto_backup_path")
     }
     
     /**
@@ -186,19 +194,116 @@ class MemberPreferences(private val context: Context) {
             preferences[LANGUAGE] = language
         }
     }
-    
+
     /**
      * 获取 Web 服务器启用状态
      */
     val webServerEnabled: Flow<Boolean> = context.dataStore.data
         .map { preferences -> preferences[WEB_SERVER_ENABLED] ?: false }
-    
+
     /**
      * 保存 Web 服务器启用状态
      */
     suspend fun saveWebServerEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[WEB_SERVER_ENABLED] = enabled
+        }
+    }
+
+    /**
+     * 获取 Web API Token
+     */
+    val webApiToken: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[WEB_API_TOKEN] }
+
+    /**
+     * 获取 Web API Token（同步阻塞，仅用于 Ktor 路由鉴权）
+     */
+    suspend fun getWebApiToken(): String? {
+        return context.dataStore.data.first()[WEB_API_TOKEN]
+    }
+
+    /**
+     * 保存 Web API Token
+     */
+    suspend fun saveWebApiToken(token: String) {
+        context.dataStore.edit { preferences ->
+            preferences[WEB_API_TOKEN] = token
+        }
+    }
+
+    /**
+     * 生成并保存新的 Web API Token
+     * 格式：6位大写字母+数字组合（如 A3B7K9）
+     */
+    suspend fun generateWebApiToken(): String {
+        val chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // 排除易混淆字符 0O1I
+        val token = (1..6).map { chars.random() }.joinToString("")
+        saveWebApiToken(token)
+        return token
+    }
+    
+    /**
+     * 获取自动备份启用状态
+     */
+    val autoBackupEnabled: Flow<Boolean> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_ENABLED] ?: false }
+    
+    /**
+     * 保存自动备份启用状态
+     */
+    suspend fun saveAutoBackupEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_ENABLED] = enabled
+        }
+    }
+    
+    /**
+     * 获取自动备份频率（daily, weekly, monthly）
+     */
+    val autoBackupFrequency: Flow<String> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_FREQUENCY] ?: "daily" }
+    
+    /**
+     * 保存自动备份频率
+     */
+    suspend fun saveAutoBackupFrequency(frequency: String) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_FREQUENCY] = frequency
+        }
+    }
+    
+    /**
+     * 获取自动备份时间（小时，0-23）
+     */
+    val autoBackupHour: Flow<Int> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_HOUR] ?: 3 }
+    
+    /**
+     * 保存自动备份时间
+     */
+    suspend fun saveAutoBackupHour(hour: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTO_BACKUP_HOUR] = hour
+        }
+    }
+    
+    /**
+     * 获取自动备份路径
+     */
+    val autoBackupPath: Flow<String?> = context.dataStore.data
+        .map { preferences -> preferences[AUTO_BACKUP_PATH] }
+    
+    /**
+     * 保存自动备份路径
+     */
+    suspend fun saveAutoBackupPath(path: String?) {
+        context.dataStore.edit { preferences ->
+            if (path != null) {
+                preferences[AUTO_BACKUP_PATH] = path
+            } else {
+                preferences.remove(AUTO_BACKUP_PATH)
+            }
         }
     }
 }

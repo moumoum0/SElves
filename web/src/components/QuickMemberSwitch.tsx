@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
+import { CreateMemberDialog } from './CreateMemberDialog';
 import { MemberSwitchDialog } from './MemberSwitchDialog';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
 
 interface QuickMemberSwitchProps {
   currentMember: Member | null;
   members: Member[];
   onMemberSelected: (member: Member) => void;
+  onCreateMember?: (name: string, bio: string, pronouns: string, groups: string[]) => void;
   size?: number;
 }
 
@@ -19,9 +22,11 @@ export function QuickMemberSwitch({
   currentMember,
   members,
   onMemberSelected,
+  onCreateMember,
   size = 48,
 }: QuickMemberSwitchProps) {
   const [showDialog, setShowDialog] = useState(false);
+  const [showCreateMember, setShowCreateMember] = useState(false);
 
   return (
     <>
@@ -43,8 +48,7 @@ export function QuickMemberSwitch({
         />
 
         {/* 交换图标在右下角，不要圆形背景 */}
-        <mdui-icon
-          name="swap_horiz"
+        <Icon
           style={{
             position: 'absolute',
             bottom: 0,
@@ -54,7 +58,7 @@ export function QuickMemberSwitch({
             fontSize: size * 0.3,
             color: 'rgb(var(--mdui-color-primary))',
           }}
-        />
+        >swap_horiz</Icon>
       </div>
 
       {/* 成员切换对话框 */}
@@ -67,8 +71,23 @@ export function QuickMemberSwitch({
             onMemberSelected(member);
             setShowDialog(false);
           }}
-          onCreateNewMember={() => setShowDialog(false)}
+          onCreateNewMember={() => {
+            setShowDialog(false);
+            setShowCreateMember(true);
+          }}
           onDeleteMember={() => setShowDialog(false)}
+        />
+      )}
+
+      {showCreateMember && (
+        <CreateMemberDialog
+          existingMembers={members}
+          existingGroups={Array.from(new Set(members.flatMap((m) => m.groups ?? [])))}
+          onDismiss={() => setShowCreateMember(false)}
+          onConfirm={(name, bio, pronouns, groups) => {
+            setShowCreateMember(false);
+            onCreateMember?.(name, bio, pronouns, groups);
+          }}
         />
       )}
     </>

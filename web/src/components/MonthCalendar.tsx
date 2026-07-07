@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Icon } from '../ui/components/Icon';
 
 interface MonthCalendarProps {
   selectedDate: Date;
@@ -40,11 +41,11 @@ export function MonthCalendar({ selectedDate, onDateSelected }: MonthCalendarPro
       {/* 月份导航 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <button type="button" onClick={prevMonth} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <mdui-icon name="chevron_left" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface))' }}></mdui-icon>
+          <Icon style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface))' }}>chevron_left</Icon>
         </button>
         <span style={{ fontSize: 16, fontWeight: 700, color: 'rgb(var(--mdui-color-on-surface))' }}>{viewYear}年{viewMonth + 1}月</span>
         <button type="button" onClick={nextMonth} disabled={isNextDisabled} style={{ width: 36, height: 36, borderRadius: '50%', border: 'none', background: 'transparent', cursor: isNextDisabled ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isNextDisabled ? 0.3 : 1 }}>
-          <mdui-icon name="chevron_right" style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface))' }}></mdui-icon>
+          <Icon style={{ fontSize: 20, color: 'rgb(var(--mdui-color-on-surface))' }}>chevron_right</Icon>
         </button>
       </div>
 

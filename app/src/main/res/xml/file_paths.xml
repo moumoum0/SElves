@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外部文件目录 -->
+    <external-files-path name="external_files" path="." />
+    
+    <!-- 自动备份目录 -->
+    <external-files-path name="auto_backups" path="auto_backups/" />
+</paths>

@@ -9,13 +9,14 @@ body,
 #root {
   margin: 0;
   padding: 0;
+  height: 100%;
   min-height: 100%;
   width: 100%;
 }
 
 body {
   overscroll-behavior-y: none;
-  background-color: rgb(var(--mdui-color-surface-container));
+  background-color: rgb(var(--mdui-color-background));
   font-family: 'Noto Sans SC', 'Roboto', sans-serif;
 }
 
@@ -52,6 +53,7 @@ a {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
+  vertical-align: middle;
 }
 
 .material-icons-round {
@@ -66,10 +68,16 @@ a {
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
+  vertical-align: middle;
+}
+
+md-icon {
+  --md-icon-font: 'Material Icons';
 }
 
 /* App 外层居中卡片 */
 .app-shell {
+  min-height: 100vh;
   min-height: 100svh;
   display: flex;
   justify-content: center;
@@ -87,30 +95,25 @@ a {
 .app-card {
   width: 100%;
   max-width: 480px;
+  height: 100vh;
   height: 100svh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background-color: rgb(var(--mdui-color-surface));
+  background-color: rgb(var(--mdui-color-background));
   position: relative;
   overflow: hidden;
 }
 
 @media (min-width: 600px) {
   .app-card {
-    height: auto;
-    min-height: min(860px, 95svh);
+    /* 必须是确定高度（而非 auto + min-height），
+       否则内部 flex:1 的滚动容器无法确定高度，滚动会溢出到整卡片/body 层 */
+    height: min(860px, 95vh);
+    height: min(860px, 95svh);
     border-radius: 28px;
-    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 8px 48px rgba(var(--mdui-color-scrim), 0.18);
   }
-}
-
-.page-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  background-color: rgb(var(--mdui-color-surface));
-  /* 覆盖 mdui-navigation-bar 自动注入的 padding-bottom（导航栏是兄弟节点，不需要此间距） */
-  padding-bottom: 0 !important;
 }
 
 /* 系统管理列表项 hover/active 反馈，近似 Compose ripple */
@@ -153,8 +156,9 @@ a {
 .page-transition-container {
   position: relative;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
-  background-color: rgb(var(--mdui-color-surface));
+  background-color: rgb(var(--mdui-color-background));
 }
 
 .page-transition-layer {
@@ -162,7 +166,7 @@ a {
   inset: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: rgb(var(--mdui-color-surface));
+  background-color: rgb(var(--mdui-color-background));
   will-change: transform;
 }
 
@@ -203,9 +207,32 @@ a {
   animation: scrim-fade-out 300ms cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
-/* 无动画态（首次加载） */
+/* === 对话框入场动画（遮罩渐显变暗 + 面板弹出） === */
+@keyframes dialog-overlay-in {
+  from { background-color: rgba(var(--mdui-color-scrim), 0); }
+}
+@keyframes dialog-panel-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+.dialog-overlay {
+  animation: dialog-overlay-in 200ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.dialog-panel {
+  animation: dialog-panel-in 220ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* 对齐 Android Material3 AlertDialog / md-dialog — ExtraLarge 28dp */
+.alert-dialog-panel {
+  border-radius: 28px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay, .dialog-panel { animation: none; }
+}
+
+/* 无动画态（首次加载）：保持 absolute 撑满容器，
+   使页面根 div 的 height:100% 能正确解析（FAB 定位依赖于此） */
 .page-transition-layer.no-transition {
-  position: relative;
   animation: none;
 }
 
@@ -227,8 +254,28 @@ a {
   z-index: 1;
 }
 
-/* mdui-navigation-bar 固定在底部 */
+/* mdui 的顶部/底部栏默认面向整页 fixed 布局，会向 document.body 注入滚动补偿。
+   本项目外层是 .app-card 内部滚动模型，必须让栏位回到 flex 文档流，
+   否则打开页面后整张卡片会被 body padding-top/padding-bottom 推开一个栏高。 */
+mdui-top-app-bar,
 mdui-navigation-bar {
+  position: relative !important;
   flex-shrink: 0;
   z-index: 10;
+}
+
+/* 待办页折叠列表 — 对齐 Android expandVertically / shrinkVertically */
+.todo-collapsible {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.todo-collapsible--expanded {
+  grid-template-rows: 1fr;
+}
+
+.todo-collapsible__inner {
+  overflow: hidden;
+  min-height: 0;
 }

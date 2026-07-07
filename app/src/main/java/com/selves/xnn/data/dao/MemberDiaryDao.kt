@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.selves.xnn.data.entity.MemberDiaryEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -20,6 +21,12 @@ interface MemberDiaryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertDiary(diary: MemberDiaryEntity)
+
+    @Query("SELECT * FROM member_diaries WHERE id = :id")
+    suspend fun getDiaryById(id: String): MemberDiaryEntity?
+
+    @Update
+    suspend fun updateDiary(diary: MemberDiaryEntity)
 
     @Query("DELETE FROM member_diaries WHERE id = :id")
     suspend fun deleteDiaryById(id: String)

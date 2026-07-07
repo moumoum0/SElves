@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { ChatGroup, Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { Checkbox } from '../ui/components/Checkbox';
+import { TextField } from '../ui/components/TextField';
+import { Radio } from '../ui/components/Radio';
 
 interface GroupManagementDialogProps {
   group: ChatGroup;
@@ -48,9 +52,9 @@ export function GroupManagementDialog({
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}
+      <div className="dialog-panel" style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }}
         onClick={(e) => e.stopPropagation()}>
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 4 }}>群组管理</div>
         <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 16 }}>
@@ -76,7 +80,7 @@ function ManagementOption({ icon, title, subtitle, onClick, destructive = false 
   const bg = destructive ? 'rgba(var(--mdui-color-error), 0.08)' : 'rgba(var(--mdui-color-surface-variant), 0.3)';
   return (
     <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: 16, borderRadius: 12, backgroundColor: bg, marginBottom: 8, cursor: 'pointer', transition: 'background-color 0.15s' }}>
-      <mdui-icon name={icon} style={{ fontSize: 24, color, flexShrink: 0 }}></mdui-icon>
+      <Icon style={{ fontSize: 24, color, flexShrink: 0 }}>{icon}</Icon>
       <div>
         <div style={{ fontSize: 16, fontWeight: 500, color: destructive ? 'rgb(var(--mdui-color-error))' : 'rgb(var(--mdui-color-on-surface))' }}>{title}</div>
         <div style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{subtitle}</div>
@@ -94,9 +98,9 @@ function AddMemberDialog({ group, allMembers, onDismiss, onConfirm }: { group: C
   const toggle = (id: string) => setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="dialog-panel" style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 16 }}>添加成员</div>
         {notInGroup.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgb(var(--mdui-color-on-surface-variant))' }}>所有成员已在群组中</div>
@@ -106,7 +110,7 @@ function AddMemberDialog({ group, allMembers, onDismiss, onConfirm }: { group: C
               <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }} onClick={() => toggle(m.id)}>
                 <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
                 <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
-                <mdui-checkbox checked={selected.has(m.id)}></mdui-checkbox>
+                <Checkbox checked={selected.has(m.id)} />
               </div>
             ))}
           </div>
@@ -130,16 +134,16 @@ function RemoveMemberDialog({ group, currentMember, onDismiss, onConfirm }: { gr
   const toggle = (id: string) => setSelected((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="dialog-panel" style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 16 }}>移除成员</div>
         <div style={{ maxHeight: 320, overflowY: 'auto', marginBottom: 16 }}>
           {removable.map((m) => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }} onClick={() => toggle(m.id)}>
               <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
               <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
-              <mdui-checkbox checked={selected.has(m.id)}></mdui-checkbox>
+              <Checkbox checked={selected.has(m.id)} />
             </div>
           ))}
         </div>
@@ -160,9 +164,9 @@ function EditGroupInfoDialog({ group, onDismiss, onConfirm }: { group: ChatGroup
   const [nameError, setNameError] = useState('');
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="dialog-panel" style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 20 }}>编辑群信息</div>
         {/* 群头像 */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
@@ -175,11 +179,11 @@ function EditGroupInfoDialog({ group, onDismiss, onConfirm }: { group: ChatGroup
             <span style={{ fontSize: 32, fontWeight: 500, color: 'rgb(var(--mdui-color-primary))' }}>
               {group.name.charAt(0).toUpperCase()}
             </span>
-            <mdui-icon name="photo_camera" style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 20, color: 'rgb(var(--mdui-color-primary))', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: '50%', padding: 2 }}></mdui-icon>
+            <Icon style={{ position: 'absolute', bottom: 0, right: 0, fontSize: 20, color: 'rgb(var(--mdui-color-primary))', backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: '50%', padding: 2 }}>photo_camera</Icon>
           </div>
         </div>
         <div style={{ marginBottom: 20 }}>
-          <mdui-text-field label="群名称" value={name} error-text={nameError} style={{ width: '100%' }} onInput={(e: Event) => { setName((e.target as HTMLInputElement).value); setNameError(''); }}></mdui-text-field>
+          <TextField label="群名称" value={name} error-text={nameError} style={{ width: '100%' }} onChange={(val) => { setName(val); setNameError(''); }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button type="button" style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 14, color: 'rgb(var(--mdui-color-primary))' }} onClick={onDismiss}>取消</button>
@@ -195,9 +199,9 @@ function EditGroupInfoDialog({ group, onDismiss, onConfirm }: { group: ChatGroup
 
 function DeleteGroupDialog({ groupName, onDismiss, onConfirm }: { groupName: string; onDismiss: () => void; onConfirm: () => void }) {
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div style={{ width: '85%', maxWidth: 320, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="dialog-panel alert-dialog-panel" style={{ width: '85%', maxWidth: 320, backgroundColor: 'rgb(var(--mdui-color-surface))', padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 16 }}>解散群组</div>
         <div style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))', marginBottom: 24 }}>确定要解散「{groupName}」吗？此操作不可撤销。</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -216,14 +220,14 @@ function TransferOwnershipDialog({ group, currentMember, onDismiss, onConfirm }:
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+    <div className="dialog-overlay" style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}>
-      <div style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }} onClick={(e) => e.stopPropagation()}>
+      <div className="dialog-panel" style={{ width: '92%', maxWidth: 400, backgroundColor: 'rgb(var(--mdui-color-surface))', borderRadius: 16, padding: 24, boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 16 }}>转让群主</div>
         <div style={{ maxHeight: 280, overflowY: 'auto', marginBottom: 16 }}>
           {candidates.map((m) => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', cursor: 'pointer' }} onClick={() => setSelected(m.id)}>
-              <mdui-radio checked={selected === m.id} style={{ flexShrink: 0 }}></mdui-radio>
+              <Radio checked={selected === m.id} style={{ flexShrink: 0 }} />
               <MemberAvatar name={m.name} avatarUrl={m.avatarUrl} size={40} />
               <div style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgb(var(--mdui-color-on-surface))' }}>{m.name}</div>
             </div>

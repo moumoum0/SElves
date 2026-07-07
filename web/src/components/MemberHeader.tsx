@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Member } from '../types/models';
 import { MemberAvatar } from './MemberAvatar';
+import { CreateMemberDialog } from './CreateMemberDialog';
 import { MemberSwitchDialog } from './MemberSwitchDialog';
 
 interface MemberHeaderProps {
@@ -8,12 +9,13 @@ interface MemberHeaderProps {
   members?: Member[];
   onMemberSwitch?: () => void;
   onMemberSelected?: (member: Member) => void;
-  onCreateNewMember?: () => void;
+  onCreateMember?: (name: string, bio: string, pronouns: string, groups: string[]) => void;
   onDeleteMember?: (member: Member) => void;
 }
 
-export function MemberHeader({ member, members, onMemberSwitch, onMemberSelected, onCreateNewMember, onDeleteMember }: MemberHeaderProps) {
+export function MemberHeader({ member, members, onMemberSwitch, onMemberSelected, onCreateMember, onDeleteMember }: MemberHeaderProps) {
   const [showSwitch, setShowSwitch] = useState(false);
+  const [showCreateMember, setShowCreateMember] = useState(false);
 
   const handleSwitchClick = () => {
     if (members && members.length > 0) {
@@ -57,9 +59,21 @@ export function MemberHeader({ member, members, onMemberSwitch, onMemberSelected
           }}
           onCreateNewMember={() => {
             setShowSwitch(false);
-            onCreateNewMember?.();
+            setShowCreateMember(true);
           }}
           onDeleteMember={onDeleteMember}
+        />
+      )}
+
+      {showCreateMember && members && (
+        <CreateMemberDialog
+          existingMembers={members}
+          existingGroups={Array.from(new Set(members.flatMap((m) => m.groups ?? [])))}
+          onDismiss={() => setShowCreateMember(false)}
+          onConfirm={(name, bio, pronouns, groups) => {
+            setShowCreateMember(false);
+            onCreateMember?.(name, bio, pronouns, groups);
+          }}
         />
       )}
     </>

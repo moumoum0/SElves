@@ -28,6 +28,7 @@ import com.selves.xnn.data.MemberPreferences
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
 import com.selves.xnn.utils.LanguageManager
+import com.selves.xnn.service.WebServerService
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import android.content.Context
@@ -81,6 +82,33 @@ class MainActivity : ComponentActivity() {
             
             LaunchedEffect(Unit) {
                 memberPreferences.colorScheme.collect { colorScheme = it }
+            }
+
+            // 应用启动时恢复 Web 服务器（进程被杀后服务不会自动恢复）
+            LaunchedEffect(Unit) {
+                if (memberPreferences.webServerEnabled.first()) {
+                    WebServerService.start(this@MainActivity)
+                }
+            }
+
+            // 图片资源缓存任务，保持相册缩略图索引更新
+            LaunchedEffect(Unit) {
+                com.selves.xnn.util.MediaIndexScheduler.schedule(this@MainActivity)
+            }
+            
+            // 应用启动时检查并设置自动备份任务
+            LaunchedEffect(Unit) {
+                val autoBackupEnabled = memberPreferences.autoBackupEnabled.first()
+                if (autoBackupEnabled) {
+                    val frequency = memberPreferences.autoBackupFrequency.first()
+                    val hour = memberPreferences.autoBackupHour.first()
+                    com.selves.xnn.util.AutoBackupScheduler.scheduleAutoBackup(
+                        this@MainActivity,
+                        frequency,
+                        hour,
+                        replaceExisting = false
+                    )
+                }
             }
             
             SelvesTheme(

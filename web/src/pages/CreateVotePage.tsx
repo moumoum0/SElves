@@ -1,5 +1,8 @@
 import { useState, useRef } from 'react';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
+import { Switch } from '../ui/components/Switch';
 
 interface CreateVotePageProps {
   currentMember: Member;
@@ -102,7 +105,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', height: 64, padding: '0 4px' }}>
-          <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+          <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px', overflow: 'hidden' }}>
             <div
               style={{
@@ -296,14 +299,13 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
                   </div>
 
                   {options.length > 2 ? (
-                    <mdui-button-icon
-                      icon="delete"
+                    <IconButton
                       style={{
                         color: 'rgb(var(--mdui-color-error))',
                         flexShrink: 0,
                       }}
                       onClick={() => handleRemoveOption(index)}
-                    ></mdui-button-icon>
+                    ><md-icon>delete</md-icon></IconButton>
                   ) : (
                     <div style={{ width: 48, flexShrink: 0 }} />
                   )}
@@ -333,7 +335,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
                   fontWeight: 500,
                 }}
               >
-                <mdui-icon name="add" style={{ fontSize: 18 }}></mdui-icon>
+                <Icon style={{ fontSize: 18 }}>add</Icon>
                 <span>添加选项</span>
               </div>
             )}
@@ -361,10 +363,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
               title="允许多选"
               subtitle="允许选择多个选项"
               trailing={
-                <mdui-switch
-                  checked={allowMultipleChoice}
-                  onClick={() => setAllowMultipleChoice(!allowMultipleChoice)}
-                ></mdui-switch>
+                <Switch selected={allowMultipleChoice} onChange={setAllowMultipleChoice} />
               }
             />
 
@@ -376,10 +375,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
               title="匿名投票"
               subtitle="投票结果不显示投票者"
               trailing={
-                <mdui-switch
-                  checked={isAnonymous}
-                  onClick={() => setIsAnonymous(!isAnonymous)}
-                ></mdui-switch>
+                <Switch selected={isAnonymous} onChange={setIsAnonymous} />
               }
             />
 
@@ -393,13 +389,12 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
               onClick={() => setShowDatePicker(true)}
               trailing={
                 endTime ? (
-                  <mdui-button-icon
-                    icon="close"
-                    onClick={(e: MouseEvent) => {
+                  <IconButton
+                    onClick={(e) => {
                       e.stopPropagation();
                       setEndTime(null);
                     }}
-                  ></mdui-button-icon>
+                  ><md-icon>close</md-icon></IconButton>
                 ) : null
               }
             />
@@ -414,7 +409,7 @@ export function CreateVotePage({ currentMember, onBack, onSubmit }: CreateVotePa
             position: 'fixed',
             inset: 0,
             zIndex: 100,
-            backgroundColor: 'rgba(0,0,0,0.3)',
+            backgroundColor: 'rgba(var(--mdui-color-scrim), 0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -526,13 +521,12 @@ function SectionHeader({
           flexShrink: 0,
         }}
       >
-        <mdui-icon
-          name={icon}
+        <Icon
           style={{
             fontSize: 20,
             color: 'rgb(var(--mdui-color-on-primary-container))',
           }}
-        ></mdui-icon>
+        >{icon}</Icon>
       </div>
       <div style={{ width: 12 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -588,14 +582,13 @@ function SettingsRow({
         cursor: onClick ? 'pointer' : 'default',
       }}
     >
-      <mdui-icon
-        name={icon}
+      <Icon
         style={{
           fontSize: 24,
           color: 'rgb(var(--mdui-color-on-surface-variant))',
           flexShrink: 0,
         }}
-      ></mdui-icon>
+      >{icon}</Icon>
       <div style={{ width: 12 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div

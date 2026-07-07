@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MemberAvatar } from './MemberAvatar';
 import type { Member } from '../types/models';
+import { Icon } from '../ui/components/Icon';
 
 interface MemberSwitchDialogProps {
   members: Member[];
@@ -73,20 +74,22 @@ export function MemberSwitchDialog({
 
   return (
     <div
+      className="dialog-overlay"
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
+        className="dialog-panel"
         style={{
           width: '90%', maxWidth: 360,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -124,7 +127,7 @@ export function MemberSwitchDialog({
                     </div>
                   </div>
                   {isCurrent && (
-                    <mdui-icon name="check" style={{ color: 'rgb(var(--mdui-color-primary))', fontSize: 20 }}></mdui-icon>
+                    <Icon style={{ color: 'rgb(var(--mdui-color-primary))', fontSize: 20 }}>check</Icon>
                   )}
                 </div>
 
@@ -136,7 +139,7 @@ export function MemberSwitchDialog({
                       position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                       zIndex: 10, minWidth: 120,
                       backgroundColor: 'rgb(var(--mdui-color-surface-container))',
-                      borderRadius: 8, boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                      borderRadius: 8, boxShadow: '0 2px 12px rgba(var(--mdui-color-scrim), 0.2)',
                       padding: '4px 0',
                     }}
                   >
@@ -150,7 +153,7 @@ export function MemberSwitchDialog({
                       }}
                       onClick={() => { setMenuTarget(null); setDeleteTarget(member); }}
                     >
-                      <mdui-icon name="delete" style={{ fontSize: 18 }}></mdui-icon>
+                      <Icon style={{ fontSize: 18 }}>delete</Icon>
                       删除
                     </button>
                   </div>
@@ -177,7 +180,7 @@ export function MemberSwitchDialog({
               backgroundColor: 'rgba(var(--mdui-color-primary), 0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              <mdui-icon name="add" style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }}></mdui-icon>
+              <Icon style={{ fontSize: 24, color: 'rgb(var(--mdui-color-primary))' }}>add</Icon>
             </div>
             新建成员
           </button>
@@ -187,19 +190,21 @@ export function MemberSwitchDialog({
       {/* 删除确认弹窗 */}
       {deleteTarget && (
         <div
+          className="dialog-overlay"
           style={{
             position: 'fixed', inset: 0, zIndex: 300,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <div
+            className="dialog-panel alert-dialog-panel"
             style={{
               width: '85%', maxWidth: 320,
               backgroundColor: 'rgb(var(--mdui-color-surface))',
-              borderRadius: 16, padding: 24,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              padding: 24,
+              boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)',
             }}
           >
             <div style={{ fontSize: 22, fontWeight: 400, color: 'rgb(var(--mdui-color-on-surface))', marginBottom: 12 }}>

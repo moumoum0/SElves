@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +22,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FileDownload
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Wifi
@@ -53,6 +57,7 @@ import com.selves.xnn.ui.components.ImportBackupWarningDialog
 import com.selves.xnn.ui.components.SpOwnerSelectionDialog
 import com.selves.xnn.data.ImportMode
 import com.selves.xnn.ui.components.LanguageDialog
+import com.selves.xnn.ui.components.AutoBackupConfigDialog
 import com.selves.xnn.model.getDisplayName
 import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
@@ -78,6 +83,7 @@ fun SettingsScreen(
     val showLanguageDialog by viewModel.showLanguageDialog.collectAsState()
     val webServerEnabled by viewModel.webServerEnabled.collectAsState()
     val webServerIp by viewModel.webServerIp.collectAsState()
+    val webApiToken by viewModel.webApiToken.collectAsState()
     val isBackupInProgress by viewModel.isBackupInProgress.collectAsState()
     val backupMessage by viewModel.backupMessage.collectAsState()
     val showBackupProgressDialog by viewModel.showBackupProgressDialog.collectAsState()
@@ -91,6 +97,10 @@ fun SettingsScreen(
     val showSpModeDialog by viewModel.showSpModeDialog.collectAsState()
     val showSpOwnerDialog by viewModel.showSpOwnerDialog.collectAsState()
     val spOwnerCandidates by viewModel.spOwnerCandidates.collectAsState()
+    val autoBackupEnabled by viewModel.autoBackupEnabled.collectAsState()
+    val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
+    val autoBackupHour by viewModel.autoBackupHour.collectAsState()
+    val showAutoBackupDialog by viewModel.showAutoBackupDialog.collectAsState()
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -213,8 +223,18 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Default.Schedule,
                     title = stringResource(R.string.settings_backup_auto),
-                    subtitle = stringResource(R.string.settings_backup_auto_desc),
-                    onClick = { /* TODO: 实现定时备份设置 */ }
+                    subtitle = if (autoBackupEnabled) {
+                        val freqText = when (autoBackupFrequency) {
+                            "daily" -> stringResource(R.string.settings_backup_auto_daily)
+                            "weekly" -> stringResource(R.string.settings_backup_auto_weekly)
+                            "monthly" -> stringResource(R.string.settings_backup_auto_monthly)
+                            else -> stringResource(R.string.settings_backup_auto_daily)
+                        }
+                        "$freqText · ${String.format("%02d:00", autoBackupHour)}"
+                    } else {
+                        stringResource(R.string.settings_backup_auto_desc)
+                    },
+                    onClick = { viewModel.showAutoBackupDialog() }
                 )
             }
             
@@ -275,8 +295,14 @@ fun SettingsScreen(
 
             if (webServerEnabled) {
                 item {
+                    BatteryOptimizationGuideCard(context = context)
+                }
+
+                item {
                     WebAccessInfoCard(
                         url = viewModel.webServerUrl,
+                        token = webApiToken,
+                        onCopyToken = { viewModel.refreshWebApiToken() },
                         context = context
                     )
                 }
@@ -326,6 +352,18 @@ fun SettingsScreen(
                 viewModel.setLanguage(selectedLanguage)
             },
             onDismiss = { viewModel.hideLanguageDialog() }
+        )
+        
+        // 自动备份配置对话框
+        AutoBackupConfigDialog(
+            isOpen = showAutoBackupDialog,
+            enabled = autoBackupEnabled,
+            frequency = autoBackupFrequency,
+            hour = autoBackupHour,
+            onConfirm = { enabled, frequency, hour ->
+                viewModel.setAutoBackupConfig(enabled, frequency, hour)
+            },
+            onDismiss = { viewModel.hideAutoBackupDialog() }
         )
         
         // 备份进度对话框
@@ -571,8 +609,118 @@ fun SettingsItemWithProgress(
 }
 
 @Composable
+private fun BatteryOptimizationGuideCard(context: Context) {
+    val packageName = context.packageName
+    val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
+
+    // 进入页面时检测当前是否已在电池优化白名单中
+    var isIgnoring by remember {
+        mutableStateOf(powerManager.isIgnoringBatteryOptimizations(packageName))
+    }
+
+    val openFailedText = stringResource(R.string.settings_web_battery_open_failed)
+
+    // 从系统设置页返回后重新检测状态，刷新 UI
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        isIgnoring = powerManager.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    // 已完成设置后，整个卡片消失
+    if (isIgnoring) return
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    // 三角形感叹号警告图标
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.settings_web_battery_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 未授权：展示说明 + 跳转按钮
+            Text(
+                text = stringResource(R.string.settings_web_battery_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 查看教程按钮
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("us.xnncsj.xyz"))
+                            //链接等待填充
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "无法打开浏览器", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text(text = "查看教程")
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 系统设置按钮
+                Button(
+                    onClick = {
+                        val requestIntent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                        try {
+                            launcher.launch(requestIntent)
+                        } catch (e: Exception) {
+                            try {
+                                launcher.launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                            } catch (e2: Exception) {
+                                Toast.makeText(context, openFailedText, Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(text = stringResource(R.string.settings_web_battery_action))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun WebAccessInfoCard(
     url: String,
+    token: String?,
+    onCopyToken: () -> Unit,
     context: Context
 ) {
     val qrBitmap = remember(url) { generateQrCodeBitmap(url, 240) }
@@ -591,6 +739,7 @@ private fun WebAccessInfoCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // 访问地址行
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -618,6 +767,50 @@ private fun WebAccessInfoCard(
                         contentDescription = stringResource(R.string.settings_web_access_url),
                         tint = MaterialTheme.colorScheme.primary
                     )
+                }
+            }
+
+            // Token 行
+            if (token != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "API Token",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = token,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                    // 复制 token
+                    IconButton(onClick = {
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        clipboard.setPrimaryClip(ClipData.newPlainText("Selves Token", token))
+                        Toast.makeText(context, copiedText, Toast.LENGTH_SHORT).show()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "复制 Token",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    // 刷新 token
+                    IconButton(onClick = onCopyToken) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "刷新 Token",
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
                 }
             }
 

@@ -1,12 +1,22 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
 import type { Member, Todo, TodoPriority } from '../types/models';
 import { formatTimestamp } from '../lib/utils';
+import { IconButton } from '../ui/components/IconButton';
+import { Card } from '../ui/components/Card';
+import { Icon } from '../ui/components/Icon';
+import { FAB } from '../ui/components/FAB';
+import { Checkbox } from '../ui/components/Checkbox';
+import { TextField } from '../ui/components/TextField';
+import { Button } from '../ui/components/Button';
 
 interface TodoPageProps {
   todos: Todo[];
   members: Member[];
   currentMember: Member;
   onBack: () => void;
+  onCreateTodo: (title: string, description: string, priority: TodoPriority) => void;
+  onToggleTodo: (todo: Todo, isCompleted: boolean) => void;
+  onDeleteTodo: (todo: Todo) => void;
 }
 
 const PRIORITY_LABEL: Record<TodoPriority, string> = {
@@ -21,7 +31,7 @@ const PRIORITY_COLOR: Record<TodoPriority, string> = {
   LOW: 'rgb(var(--mdui-color-tertiary))',
 };
 
-export function TodoPage({ todos, members, onBack }: TodoPageProps) {
+export function TodoPage({ todos, members, onBack, onCreateTodo, onToggleTodo, onDeleteTodo }: TodoPageProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showPendingTodos, setShowPendingTodos] = useState(true);
   const [showCompletedTodos, setShowCompletedTodos] = useState(false);
@@ -42,28 +52,28 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
   }, []);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%' }}>
+    <div style={{ position: 'relative', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* TopAppBar */}
       <mdui-top-app-bar
         style={{
-          position: 'sticky',
-          top: 0,
+          flexShrink: 0,
           zIndex: 10,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderBottom: '1px solid rgba(var(--mdui-color-outline-variant), 0.35)',
         }}
       >
-        <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+        <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
         <mdui-top-app-bar-title>
           <span style={{ fontWeight: 400 }}>待办事项</span>
         </mdui-top-app-bar-title>
       </mdui-top-app-bar>
 
       {/* 主要内容 */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
       <div style={{ padding: 16 }}>
         {/* 统计卡片 */}
         {stats.total > 0 ? (
-          <mdui-card
+          <Card
             variant="filled"
             style={{
               padding: 16,
@@ -96,7 +106,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
                 color="rgb(var(--mdui-color-tertiary))"
               />
             </div>
-          </mdui-card>
+          </Card>
         ) : null}
 
         {/* 空状态 */}
@@ -112,10 +122,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
               textAlign: 'center',
             }}
           >
-            <mdui-icon
-              name="assignment"
-              style={{ fontSize: 64, opacity: 0.5, marginBottom: 16 }}
-            ></mdui-icon>
+            <Icon style={{ fontSize: 64, opacity: 0.5, marginBottom: 16 }}>assignment</Icon>
             <div style={{ fontSize: 16 }}>暂无待办事项</div>
             <div style={{ fontSize: 14, opacity: 0.6, marginTop: 8 }}>
               点击右下角添加第一条待办
@@ -126,88 +133,59 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
             {/* 待完成 */}
             {pendingTodos.length > 0 ? (
               <div>
-                <div style={{ padding: '4px 0' }}>
-                  <mdui-button-icon
-                    icon="keyboard_arrow_down"
-                    onClick={() => setShowPendingTodos((v) => !v)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 0',
-                      cursor: 'pointer',
-                      transform: showPendingTodos ? 'rotate(0deg)' : 'rotate(-90deg)',
-                      transition: 'transform 0.2s ease',
-                      fontSize: 16,
-                      fontWeight: 600,
-                    }}
-                  >
-                    <span>待完成 ({pendingTodos.length})</span>
-                  </mdui-button-icon>
-                </div>
-                {showPendingTodos && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {pendingTodos.map((todo) => (
-                      <TodoCard
-                        key={todo.id}
-                        todo={todo}
-                        members={members}
-                        onLongPress={() => handleLongPress(todo)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <TodoSectionHeader
+                  label="待完成"
+                  count={pendingTodos.length}
+                  expanded={showPendingTodos}
+                  onToggle={() => setShowPendingTodos((v) => !v)}
+                />
+                <TodoCollapsibleList expanded={showPendingTodos}>
+                  {pendingTodos.map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      members={members}
+                      onLongPress={() => handleLongPress(todo)}
+                      onToggle={(isCompleted) => onToggleTodo(todo, isCompleted)}
+                    />
+                  ))}
+                </TodoCollapsibleList>
               </div>
             ) : null}
 
             {/* 已完成 */}
             {completedTodos.length > 0 ? (
               <div>
-                <div style={{ padding: '4px 0' }}>
-                  <mdui-button-icon
-                    icon="keyboard_arrow_down"
-                    onClick={() => setShowCompletedTodos((v) => !v)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 0',
-                      cursor: 'pointer',
-                      transform: showCompletedTodos ? 'rotate(0deg)' : 'rotate(-90deg)',
-                      transition: 'transform 0.2s ease',
-                      fontSize: 16,
-                      fontWeight: 600,
-                    }}
-                  >
-                    <span>已完成 ({completedTodos.length})</span>
-                  </mdui-button-icon>
-                </div>
-                {showCompletedTodos && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {completedTodos.map((todo) => (
-                      <TodoCard
-                        key={todo.id}
-                        todo={todo}
-                        members={members}
-                        onLongPress={() => handleLongPress(todo)}
-                      />
-                    ))}
-                  </div>
-                )}
+                <TodoSectionHeader
+                  label="已完成"
+                  count={completedTodos.length}
+                  expanded={showCompletedTodos}
+                  onToggle={() => setShowCompletedTodos((v) => !v)}
+                />
+                <TodoCollapsibleList expanded={showCompletedTodos}>
+                  {completedTodos.map((todo) => (
+                    <TodoCard
+                      key={todo.id}
+                      todo={todo}
+                      members={members}
+                      onLongPress={() => handleLongPress(todo)}
+                      onToggle={(isCompleted) => onToggleTodo(todo, isCompleted)}
+                    />
+                  ))}
+                </TodoCollapsibleList>
               </div>
             ) : null}
           </div>
         )}
       </div>
+      </div>
 
       {/* FAB */}
-      <mdui-fab
+      <FAB
         icon="add"
         onClick={() => setShowCreateDialog(true)}
-        style={{ position: 'fixed', right: 24, bottom: 24 }}
-      ></mdui-fab>
+        style={{ position: 'absolute', right: 24, bottom: 24 }}
+      />
 
       {/* ─── 创建待办对话框 ─── */}
       {showCreateDialog && (
@@ -215,7 +193,7 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
           onDismiss={() => setShowCreateDialog(false)}
           onConfirm={(title, description, priority) => {
             setShowCreateDialog(false);
-            // TODO: 实际创建逻辑
+            onCreateTodo(title, description, priority);
           }}
         />
       )}
@@ -229,8 +207,82 @@ export function TodoPage({ todos, members, onBack }: TodoPageProps) {
             setShowBottomSheet(false);
             setSelectedTodo(null);
           }}
+          onDelete={() => {
+            onDeleteTodo(selectedTodo);
+            setShowBottomSheet(false);
+            setSelectedTodo(null);
+          }}
         />
       )}
+    </div>
+  );
+}
+
+// ─── TodoSectionHeader / TodoCollapsibleList ────────────────
+
+function TodoSectionHeader({
+  label,
+  count,
+  expanded,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div style={{ padding: '4px 0' }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '8px 0',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 16,
+            fontWeight: 600,
+            color: 'rgb(var(--mdui-color-on-surface))',
+          }}
+        >
+          {label} ({count})
+        </span>
+        <Icon
+          style={{
+            fontSize: 24,
+            color: 'rgb(var(--mdui-color-primary))',
+            transform: `rotate(${expanded ? 180 : 0}deg)`,
+            transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          keyboard_arrow_down
+        </Icon>
+      </button>
+    </div>
+  );
+}
+
+function TodoCollapsibleList({
+  expanded,
+  children,
+}: {
+  expanded: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`todo-collapsible${expanded ? ' todo-collapsible--expanded' : ''}`}>
+      <div className="todo-collapsible__inner">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
+      </div>
     </div>
   );
 }
@@ -283,10 +335,12 @@ function TodoCard({
   todo,
   members,
   onLongPress,
+  onToggle,
 }: {
   todo: Todo;
   members: Member[];
   onLongPress: () => void;
+  onToggle: (isCompleted: boolean) => void;
 }) {
   const creator = members.find((m) => m.id === todo.createdBy);
   const timeLabel = todo.isCompleted
@@ -294,10 +348,10 @@ function TodoCard({
     : `创建于 ${formatTimestamp(todo.createdAt)}`;
 
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{ borderRadius: 12, padding: 0, boxShadow: 'none' }}
-      onContextMenu={(e: MouseEvent) => {
+      onContextMenu={(e) => {
         e.preventDefault();
         onLongPress();
       }}
@@ -406,13 +460,13 @@ function TodoCard({
 
         {/* 右侧间距 + Checkbox */}
         <div style={{ width: 16 }} />
-        <mdui-checkbox
+        <Checkbox
           checked={todo.isCompleted}
-          disabled
+          onChange={onToggle}
           style={{ flexShrink: 0 }}
-        ></mdui-checkbox>
+        />
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -451,7 +505,7 @@ function CreateTodoDialog({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.32)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.32)',
       }}
     >
       <div
@@ -476,16 +530,16 @@ function CreateTodoDialog({
         </div>
 
         {/* 标题输入 */}
-        <mdui-text-field
+        <TextField
           variant="outlined"
           label="标题"
           value={title}
           style={{ width: '100%', marginBottom: 8 }}
-          onInput={(e: Event) => {
-            setTitle((e.target as HTMLInputElement).value);
+          onChange={(val) => {
+            setTitle(val);
             setShowTitleError(false);
           }}
-        ></mdui-text-field>
+        />
         {showTitleError && (
           <div
             style={{
@@ -500,27 +554,25 @@ function CreateTodoDialog({
         )}
 
         {/* 描述输入 */}
-        <mdui-text-field
+        <TextField
           variant="outlined"
           label="描述（可选）"
           value={description}
           style={{ width: '100%', marginBottom: 8 }}
           rows={3}
-          onInput={(e: Event) =>
-            setDescription((e.target as HTMLInputElement).value)
-          }
-        ></mdui-text-field>
+          onChange={(val) => setDescription(val)}
+        />
 
         {/* 优先级选择 */}
         <div style={{ position: 'relative', marginBottom: 16 }}>
-          <mdui-text-field
+          <TextField
             variant="outlined"
             label="优先级"
             value={getPriorityLabel(priority)}
             readonly
             style={{ width: '100%', color: getPriorityWebColor(priority) }}
             onClick={() => setShowPriorityDropdown((v) => !v)}
-          ></mdui-text-field>
+          />
 
           {showPriorityDropdown && (
             <div
@@ -532,7 +584,7 @@ function CreateTodoDialog({
                 zIndex: 10,
                 backgroundColor: 'rgb(var(--mdui-color-surface-container))',
                 borderRadius: 8,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                boxShadow: '0 4px 16px rgba(var(--mdui-color-scrim), 0.12)',
                 marginTop: 4,
                 overflow: 'hidden',
               }}
@@ -582,10 +634,10 @@ function CreateTodoDialog({
             gap: 8,
           }}
         >
-          <mdui-button variant="text" onClick={onDismiss}>
+          <Button variant="text" onClick={onDismiss}>
             取消
-          </mdui-button>
-          <mdui-button
+          </Button>
+          <Button
             variant="filled"
             onClick={() => {
               if (title.trim()) {
@@ -596,7 +648,7 @@ function CreateTodoDialog({
             }}
           >
             创建
-          </mdui-button>
+          </Button>
         </div>
       </div>
     </div>
@@ -609,10 +661,12 @@ function TodoDetailBottomSheet({
   todo,
   members,
   onDismiss,
+  onDelete,
 }: {
   todo: Todo;
   members: Member[];
   onDismiss: () => void;
+  onDelete: () => void;
 }) {
   const creator = members.find((m) => m.id === todo.createdBy);
 
@@ -625,7 +679,7 @@ function TodoDetailBottomSheet({
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.32)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.32)',
       }}
       onClick={onDismiss}
     >
@@ -834,14 +888,22 @@ function TodoDetailBottomSheet({
 
         {!todo.isCompleted && <div style={{ height: 16 }} />}
 
-        {/* 关闭按钮 */}
-        <mdui-button
-          variant="filled"
-          onClick={onDismiss}
-          style={{ width: '100%' }}
-        >
-          关闭
-        </mdui-button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button
+            variant="text"
+            onClick={onDelete}
+            style={{ flex: 1, color: 'rgb(var(--mdui-color-error))' }}
+          >
+            删除
+          </Button>
+          <Button
+            variant="filled"
+            onClick={onDismiss}
+            style={{ flex: 1 }}
+          >
+            关闭
+          </Button>
+        </div>
       </div>
     </div>
   );

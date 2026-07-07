@@ -2,6 +2,12 @@ import { useMemo, useState } from 'react';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { formatVoteRemaining, formatTimestamp } from '../lib/utils';
 import type { Member, Vote, VoteOption } from '../types/models';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
+import { Card } from '../ui/components/Card';
+import { FAB } from '../ui/components/FAB';
+import { Chip } from '../ui/components/Chip';
+import { TextField } from '../ui/components/TextField';
 
 interface VotePageProps {
   votes: Vote[];
@@ -30,9 +36,9 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
   }, [votes, filterActive, searchQuery]);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100%', backgroundColor: 'rgb(var(--mdui-color-surface))' }}>
+    <div style={{ position: 'relative', height: '100%', overflow: 'hidden', backgroundColor: 'rgb(var(--mdui-color-surface))', display: 'flex', flexDirection: 'column' }}>
       {/* TopBar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'rgb(var(--mdui-color-surface))' }}>
+      <div style={{ flexShrink: 0, zIndex: 10, backgroundColor: 'rgb(var(--mdui-color-surface))' }}>
         {/* AppBar */}
         <div
           style={{
@@ -43,33 +49,31 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
             borderBottom: '1px solid rgba(var(--mdui-color-outline-variant), 0.35)',
           }}
         >
-          <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+          <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px' }}>
             {showSearchBar ? (
-              <mdui-text-field
+              <TextField
                 value={searchQuery}
                 placeholder="搜索投票..."
                 variant="outlined"
                 style={{ width: '100%' }}
-                onInput={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+                onChange={(val) => setSearchQuery(val)}
               >
                 {searchQuery ? (
-                  <mdui-button-icon
+                  <IconButton
                     slot="end-icon"
-                    icon="close"
                     onClick={() => setSearchQuery('')}
-                  ></mdui-button-icon>
+                  ><md-icon>close</md-icon></IconButton>
                 ) : (
-                  <mdui-button-icon
+                  <IconButton
                     slot="end-icon"
-                    icon="close"
                     onClick={() => {
                       setShowSearchBar(false);
                       setSearchQuery('');
                     }}
-                  ></mdui-button-icon>
+                  ><md-icon>close</md-icon></IconButton>
                 )}
-              </mdui-text-field>
+              </TextField>
             ) : (
               <div
                 style={{
@@ -86,25 +90,25 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
             )}
           </div>
           {!showSearchBar ? (
-            <mdui-button-icon icon="search" onClick={() => setShowSearchBar(true)}></mdui-button-icon>
+            <IconButton onClick={() => setShowSearchBar(true)}><md-icon>search</md-icon></IconButton>
           ) : null}
         </div>
 
         {/* FilterChips */}
         <div style={{ display: 'flex', gap: 8, padding: '8px 16px' }}>
-          <mdui-chip selectable selected={filterActive} onClick={() => setFilterActive(true)}>
-            {filterActive ? <mdui-icon slot="icon" name="check" style={{ fontSize: 18 }}></mdui-icon> : null}
+          <Chip selectable selected={filterActive} onClick={() => setFilterActive(true)}>
+            {filterActive ? <Icon slot="icon" style={{ fontSize: 18 }}>check</Icon> : null}
             进行中
-          </mdui-chip>
-          <mdui-chip selectable selected={!filterActive} onClick={() => setFilterActive(false)}>
-            {!filterActive ? <mdui-icon slot="icon" name="check" style={{ fontSize: 18 }}></mdui-icon> : null}
+          </Chip>
+          <Chip selectable selected={!filterActive} onClick={() => setFilterActive(false)}>
+            {!filterActive ? <Icon slot="icon" style={{ fontSize: 18 }}>check</Icon> : null}
             已结束
-          </mdui-chip>
+          </Chip>
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
         {filteredVotes.length === 0 ? (
           <div
             style={{
@@ -113,10 +117,9 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
               color: 'rgb(var(--mdui-color-on-surface-variant))',
             }}
           >
-            <mdui-icon
-              name="poll"
+            <Icon
               style={{ fontSize: 64, opacity: 0.5, display: 'block', margin: '0 auto 16px' }}
-            ></mdui-icon>
+            >poll</Icon>
             <div style={{ fontSize: 16 }}>
               {filterActive ? '暂无进行中的投票' : '暂无已结束的投票'}
             </div>
@@ -136,11 +139,11 @@ export function VotePage({ votes, currentMember, onBack, onVoteClick, onNavigate
         )}
       </div>
 
-      <mdui-fab
+      <FAB
         icon="add"
-        style={{ position: 'fixed', right: 16, bottom: 16 }}
+        style={{ position: 'absolute', right: 16, bottom: 16 }}
         onClick={onNavigateToCreateVote}
-      ></mdui-fab>
+      />
     </div>
   );
 }
@@ -158,7 +161,7 @@ function VoteCard({
   const showPercentage = !vote.isActive || vote.hasVoted;
 
   return (
-    <mdui-card
+    <Card
       variant="filled"
       style={{
         display: 'block',
@@ -193,21 +196,19 @@ function VoteCard({
           {isAuthor && (
             <div style={{ display: 'flex', alignItems: 'center' }}>
               {vote.isActive && (
-                <mdui-button-icon
-                  icon="stop"
+                <IconButton
                   style={{ color: 'rgb(var(--mdui-color-primary))' }}
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                ></mdui-button-icon>
+                ><md-icon>stop</md-icon></IconButton>
               )}
-              <mdui-button-icon
-                icon="delete"
+              <IconButton
                 style={{ color: 'rgba(var(--mdui-color-error), 0.7)' }}
                 onClick={(e) => {
                   e.stopPropagation();
                 }}
-              ></mdui-button-icon>
+              ><md-icon>delete</md-icon></IconButton>
             </div>
           )}
         </div>
@@ -284,10 +285,9 @@ function VoteCard({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <VoteStatusChip isActive={vote.isActive} endTime={vote.endTime} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <mdui-icon
-              name="people"
+            <Icon
               style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface-variant))' }}
-            ></mdui-icon>
+            >people</Icon>
             <span style={{ fontSize: 13, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>
               {vote.totalVotes} 人参与
             </span>
@@ -323,10 +323,9 @@ function VoteCard({
                 backgroundColor: 'rgba(var(--mdui-color-primary-container), 0.5)',
               }}
             >
-              <mdui-icon
-                name="check_circle"
+              <Icon
                 style={{ fontSize: 16, color: 'rgb(var(--mdui-color-primary))' }}
-              ></mdui-icon>
+              >check_circle</Icon>
               <span style={{ fontSize: 13, fontWeight: 500, color: 'rgb(var(--mdui-color-primary))' }}>
                 您已参与投票
               </span>
@@ -334,7 +333,7 @@ function VoteCard({
           </>
         )}
       </div>
-    </mdui-card>
+    </Card>
   );
 }
 
@@ -530,10 +529,9 @@ function VoteTag({ icon, text }: { icon: string; text: string }) {
         backgroundColor: 'rgba(var(--mdui-color-surface-variant), 0.6)',
       }}
     >
-      <mdui-icon
-        name={icon}
+      <Icon
         style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-surface-variant))' }}
-      ></mdui-icon>
+      >{icon}</Icon>
       <span style={{ fontSize: 11, color: 'rgb(var(--mdui-color-on-surface-variant))' }}>{text}</span>
     </div>
   );

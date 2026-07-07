@@ -226,6 +226,14 @@
     <string name="settings_data_backup">数据与备份</string>
     <string name="settings_backup_auto">定时备份</string>
     <string name="settings_backup_auto_desc">设置自动备份频率和时间</string>
+    <string name="settings_backup_auto_enable">启用自动备份</string>
+    <string name="settings_backup_auto_frequency">备份频率</string>
+    <string name="settings_backup_auto_daily">每天</string>
+    <string name="settings_backup_auto_weekly">每周</string>
+    <string name="settings_backup_auto_monthly">每月</string>
+    <string name="settings_backup_auto_time">备份时间</string>
+    <string name="settings_backup_auto_time_desc">时间</string>
+    <string name="settings_backup_auto_note">智能备份</string>
     <string name="settings_backup_export">导出备份</string>
     <string name="settings_backup_export_desc">备份应用数据到文件</string>
     <string name="settings_backup_import">导入备份</string>
@@ -246,6 +254,11 @@
     <string name="settings_web_access_qr">扫描二维码快速访问</string>
     <string name="settings_web_access_tip">确保设备与手机在同一局域网</string>
     <string name="settings_web_access_copied">已复制访问地址</string>
+    <string name="settings_web_battery_title">后台保活设置</string>
+    <string name="settings_web_battery_desc">为保证网页端能持续访问，请将本应用的耗电管理设置为「无限制」，允许后台一直运行。否则系统可能在息屏后杀掉服务，导致网页无法连接。</string>
+    <string name="settings_web_battery_action">去设置</string>
+    <string name="settings_web_battery_done">已允许后台无限制运行</string>
+    <string name="settings_web_battery_open_failed">无法打开系统电池设置，请手动前往「设置-应用-耗电管理」</string>
 
     <string name="settings_other">其他</string>
     <string name="settings_about">关于</string>
@@ -565,6 +578,7 @@
     <!-- 关于 -->
     <string name="about_version">版本 %1$s</string>
     <string name="about_developer">开发者</string>
+    <string name="about_qq_group">QQ 群</string>
     <string name="about_third_party">使用的第三方库</string>
     <string name="about_thanks">感谢所有开源项目的贡献者</string>
     <string name="about_library_version">版本 %1$s</string>

@@ -1,4 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
+import { Icon } from '../ui/components/Icon';
+import { IconButton } from '../ui/components/IconButton';
 import { MemberAvatar } from '../components/MemberAvatar';
 import { formatDetailDateTime } from '../lib/utils';
 import type { Member, Vote, VoteOption, VoteRecord } from '../types/models';
@@ -89,7 +91,7 @@ export function VoteDetailPage({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', height: 64, padding: '0 4px' }}>
-          <mdui-button-icon icon="arrow_back" onClick={onBack}></mdui-button-icon>
+          <IconButton onClick={onBack}><md-icon>arrow_back</md-icon></IconButton>
           <div style={{ flex: 1, minWidth: 0, padding: '0 8px', overflow: 'hidden' }}>
             <div
               style={{
@@ -181,17 +183,15 @@ export function VoteDetailPage({
               {isAuthor && (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   {vote.isActive && (
-                    <mdui-button-icon
-                      icon="stop"
+                    <IconButton
                       style={{ color: 'rgb(var(--mdui-color-primary))' }}
                       onClick={onEndVote}
-                    ></mdui-button-icon>
+                    ><md-icon>stop</md-icon></IconButton>
                   )}
-                  <mdui-button-icon
-                    icon="delete"
+                  <IconButton
                     style={{ color: 'rgb(var(--mdui-color-error))' }}
                     onClick={onDeleteVote}
-                  ></mdui-button-icon>
+                  ><md-icon>delete</md-icon></IconButton>
                 </div>
               )}
             </div>
@@ -296,7 +296,7 @@ export function VoteDetailPage({
                         color: 'rgb(var(--mdui-color-on-surface-variant))',
                       }}
                     >
-                      <mdui-icon name="list" style={{ fontSize: 14 }}></mdui-icon>
+                      <Icon style={{ fontSize: 14 }}>list</Icon>
                       多选
                     </span>
                   )}
@@ -313,7 +313,7 @@ export function VoteDetailPage({
                         color: 'rgb(var(--mdui-color-on-surface-variant))',
                       }}
                     >
-                      <mdui-icon name="visibility_off" style={{ fontSize: 14 }}></mdui-icon>
+                      <Icon style={{ fontSize: 14 }}>visibility_off</Icon>
                       匿名
                     </span>
                   )}
@@ -385,13 +385,12 @@ export function VoteDetailPage({
                 >
                   投票记录 ({voteRecords.length})
                 </div>
-                <mdui-icon
-                  name={showVoteRecords ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                <Icon
                   style={{
                     fontSize: 24,
                     color: 'rgb(var(--mdui-color-on-surface-variant))',
                   }}
-                ></mdui-icon>
+                >{showVoteRecords ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}</Icon>
               </div>
 
               {showVoteRecords && (
@@ -496,10 +495,9 @@ function VoteOptionItem({
                   }}
                 >
                   {isSelected && (
-                    <mdui-icon
-                      name="check"
+                    <Icon
                       style={{ fontSize: 14, color: 'rgb(var(--mdui-color-on-primary))' }}
-                    ></mdui-icon>
+                    >check</Icon>
                   )}
                 </div>
               ) : (

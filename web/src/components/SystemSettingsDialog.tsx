@@ -1,3 +1,5 @@
+import { Icon } from '../ui/components/Icon';
+
 interface SystemSettingsDialogProps {
   onDismiss: () => void;
 }
@@ -9,6 +11,7 @@ interface SystemSettingsDialogProps {
 export function SystemSettingsDialog({ onDismiss }: SystemSettingsDialogProps) {
   return (
     <div
+      className="dialog-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -16,18 +19,19 @@ export function SystemSettingsDialog({ onDismiss }: SystemSettingsDialogProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
+        backgroundColor: 'rgba(var(--mdui-color-scrim), 0.5)',
       }}
       onClick={(e) => { if (e.target === e.currentTarget) onDismiss(); }}
     >
       <div
+        className="dialog-panel"
         style={{
           width: '92%',
           maxWidth: 400,
           backgroundColor: 'rgb(var(--mdui-color-surface))',
           borderRadius: 16,
           padding: 20,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          boxShadow: '0 4px 24px rgba(var(--mdui-color-scrim), 0.2)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -95,14 +99,13 @@ function SettingsItem({ icon, title, subtitle, onClick }: SettingsItemProps) {
         borderRadius: 4,
       }}
     >
-      <mdui-icon
-        name={icon}
+      <Icon
         style={{
           fontSize: 24,
           color: 'rgb(var(--mdui-color-on-surface-variant))',
           flexShrink: 0,
         }}
-      />
+      >{icon}</Icon>
       <div style={{ flex: 1, minWidth: 0, marginLeft: 16 }}>
         <div style={{ fontSize: 16, color: 'rgb(var(--mdui-color-on-surface))' }}>
           {title}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { TextField } from '../ui/components/TextField';
 
 /**
  * 引导步骤枚举 - 与安卓 GuideStep 对齐
@@ -674,13 +675,12 @@ function CreateSystemStepContent({
 
         {/* 系统名称输入 */}
         <div style={{ width: '100%' }}>
-          <mdui-text-field
+          <TextField
             label="System Name"
             placeholder="Enter system name"
             value={name}
-            onInput={(e) => {
-              const target = e.target as HTMLInputElement;
-              onNameChange(target.value);
+            onChange={(val) => {
+              onNameChange(val);
             }}
             style={{ width: '100%' }}
           />
@@ -845,14 +845,13 @@ function CreateMemberStepContent({
 
         {/* 成员名称输入 */}
         <div style={{ width: '100%' }}>
-          <mdui-text-field
+          <TextField
             label="Member Name"
             placeholder="Enter member name"
             value={name}
-            onInput={(e) => {
-              const target = e.target as HTMLInputElement;
+            onChange={(val) => {
               // 过滤掉回车和换行符
-              onNameChange(target.value.replace(/\n/g, ''));
+              onNameChange(val.replace(/\n/g, ''));
             }}
             style={{ width: '100%' }}
           />
