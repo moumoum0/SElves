@@ -15,6 +15,11 @@
 -keep class com.selves.xnn.model.** { *; }
 -keep class com.selves.xnn.data.entity.** { *; }
 
+# Keep Web API JSON contracts stable for Gson in release builds.
+-keep class com.selves.xnn.data.*Dto { *; }
+-keep class com.selves.xnn.service.*Request { *; }
+-keep class com.selves.xnn.service.*Response { *; }
+
 # 保持行号信息用于调试
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
