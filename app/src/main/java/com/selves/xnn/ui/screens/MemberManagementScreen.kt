@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,10 +29,12 @@ import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,7 +52,7 @@ import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.util.PinyinUtils
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun MemberManagementScreen(
     members: List<Member>,
@@ -59,6 +62,8 @@ fun MemberManagementScreen(
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
     var showCreateMemberDialog by remember { mutableStateOf(false) }
+    // false=短按极简；true=长按完整表单
+    var createMemberFullForm by remember { mutableStateOf(false) }
     var memberToEdit by remember { mutableStateOf<Member?>(null) }
     var groupToEdit by remember { mutableStateOf<MemberGroup?>(null) }
     var groupToDelete by remember { mutableStateOf<MemberGroup?>(null) }
@@ -267,13 +272,44 @@ fun MemberManagementScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showCreateMemberDialog = true }
+            // 短按：仅头像+名称；长按：完整资料（简介/代词/分组）
+            val fabInteractionSource = remember { MutableInteractionSource() }
+            Surface(
+                shape = FloatingActionButtonDefaults.shape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp,
+                modifier = Modifier
+                    .size(56.dp)
+                    .combinedClickable(
+                        interactionSource = fabInteractionSource,
+                        indication = ripple(bounded = true, radius = 28.dp),
+                        role = Role.Button,
+                        onClick = {
+                            createMemberFullForm = false
+                            showCreateMemberDialog = true
+                        },
+                        onLongClick = {
+                            createMemberFullForm = true
+                            showCreateMemberDialog = true
+                        }
+                    )
             ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_member))
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.cd_add_member)
+                    )
+                }
             }
         }
     ) { paddingValues ->
+        // FAB 占位高度（56dp 按钮 + 16dp 外边距 + 16dp 间隙），避免遮挡列表与字母索引栏
+        val fabClearance = 88.dp
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -286,7 +322,7 @@ fun MemberManagementScreen(
                     .weight(1f)
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
+                contentPadding = PaddingValues(top = 16.dp, bottom = fabClearance)
             ) {
                 // 按字母分组模式且没有搜索
                 if (viewMode == MemberViewMode.BY_LETTER && searchQuery.isBlank()) {
@@ -304,6 +340,7 @@ fun MemberManagementScreen(
                             MemberItem(
                                 member = member,
                                 isCurrentMember = member.id == currentMember.id,
+                                canDeleteMembers = currentMember.isAdmin,
                                 onDeleteMember = { showDeleteConfirmation = member },
                                 onEditMember = { memberToEdit = member },
                                 onMemberClick = { selectedMember = member }
@@ -321,6 +358,7 @@ fun MemberManagementScreen(
                                 depth = 0,
                                 expandedGroups = expandedGroups,
                                 currentMemberId = currentMember.id,
+                                canDeleteMembers = currentMember.isAdmin,
                                 onEditGroup = { groupToEdit = it },
                                 onDeleteGroup = { groupToDelete = it },
                                 onDeleteMember = { showDeleteConfirmation = it },
@@ -339,6 +377,7 @@ fun MemberManagementScreen(
                                     onEditDescription = {},
                                     onDeleteGroup = {},
                                     currentMemberId = currentMember.id,
+                                    canDeleteMembers = currentMember.isAdmin,
                                     onDeleteMember = { showDeleteConfirmation = it },
                                     onEditMember = { memberToEdit = it },
                                     onMemberClick = { selectedMember = it }
@@ -384,6 +423,7 @@ fun MemberManagementScreen(
                                     if (!section.isUngrouped) groupToDelete = section.group
                                 },
                                 currentMemberId = currentMember.id,
+                                canDeleteMembers = currentMember.isAdmin,
                                 onDeleteMember = { showDeleteConfirmation = it },
                                 onEditMember = { memberToEdit = it },
                                 onMemberClick = { selectedMember = it }
@@ -427,7 +467,7 @@ fun MemberManagementScreen(
                         }
                     },
                     modifier = Modifier
-                        .padding(end = 8.dp, top = 16.dp, bottom = 16.dp)
+                        .padding(end = 8.dp, top = 16.dp, bottom = fabClearance)
                 )
             }
         }
@@ -548,9 +588,15 @@ fun MemberManagementScreen(
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
             existingGroups = allGroups,
+            fullForm = createMemberFullForm,
+            canGrantAdmin = currentMember.isAdmin,
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
-                mainViewModel.createMember(name, avatarUrl, bio, pronouns, groups, shouldSetAsCurrent = false)
+            onConfirm = { name, avatarUrl, bio, pronouns, groups, isAdmin ->
+                mainViewModel.createMember(
+                    name, avatarUrl, bio, pronouns, groups,
+                    shouldSetAsCurrent = false,
+                    isAdmin = isAdmin
+                )
                 showCreateMemberDialog = false
             },
             onGroupDescriptionsCreated = { descriptions ->
@@ -567,9 +613,18 @@ fun MemberManagementScreen(
             member = member,
             existingMemberNames = members.map { it.name },
             existingGroups = allGroups,
+            canGrantAdmin = currentMember.isAdmin,
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
-                mainViewModel.updateMember(member.id, name, avatarUrl, bio, pronouns, groups)
+            onConfirm = { name, avatarUrl, bio, pronouns, groups, isAdmin ->
+                mainViewModel.updateMember(
+                    member.id,
+                    name,
+                    avatarUrl,
+                    bio,
+                    pronouns,
+                    groups,
+                    isAdmin = isAdmin
+                )
                 memberToEdit = null
             }
         )
@@ -711,6 +766,7 @@ fun MemberManagementTopBar(
 fun MemberItem(
     member: Member,
     isCurrentMember: Boolean,
+    canDeleteMembers: Boolean = false,
     onDeleteMember: () -> Unit,
     onEditMember: (Member) -> Unit,
     onMemberClick: () -> Unit = {}
@@ -759,6 +815,20 @@ fun MemberItem(
                         )
                     }
                 }
+                if (member.isAdmin) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Text(
+                            text = stringResource(R.string.member_admin_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
             
             Text(
@@ -798,8 +868,8 @@ fun MemberItem(
                     }
                 )
                 
-                // 删除选项 - 只有非当前成员才能删除
-                if (!isCurrentMember) {
+                // 删除选项 — 管理员且非当前成员
+                if (canDeleteMembers && !isCurrentMember) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.menu_delete)) },
                         leadingIcon = {
@@ -861,6 +931,7 @@ private fun GroupFolderSection(
     onEditDescription: () -> Unit,
     onDeleteGroup: () -> Unit,
     currentMemberId: String,
+    canDeleteMembers: Boolean = false,
     onDeleteMember: (Member) -> Unit,
     onEditMember: (Member) -> Unit,
     onMemberClick: (Member) -> Unit
@@ -896,6 +967,7 @@ private fun GroupFolderSection(
                         MemberItem(
                             member = member,
                             isCurrentMember = member.id == currentMemberId,
+                            canDeleteMembers = canDeleteMembers,
                             onDeleteMember = { onDeleteMember(member) },
                             onEditMember = onEditMember,
                             onMemberClick = { onMemberClick(member) }
@@ -1021,6 +1093,7 @@ private fun GroupTreeNodeSection(
     depth: Int,
     expandedGroups: MutableMap<String, Boolean>,
     currentMemberId: String,
+    canDeleteMembers: Boolean = false,
     onEditGroup: (MemberGroup) -> Unit,
     onDeleteGroup: (MemberGroup) -> Unit,
     onDeleteMember: (Member) -> Unit,
@@ -1125,6 +1198,7 @@ private fun GroupTreeNodeSection(
                         depth = depth + 1,
                         expandedGroups = expandedGroups,
                         currentMemberId = currentMemberId,
+                        canDeleteMembers = canDeleteMembers,
                         onEditGroup = onEditGroup,
                         onDeleteGroup = onDeleteGroup,
                         onDeleteMember = onDeleteMember,
@@ -1145,6 +1219,7 @@ private fun GroupTreeNodeSection(
                             MemberItem(
                                 member = member,
                                 isCurrentMember = member.id == currentMemberId,
+                                canDeleteMembers = canDeleteMembers,
                                 onDeleteMember = { onDeleteMember(member) },
                                 onEditMember = onEditMember,
                                 onMemberClick = { onMemberClick(member) }

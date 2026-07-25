@@ -19,6 +19,16 @@ interface MemberDao {
     @Query("SELECT COUNT(*) FROM members WHERE id = :memberId")
     suspend fun checkMemberExists(memberId: String): Int
 
+    @Query("SELECT COUNT(*) FROM members WHERE isDeleted = 0")
+    suspend fun countActiveMembers(): Int
+
+    @Query("SELECT COUNT(*) FROM members WHERE isAdmin = 1 AND isDeleted = 0")
+    suspend fun countActiveAdmins(): Int
+
+    /** 将指定活跃成员设为管理员 */
+    @Query("UPDATE members SET isAdmin = 1 WHERE id = :memberId AND isDeleted = 0")
+    suspend fun setMemberAsAdmin(memberId: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMember(member: MemberEntity)
 

@@ -69,6 +69,27 @@
     <string name="member_avatar">Avatar</string>
     <string name="member_color">Color</string>
     <string name="member_create">Create Member</string>
+    <string name="member_admin_badge">Admin</string>
+    <string name="member_set_as_admin">Set as admin</string>
+    <string name="admin_setup_title">Choose admins</string>
+    <string name="admin_setup_message">After the upgrade, choose at least one admin. Admins can delete members and import backups. Select one or more members.</string>
+    <string name="admin_setup_confirm">Done</string>
+    <string name="admin_pin_setup_title">Set admin PIN</string>
+    <string name="admin_pin_setup_message">Set a 6-digit PIN. Sensitive actions (delete members, import backup) require this PIN.</string>
+    <string name="admin_pin_confirm_title">Confirm PIN</string>
+    <string name="admin_pin_confirm_message">Enter the same 6-digit PIN again.</string>
+    <string name="admin_pin_verify_title">Enter admin PIN</string>
+    <string name="admin_pin_verify_message">Enter the 6-digit admin PIN to continue.</string>
+    <string name="admin_pin_change_verify_message">Enter your current 6-digit PIN.</string>
+    <string name="admin_pin_change_new_message">Enter a new 6-digit PIN.</string>
+    <string name="admin_pin_label">6-digit PIN</string>
+    <string name="admin_pin_confirm">OK</string>
+    <string name="admin_pin_format_error">PIN must be exactly 6 digits</string>
+    <string name="admin_pin_mismatch">PINs do not match</string>
+    <string name="admin_pin_wrong">Incorrect PIN</string>
+    <string name="admin_pin_change_title">Change admin PIN</string>
+    <string name="admin_pin_change_desc">Update the 6-digit PIN used for admin actions</string>
+    <string name="admin_pin_changed">Admin PIN updated</string>
     <string name="member_edit">Edit Member</string>
     <string name="member_delete">Delete Member</string>
     <string name="member_select">Select Member</string>
@@ -664,6 +685,7 @@
     <!-- Error Messages -->
     <string name="error_member_name_empty">Name cannot be empty</string>
     <string name="error_member_name_exists">Name already exists</string>
+    <string name="error_admin_required">Only admins can perform this action</string>
     <string name="error_group_name_empty">Group name cannot be empty</string>
     <string name="error_title_empty">Title cannot be empty</string>
     <string name="error_delete_member_confirm">Delete member \"%1$s\"? Cannot be undone.</string>
@@ -694,7 +716,7 @@
     <string name="cd_end_vote_action">End poll</string>
     <string name="cd_delete_vote">Delete poll</string>
     <string name="cd_member_avatar">Member avatar</string>
-    <string name="cd_add_member">Add member</string>
+    <string name="cd_add_member">Add member. Long-press for full form</string>
     <string name="cd_search_action">Search</string>
     <string name="cd_close_search">Close search</string>
     <string name="cd_more_actions">More actions</string>

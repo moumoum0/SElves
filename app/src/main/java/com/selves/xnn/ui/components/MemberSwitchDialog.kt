@@ -62,8 +62,10 @@ fun MemberSwitchDialog(
     currentMemberId: String,
     onDismiss: () -> Unit,
     onMemberSelected: (Member) -> Unit,
-    onCreateNewMember: () -> Unit,
+    onCreateNewMember: (fullForm: Boolean) -> Unit,
     onDeleteMember: (Member) -> Unit,
+    /** 当前成员是否管理员；仅管理员可从切换列表删除成员 */
+    canDeleteMembers: Boolean = false,
     loginRecordsMap: Map<String, List<OnlineStatusEntity>> = emptyMap()
 ) {
     var showDeleteConfirmation by remember { mutableStateOf<Member?>(null) }
@@ -189,7 +191,8 @@ fun MemberSwitchDialog(
                                 onDismissRequest = { menuExpandedForMember = null },
                                 offset = menuOffset
                             ) {
-                                if (member.id != currentMemberId) {
+                                // 仅管理员且非当前成员可删
+                                if (canDeleteMembers && member.id != currentMemberId) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.dialog_delete_member)) },
                                         leadingIcon = {
@@ -209,11 +212,14 @@ fun MemberSwitchDialog(
                     }
 
                     item {
-                        // 创建新成员按钮
+                        // 创建新成员：短按极简，长按完整表单
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onCreateNewMember() }
+                                .combinedClickable(
+                                    onClick = { onCreateNewMember(false) },
+                                    onLongClick = { onCreateNewMember(true) }
+                                )
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {

@@ -1,9 +1,14 @@
 package com.selves.xnn.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -12,9 +17,12 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,12 +31,13 @@ import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
 import com.selves.xnn.model.Member
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MemberManagementDialog(
     members: List<Member>,
     currentMember: Member,
     onDismiss: () -> Unit,
-    onCreateNewMember: () -> Unit,
+    onCreateNewMember: (fullForm: Boolean) -> Unit,
     onDeleteMember: (Member) -> Unit,
     onEditMember: (Member) -> Unit
 ) {
@@ -74,17 +83,26 @@ fun MemberManagementDialog(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    
-                    IconButton(
-                        onClick = onCreateNewMember,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        )
+
+                    val addInteractionSource = remember { MutableInteractionSource() }
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .combinedClickable(
+                                interactionSource = addInteractionSource,
+                                indication = ripple(bounded = true, radius = 20.dp),
+                                role = Role.Button,
+                                onClick = { onCreateNewMember(false) },
+                                onLongClick = { onCreateNewMember(true) }
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = stringResource(R.string.cd_add_member)
+                            contentDescription = stringResource(R.string.cd_add_member),
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 }
@@ -100,6 +118,7 @@ fun MemberManagementDialog(
                         MemberItem(
                             member = member,
                             isCurrentMember = member.id == currentMember.id,
+                            canDelete = currentMember.isAdmin && member.id != currentMember.id,
                             onDeleteMember = { showDeleteConfirmation = member },
                             onEditMember = { memberToEdit = member }
                         )
@@ -160,9 +179,19 @@ fun MemberManagementDialog(
             member = member,
             existingMemberNames = members.map { it.name },
             existingGroups = allExistingGroups,
+            canGrantAdmin = currentMember.isAdmin,
             onDismiss = { memberToEdit = null },
-            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
-                onEditMember(member.copy(name = name, avatarUrl = avatarUrl, bio = bio, pronouns = pronouns, groups = groups))
+            onConfirm = { name, avatarUrl, bio, pronouns, groups, isAdmin ->
+                onEditMember(
+                    member.copy(
+                        name = name,
+                        avatarUrl = avatarUrl,
+                        bio = bio,
+                        pronouns = pronouns,
+                        groups = groups,
+                        isAdmin = isAdmin
+                    )
+                )
                 memberToEdit = null
             }
         )
@@ -173,6 +202,7 @@ fun MemberManagementDialog(
 fun MemberItem(
     member: Member,
     isCurrentMember: Boolean,
+    canDelete: Boolean = false,
     onDeleteMember: () -> Unit,
     onEditMember: (Member) -> Unit
 ) {
@@ -220,6 +250,20 @@ fun MemberItem(
                         )
                     }
                 }
+                if (member.isAdmin) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Text(
+                            text = stringResource(R.string.member_admin_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
             }
             
             Text(
@@ -240,7 +284,7 @@ fun MemberItem(
             }
         }
         
-        // 操作菜单 - 所有成员都显示菜单，但当前成员只能编辑，不能删除
+        // 操作菜单：编辑对所有人开放；删除仅管理员且非当前成员
         Box {
             IconButton(
                 onClick = { showMenu = true }
@@ -256,7 +300,6 @@ fun MemberItem(
                 expanded = showMenu,
                 onDismissRequest = { showMenu = false }
             ) {
-                // 编辑选项 - 所有成员都可以编辑
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.btn_edit)) },
                     leadingIcon = {
@@ -268,8 +311,7 @@ fun MemberItem(
                     }
                 )
                 
-                // 删除选项 - 只有非当前成员才能删除
-                if (!isCurrentMember) {
+                if (canDelete) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.menu_delete)) },
                         leadingIcon = {

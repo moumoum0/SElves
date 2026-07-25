@@ -69,13 +69,14 @@ fun QuickMemberSwitch(
                 showMemberSwitchDialog = false
             },
             onCreateNewMember = {
-                // 这里可以添加创建新成员的逻辑
+                // 快捷切换里创建入口预留；完整创建走成员管理页
                 showMemberSwitchDialog = false
             },
-            onDeleteMember = { member ->
-                // 这里可以添加删除成员的逻辑
+            onDeleteMember = { _ ->
+                // 删除统一走成员管理页；此处不暴露删除入口
                 showMemberSwitchDialog = false
             },
+            canDeleteMembers = false,
             onDismiss = { showMemberSwitchDialog = false },
             loginRecordsMap = loginRecordsMap
         )

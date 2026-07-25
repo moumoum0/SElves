@@ -15,5 +15,6 @@ data class MemberEntity(
     val isDeleted: Boolean = false,
     val bio: String = "",
     val pronouns: String = "",
-    val groups: List<String> = emptyList()
-) : Parcelable 
+    val groups: List<String> = emptyList(),
+    val isAdmin: Boolean = false
+) : Parcelable

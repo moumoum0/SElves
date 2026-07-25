@@ -90,6 +90,28 @@ class MemberRepository @Inject constructor(private val database: AppDatabase) {
     }
     
     /**
+     * 活跃成员数量（未删除）
+     */
+    suspend fun countActiveMembers(): Int {
+        return database.memberDao().countActiveMembers()
+    }
+
+    /**
+     * 活跃管理员数量
+     */
+    suspend fun countActiveAdmins(): Int {
+        return database.memberDao().countActiveAdmins()
+    }
+
+    /**
+     * 将成员设为管理员（升级迁移后的首次选管理员等）
+     */
+    suspend fun setMemberAsAdmin(memberId: String) {
+        database.memberDao().setMemberAsAdmin(memberId)
+        Log.d("MemberRepository", "已设为管理员: $memberId")
+    }
+
+    /**
      * 标记成员为已删除状态
      */
     suspend fun deleteMember(memberId: String) {

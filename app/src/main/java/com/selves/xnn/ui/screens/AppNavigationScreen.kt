@@ -38,6 +38,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.selves.xnn.ui.viewmodels.MainViewModel
 import com.selves.xnn.ui.viewmodels.LoadingState
+import com.selves.xnn.ui.components.AdminSetupDialog
+import com.selves.xnn.ui.components.AdminPinDialog
 import com.selves.xnn.viewmodel.OnlineStatsViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.ui.graphics.luminance
@@ -97,12 +99,25 @@ fun AppNavigationScreen(
     var developerModeArmed by rememberSaveable { mutableStateOf(false) }
     val isLoading by viewModel.isLoading.collectAsState()
     val needsGuide by viewModel.needsGuide.collectAsState()
+    val needsAdminSetup by viewModel.needsAdminSetup.collectAsState()
+    val adminPinDialog by viewModel.adminPinDialog.collectAsState()
     
     // 在UI渲染完成后触发数据加载（参考LibChecker的做法）
     LaunchedEffect(Unit) {
         // 延迟到下一帧，确保LoadingScreen已经显示
         kotlinx.coroutines.delay(16) // 一帧的时间
         viewModel.startLoading()
+    }
+
+    // 全局管理员 PIN 弹窗（强制设置 / 删除成员验证等）
+    adminPinDialog?.let { pinState ->
+        AdminPinDialog(
+            mode = pinState.mode,
+            canDismiss = pinState.canDismiss,
+            errorMessage = pinState.errorMessage,
+            onDismiss = { viewModel.dismissAdminPinDialog() },
+            onSubmit = { pin -> viewModel.submitAdminPin(pin) }
+        )
     }
     
     // 如果正在加载，显示加载界面
@@ -178,6 +193,14 @@ fun AppNavigationScreen(
         val currentMember by viewModel.currentMember.collectAsState()
         val members by viewModel.members.collectAsState()
         val groups by viewModel.groups.collectAsState()
+
+        // 有成员但无管理员：强制选择（迁移升级 / 异常数据）
+        if (needsAdminSetup && members.isNotEmpty()) {
+            AdminSetupDialog(
+                members = members,
+                onConfirm = { ids -> viewModel.assignInitialAdmins(ids) }
+            )
+        }
         
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -615,7 +638,8 @@ fun AppNavigationScreen(
                         navController.navigate("about") {
                             launchSingleTop = true
                         }
-                    }
+                    },
+                    isCurrentMemberAdmin = currentMember?.isAdmin == true
                 )
             }
             

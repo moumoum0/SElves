@@ -45,6 +45,12 @@ class MemberPreferences(private val context: Context) {
         private val AUTO_BACKUP_FREQUENCY = stringPreferencesKey("auto_backup_frequency")
         private val AUTO_BACKUP_HOUR = intPreferencesKey("auto_backup_hour")
         private val AUTO_BACKUP_PATH = stringPreferencesKey("auto_backup_path")
+
+        // 系统级管理员 PIN（哈希存储；恢复机制后续扩展）
+        private val ADMIN_PIN_SALT = stringPreferencesKey("admin_pin_salt")
+        private val ADMIN_PIN_HASH = stringPreferencesKey("admin_pin_hash")
+        // 预留：恢复凭证哈希（本期不写、不读，仅占位键名约定）
+        // private val ADMIN_PIN_RECOVERY_HASH = stringPreferencesKey("admin_pin_recovery_hash")
     }
     
     /**
@@ -322,6 +328,41 @@ class MemberPreferences(private val context: Context) {
             } else {
                 preferences.remove(AUTO_BACKUP_PATH)
             }
+        }
+    }
+
+    // ── 管理员 PIN ──────────────────────────────────────────────
+
+    /** 是否已设置管理员数字密码 */
+    val hasAdminPin: Flow<Boolean> = context.dataStore.data
+        .map { prefs ->
+            !prefs[ADMIN_PIN_SALT].isNullOrBlank() && !prefs[ADMIN_PIN_HASH].isNullOrBlank()
+        }
+
+    suspend fun hasAdminPin(): Boolean {
+        val prefs = context.dataStore.data.first()
+        return !prefs[ADMIN_PIN_SALT].isNullOrBlank() && !prefs[ADMIN_PIN_HASH].isNullOrBlank()
+    }
+
+    suspend fun getAdminPinSalt(): String? =
+        context.dataStore.data.first()[ADMIN_PIN_SALT]
+
+    suspend fun getAdminPinHash(): String? =
+        context.dataStore.data.first()[ADMIN_PIN_HASH]
+
+    /** 写入 salt + hash（调用方负责先哈希） */
+    suspend fun saveAdminPin(saltBase64: String, hashBase64: String) {
+        context.dataStore.edit { preferences ->
+            preferences[ADMIN_PIN_SALT] = saltBase64
+            preferences[ADMIN_PIN_HASH] = hashBase64
+        }
+    }
+
+    /** 清除管理员 PIN（改密失败回滚 / 测试用；恢复流程后续可复用） */
+    suspend fun clearAdminPin() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(ADMIN_PIN_SALT)
+            preferences.remove(ADMIN_PIN_HASH)
         }
     }
 }

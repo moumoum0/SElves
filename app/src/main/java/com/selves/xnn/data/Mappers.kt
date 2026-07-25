@@ -41,7 +41,8 @@ object Mappers {
         isDeleted = isDeleted,
         bio = bio,
         pronouns = pronouns,
-        groups = groups
+        groups = groups,
+        isAdmin = isAdmin
     )
 
     fun Member.toEntity(): MemberEntity = MemberEntity(
@@ -51,7 +52,8 @@ object Mappers {
         isDeleted = isDeleted,
         bio = bio,
         pronouns = pronouns,
-        groups = groups
+        groups = groups,
+        isAdmin = isAdmin
     )
 
     fun MemberGroupEntity.toDomain(): MemberGroup = MemberGroup(
@@ -213,7 +215,8 @@ object Mappers {
         isDeleted = isDeleted,
         bio = bio,
         pronouns = pronouns,
-        groups = groups
+        groups = groups,
+        isAdmin = isAdmin
     )
 
     fun SystemEntity.toDto(): SystemInfoDto = SystemInfoDto(

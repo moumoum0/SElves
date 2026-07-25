@@ -14,7 +14,8 @@ data class MemberDto(
     val isDeleted: Boolean = false,
     val bio: String = "",
     val pronouns: String = "",
-    val groups: List<String> = emptyList()
+    val groups: List<String> = emptyList(),
+    val isAdmin: Boolean = false
 )
 
 // ===== SystemInfo =====

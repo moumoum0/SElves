@@ -59,6 +59,8 @@ fun MainTabScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     
     var showCreateMemberDialog by remember { mutableStateOf(false) }
+    // false=短按极简；true=长按完整表单
+    var createMemberFullForm by remember { mutableStateOf(false) }
     var showMemberSwitchDialog by remember { mutableStateOf(false) }
     var showCreateSystemDialog by remember { mutableStateOf(false) }
     val mainNavController = rememberNavController()
@@ -76,7 +78,8 @@ fun MainTabScreen(
     LaunchedEffect(currentMember, isLoading, hasSystem) {
         if (currentMember == null && !isLoading && hasSystem == true) {
             if (members.isEmpty()) {
-                // 没有任何成员，显示创建成员对话框
+                // 没有任何成员，显示创建成员对话框（极简）
+                createMemberFullForm = false
                 showCreateMemberDialog = true
             } else {
                 // 有已存在的成员，显示成员切换对话框
@@ -104,12 +107,14 @@ fun MainTabScreen(
         CreateMemberDialog(
             existingMemberNames = members.map { it.name },
             existingGroups = existingGroups,
+            fullForm = createMemberFullForm,
+            canGrantAdmin = currentMember?.isAdmin == true,
             onDismiss = { showCreateMemberDialog = false },
-            onConfirm = { name, avatarUrl, bio, pronouns, groups ->
+            onConfirm = { name, avatarUrl, bio, pronouns, groups, isAdmin ->
                 // 立即关闭对话框，防止多次点击
                 showCreateMemberDialog = false
                 // 创建成员
-                viewModel.createMember(name, avatarUrl, bio, pronouns, groups)
+                viewModel.createMember(name, avatarUrl, bio, pronouns, groups, isAdmin = isAdmin)
             }
         )
     }
@@ -123,14 +128,16 @@ fun MainTabScreen(
                 viewModel.setCurrentMember(member)
                 showMemberSwitchDialog = false
             },
-            onCreateNewMember = {
+            onCreateNewMember = { fullForm ->
                 showMemberSwitchDialog = false
+                createMemberFullForm = fullForm
                 showCreateMemberDialog = true
             },
             onDeleteMember = { member ->
-                // 成员删除功能可在后续实现
+                viewModel.deleteMember(member)
                 showMemberSwitchDialog = false
             },
+            canDeleteMembers = currentMember?.isAdmin == true,
             onDismiss = { showMemberSwitchDialog = false },
             loginRecordsMap = memberLoginRecords
         )

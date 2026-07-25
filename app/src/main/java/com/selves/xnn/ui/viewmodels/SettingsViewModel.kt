@@ -5,14 +5,19 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.selves.xnn.data.MemberPreferences
+import com.selves.xnn.data.AdminPinRepository
 import com.selves.xnn.data.BackupService
 import com.selves.xnn.data.BackupResult
 import com.selves.xnn.data.SimplyPluralImportService
 import com.selves.xnn.data.ImportMode
 import com.selves.xnn.data.SpImportMemberPreview
 import com.selves.xnn.data.SpImportResult
+import com.selves.xnn.data.repository.MemberRepository
 import com.selves.xnn.service.WebServerService
 import com.selves.xnn.util.AutoBackupScheduler
+import com.selves.xnn.util.AdminPinCrypto
+import com.selves.xnn.ui.components.AdminPinDialogMode
+import com.selves.xnn.ui.components.AdminPinUiState
 import kotlinx.coroutines.Dispatchers
 import com.selves.xnn.model.ThemeMode
 import com.selves.xnn.model.ColorScheme
@@ -21,12 +26,22 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/** 设置页 PIN 流程用途 */
+private enum class SettingsPinFlow {
+    None,
+    Import,
+    Change
+}
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val memberPreferences: MemberPreferences,
+    private val memberRepository: MemberRepository,
+    private val adminPinRepository: AdminPinRepository,
     private val backupService: BackupService,
     private val spImportService: SimplyPluralImportService,
     @ApplicationContext private val context: Context
@@ -70,10 +85,20 @@ class SettingsViewModel @Inject constructor(
     
     private val _showImportWarningDialog = MutableStateFlow(false)
     val showImportWarningDialog: StateFlow<Boolean> = _showImportWarningDialog.asStateFlow()
-    
+
+    /** 设置页内管理员 PIN 弹窗（导入校验 / 修改密码） */
+    private val _adminPinDialog = MutableStateFlow<AdminPinUiState?>(null)
+    val adminPinDialog: StateFlow<AdminPinUiState?> = _adminPinDialog.asStateFlow()
+
+    private var pendingPinFirstInput: String? = null
+    /** 验证通过后继续导入 */
+    private var pendingImportAfterPin: Uri? = null
+    /** 当前弹窗目的：改密 or 导入 */
+    private var pinFlow: SettingsPinFlow = SettingsPinFlow.None
+
     private val _backupProgress = MutableStateFlow<Float?>(null)
     val backupProgress: StateFlow<Float?> = _backupProgress.asStateFlow()
-    
+
     private val _backupProgressMessage = MutableStateFlow("")
     val backupProgressMessage: StateFlow<String> = _backupProgressMessage.asStateFlow()
     
@@ -279,21 +304,169 @@ class SettingsViewModel @Inject constructor(
     
     /**
      * 显示导入备份警告对话框
+     * 仅当前管理员可导入；UI 已隐藏入口，此处再拦一层
      */
     fun showImportWarning(inputUri: Uri) {
-        pendingImportUri = inputUri
-        _showImportWarningDialog.value = true
+        viewModelScope.launch {
+            if (!isCurrentMemberAdmin()) {
+                _backupMessage.value = context.getString(com.selves.xnn.R.string.error_admin_required)
+                return@launch
+            }
+            pendingImportUri = inputUri
+            _showImportWarningDialog.value = true
+        }
     }
     
     /**
-     * 确认导入备份
+     * 确认导入备份 — 需管理密码（会话已解锁则跳过）
      */
     fun confirmImportBackup() {
         _showImportWarningDialog.value = false
-        pendingImportUri?.let { uri ->
-            importBackup(uri)
-        }
+        val uri = pendingImportUri
         pendingImportUri = null
+        if (uri == null) return
+        viewModelScope.launch {
+            if (!isCurrentMemberAdmin()) {
+                _backupMessage.value = context.getString(com.selves.xnn.R.string.error_admin_required)
+                return@launch
+            }
+            if (!adminPinRepository.hasAdminPin()) {
+                // 尚未设置 PIN：强制设置后再导入
+                pinFlow = SettingsPinFlow.Import
+                pendingImportAfterPin = uri
+                pendingPinFirstInput = null
+                _adminPinDialog.value = AdminPinUiState(
+                    mode = AdminPinDialogMode.Setup,
+                    canDismiss = false
+                )
+                return@launch
+            }
+            if (adminPinRepository.isSessionUnlocked()) {
+                importBackup(uri)
+                return@launch
+            }
+            pinFlow = SettingsPinFlow.Import
+            pendingImportAfterPin = uri
+            _adminPinDialog.value = AdminPinUiState(
+                mode = AdminPinDialogMode.Verify,
+                canDismiss = true
+            )
+        }
+    }
+
+    /** 当前选中成员是否管理员 */
+    private suspend fun isCurrentMemberAdmin(): Boolean {
+        val id = memberPreferences.currentMemberId.first() ?: return false
+        return memberRepository.getMemberById(id)?.isAdmin == true
+    }
+
+    fun dismissAdminPinDialog() {
+        val state = _adminPinDialog.value ?: return
+        if (!state.canDismiss) return
+        pendingImportAfterPin = null
+        pendingPinFirstInput = null
+        pinFlow = SettingsPinFlow.None
+        _adminPinDialog.value = null
+    }
+
+    fun startChangeAdminPin() {
+        viewModelScope.launch {
+            pinFlow = SettingsPinFlow.Change
+            pendingPinFirstInput = null
+            if (!adminPinRepository.hasAdminPin()) {
+                _adminPinDialog.value = AdminPinUiState(
+                    mode = AdminPinDialogMode.Setup,
+                    canDismiss = true
+                )
+            } else {
+                _adminPinDialog.value = AdminPinUiState(
+                    mode = AdminPinDialogMode.ChangeVerify,
+                    canDismiss = true
+                )
+            }
+        }
+    }
+
+    fun submitAdminPin(pin: String) {
+        viewModelScope.launch {
+            val state = _adminPinDialog.value ?: return@launch
+            when (state.mode) {
+                AdminPinDialogMode.Setup, AdminPinDialogMode.ChangeNew -> {
+                    if (!AdminPinCrypto.isValidPinFormat(pin)) {
+                        _adminPinDialog.value = state.copy(
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_format_error)
+                        )
+                        return@launch
+                    }
+                    pendingPinFirstInput = pin
+                    val next = if (state.mode == AdminPinDialogMode.Setup) {
+                        AdminPinDialogMode.SetupConfirm
+                    } else {
+                        AdminPinDialogMode.ChangeConfirm
+                    }
+                    _adminPinDialog.value = AdminPinUiState(mode = next, canDismiss = state.canDismiss)
+                }
+                AdminPinDialogMode.SetupConfirm, AdminPinDialogMode.ChangeConfirm -> {
+                    val first = pendingPinFirstInput
+                    if (first == null || first != pin) {
+                        val back = if (state.mode == AdminPinDialogMode.SetupConfirm) {
+                            AdminPinDialogMode.Setup
+                        } else {
+                            AdminPinDialogMode.ChangeNew
+                        }
+                        pendingPinFirstInput = null
+                        _adminPinDialog.value = AdminPinUiState(
+                            mode = back,
+                            canDismiss = state.canDismiss,
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_mismatch)
+                        )
+                        return@launch
+                    }
+                    if (!adminPinRepository.setPin(pin)) {
+                        _adminPinDialog.value = state.copy(
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_format_error)
+                        )
+                        return@launch
+                    }
+                    pendingPinFirstInput = null
+                    _adminPinDialog.value = null
+                    onPinFlowSuccess()
+                }
+                AdminPinDialogMode.Verify, AdminPinDialogMode.ChangeVerify -> {
+                    if (!adminPinRepository.verifyPin(pin)) {
+                        _adminPinDialog.value = state.copy(
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_wrong)
+                        )
+                        return@launch
+                    }
+                    if (state.mode == AdminPinDialogMode.ChangeVerify) {
+                        _adminPinDialog.value = AdminPinUiState(
+                            mode = AdminPinDialogMode.ChangeNew,
+                            canDismiss = true
+                        )
+                    } else {
+                        _adminPinDialog.value = null
+                        onPinFlowSuccess()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onPinFlowSuccess() {
+        when (pinFlow) {
+            SettingsPinFlow.Import -> {
+                val uri = pendingImportAfterPin
+                pendingImportAfterPin = null
+                pinFlow = SettingsPinFlow.None
+                if (uri != null) importBackup(uri)
+            }
+            SettingsPinFlow.Change -> {
+                pinFlow = SettingsPinFlow.None
+                _backupMessage.value = context.getString(com.selves.xnn.R.string.admin_pin_changed)
+            }
+            SettingsPinFlow.None -> Unit
+        }
     }
     
     /**

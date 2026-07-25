@@ -1,24 +1,44 @@
 package com.selves.xnn.ui.components
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -28,27 +48,32 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.selves.xnn.R
 import coil.compose.AsyncImage
-import com.selves.xnn.model.Member
-import com.selves.xnn.util.ImageUtils
-import com.selves.xnn.ui.components.ProfileAvatarImage
 import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageView
+import com.selves.xnn.R
+import com.selves.xnn.util.ImageUtils
 
+/**
+ * 创建成员对话框。
+ *
+ * @param fullForm false：仅头像 + 名称（短按创建）；true：含简介/代词/分组（长按创建）
+ * @param canGrantAdmin 当前操作者是否管理员；为 true 时显示「设为管理员」
+ * @param onConfirm name, avatar, bio, pronouns, groups, isAdmin
+ */
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateMemberDialog(
     existingMemberNames: List<String>,
     existingGroups: List<String> = emptyList(),
+    fullForm: Boolean = false,
+    canGrantAdmin: Boolean = false,
     onDismiss: () -> Unit,
-    onConfirm: (String, String?, String, String, List<String>) -> Unit,
+    onConfirm: (String, String?, String, String, List<String>, Boolean) -> Unit,
     onGroupDescriptionsCreated: ((Map<String, String>) -> Unit)? = null
 ) {
     var memberName by remember { mutableStateOf("") }
@@ -56,6 +81,7 @@ fun CreateMemberDialog(
     var memberPronouns by remember { mutableStateOf("") }
     var memberGroups by remember { mutableStateOf<List<String>>(emptyList()) }
     var groupDescriptions by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var newMemberIsAdmin by remember { mutableStateOf(false) }
     var showNewGroupDialog by remember { mutableStateOf(false) }
     var newGroupInput by remember { mutableStateOf("") }
     var newGroupDescription by remember { mutableStateOf("") }
@@ -65,15 +91,14 @@ fun CreateMemberDialog(
     var isSubmitting by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
-    // 图片裁剪启动器
     val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
         if (result.isSuccessful) {
             avatarUri = result.uriContent
         }
     }
 
-    // 创建成员的函数
     val createMember = {
         if (!isSubmitting) {
             when {
@@ -87,13 +112,13 @@ fun CreateMemberDialog(
                 }
                 else -> {
                     isSubmitting = true
-                    
-                    // 保存头像到内部存储
                     val savedAvatarPath = ImageUtils.saveAvatarToInternalStorage(context, avatarUri)
-                    
-                    // 使用保存后的头像路径
-                    onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns, memberGroups)
-                    if (groupDescriptions.isNotEmpty()) {
+                    val bio = if (fullForm) memberBio else ""
+                    val pronouns = if (fullForm) memberPronouns else ""
+                    val groups = if (fullForm) memberGroups else emptyList()
+                    val isAdmin = canGrantAdmin && newMemberIsAdmin
+                    onConfirm(memberName, savedAvatarPath, bio, pronouns, groups, isAdmin)
+                    if (fullForm && groupDescriptions.isNotEmpty()) {
                         onGroupDescriptionsCreated?.invoke(groupDescriptions)
                     }
                 }
@@ -113,6 +138,9 @@ fun CreateMemberDialog(
                 modifier = Modifier
                     .padding(16.dp)
                     .fillMaxWidth()
+                    .then(
+                        if (fullForm) Modifier.verticalScroll(scrollState) else Modifier
+                    )
             ) {
                 Text(
                     text = stringResource(R.string.member_create),
@@ -120,13 +148,11 @@ fun CreateMemberDialog(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // 头像选择区域
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp)
-                        .clickable { 
-                            // 启动图片裁剪器，可以选择从图库或相机
+                        .clickable {
                             cropImageLauncher.launch(ImageUtils.createAvatarCropOptions(context))
                         }
                 ) {
@@ -151,20 +177,18 @@ fun CreateMemberDialog(
                     }
                 }
 
-                // 成员名输入 - 使用单行输入框
                 OutlinedTextField(
                     value = memberName,
-                    onValueChange = { newValue -> 
-                        // 过滤掉回车和换行符
+                    onValueChange = { newValue ->
                         memberName = newValue.replace("\n", "")
-                        showError = false 
+                        showError = false
                     },
                     label = { Text(stringResource(R.string.label_member_name)) },
                     isError = showError,
                     supportingText = if (showError) {
                         { Text(errorMessage) }
                     } else null,
-                    singleLine = true, // 确保是单行输入
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done,
                         keyboardType = KeyboardType.Text
@@ -177,7 +201,7 @@ fun CreateMemberDialog(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = if (fullForm) 16.dp else 8.dp)
                         .onKeyEvent { keyEvent ->
                             if (keyEvent.key == Key.Enter) {
                                 keyboardController?.hide()
@@ -189,98 +213,116 @@ fun CreateMemberDialog(
                         }
                 )
 
-                // 简介输入框
-                OutlinedTextField(
-                    value = memberBio,
-                    onValueChange = { memberBio = it },
-                    label = { Text(stringResource(R.string.label_member_bio)) },
-                    placeholder = { Text(stringResource(R.string.placeholder_member_bio)) },
-                    maxLines = 4,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                )
+                if (fullForm) {
+                    OutlinedTextField(
+                        value = memberBio,
+                        onValueChange = { memberBio = it },
+                        label = { Text(stringResource(R.string.label_member_bio)) },
+                        placeholder = { Text(stringResource(R.string.placeholder_member_bio)) },
+                        maxLines = 4,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
 
-                // 代词输入框
-                OutlinedTextField(
-                    value = memberPronouns,
-                    onValueChange = { memberPronouns = it },
-                    label = { Text(stringResource(R.string.label_member_pronouns)) },
-                    placeholder = { Text(stringResource(R.string.placeholder_member_pronouns)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                )
+                    OutlinedTextField(
+                        value = memberPronouns,
+                        onValueChange = { memberPronouns = it },
+                        label = { Text(stringResource(R.string.label_member_pronouns)) },
+                        placeholder = { Text(stringResource(R.string.placeholder_member_pronouns)) },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    )
 
-                // 已选分组标签
-                if (memberGroups.isNotEmpty()) {
+                    if (memberGroups.isNotEmpty()) {
+                        FlowRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            memberGroups.forEach { group ->
+                                AssistChip(
+                                    onClick = { },
+                                    label = { Text(group) },
+                                    trailingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.cd_delete),
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clickable {
+                                                    memberGroups = memberGroups.filter { it != group }
+                                                }
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    val availableGroups = existingGroups.filter { it !in memberGroups }
+                    Text(
+                        text = stringResource(R.string.member_existing_groups),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = 8.dp),
+                            .padding(bottom = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        memberGroups.forEach { group ->
-                            AssistChip(
-                                onClick = { },
-                                label = { Text(group) },
-                                trailingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.cd_delete),
-                                        modifier = Modifier
-                                            .size(18.dp)
-                                            .clickable {
-                                                memberGroups = memberGroups.filter { it != group }
-                                            }
-                                    )
-                                }
+                        availableGroups.forEach { group ->
+                            SuggestionChip(
+                                onClick = {
+                                    if (group !in memberGroups) {
+                                        memberGroups = memberGroups + group
+                                    }
+                                },
+                                label = { Text(group) }
                             )
                         }
-                    }
-                }
-
-                // 分组选择区域
-                val availableGroups = existingGroups.filter { it !in memberGroups }
-                Text(
-                    text = stringResource(R.string.member_existing_groups),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    availableGroups.forEach { group ->
                         SuggestionChip(
-                            onClick = {
-                                if (group !in memberGroups) {
-                                    memberGroups = memberGroups + group
-                                }
-                            },
-                            label = { Text(group) }
+                            onClick = { showNewGroupDialog = true },
+                            label = { Text(stringResource(R.string.member_create_new_group)) },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         )
                     }
-                    SuggestionChip(
-                        onClick = { showNewGroupDialog = true },
-                        label = { Text(stringResource(R.string.member_create_new_group)) },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    )
                 }
 
-                // 按钮区域
+                // 管理员创建时可指定新成员是否为管理员（简/全表单均显示）
+                if (canGrantAdmin) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.member_set_as_admin),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = newMemberIsAdmin,
+                            onCheckedChange = { newMemberIsAdmin = it }
+                        )
+                    }
+                }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
@@ -297,7 +339,7 @@ fun CreateMemberDialog(
         }
     }
 
-    if (showNewGroupDialog) {
+    if (showNewGroupDialog && fullForm) {
         Dialog(
             onDismissRequest = {
                 showNewGroupDialog = false
@@ -363,7 +405,8 @@ fun CreateMemberDialog(
                                 if (trimmed.isNotEmpty() && trimmed !in memberGroups) {
                                     memberGroups = memberGroups + trimmed
                                     if (newGroupDescription.isNotBlank()) {
-                                        groupDescriptions = groupDescriptions + (trimmed to newGroupDescription.trim())
+                                        groupDescriptions =
+                                            groupDescriptions + (trimmed to newGroupDescription.trim())
                                     }
                                 }
                                 showNewGroupDialog = false
@@ -378,4 +421,4 @@ fun CreateMemberDialog(
             }
         }
     }
-} 
+}

@@ -69,6 +69,27 @@
     <string name="member_avatar">头像</string>
     <string name="member_color">颜色</string>
     <string name="member_create">创建成员</string>
+    <string name="member_admin_badge">管理员</string>
+    <string name="member_set_as_admin">设为管理员</string>
+    <string name="admin_setup_title">选择管理员</string>
+    <string name="admin_setup_message">权限机制上线，现在需要选择一名管理员（可多选）</string>
+    <string name="admin_setup_confirm">完成</string>
+    <string name="admin_pin_setup_title">设置管理密码</string>
+    <string name="admin_pin_setup_message">请设置 6 位数字密码。删除成员、导入备份等敏感操作需要此密码。</string>
+    <string name="admin_pin_confirm_title">确认密码</string>
+    <string name="admin_pin_confirm_message">请再次输入相同的 6 位数字密码。</string>
+    <string name="admin_pin_verify_title">输入管理密码</string>
+    <string name="admin_pin_verify_message">请输入 6 位管理密码以继续。</string>
+    <string name="admin_pin_change_verify_message">请输入当前 6 位数字密码。</string>
+    <string name="admin_pin_change_new_message">请输入新的 6 位数字密码。</string>
+    <string name="admin_pin_label">6 位数字密码</string>
+    <string name="admin_pin_confirm">确定</string>
+    <string name="admin_pin_format_error">密码须为 6 位数字</string>
+    <string name="admin_pin_mismatch">两次密码不一致</string>
+    <string name="admin_pin_wrong">密码错误</string>
+    <string name="admin_pin_change_title">修改管理密码</string>
+    <string name="admin_pin_change_desc">修改用于敏感操作的 6 位数字密码</string>
+    <string name="admin_pin_changed">管理密码已更新</string>
     <string name="member_edit">编辑成员</string>
     <string name="member_delete">删除成员</string>
     <string name="member_select">选择成员</string>
@@ -666,6 +687,7 @@
     <!-- 错误消息 -->
     <string name="error_member_name_empty">成员名不能为空</string>
     <string name="error_member_name_exists">成员名已存在</string>
+    <string name="error_admin_required">仅管理员可执行此操作</string>
     <string name="error_group_name_empty">群聊名称不能为空</string>
     <string name="error_title_empty">标题不能为空</string>
     <string name="error_delete_member_confirm">确定要删除成员「%1$s」吗？此操作不可撤销。</string>
@@ -696,7 +718,7 @@
     <string name="cd_end_vote_action">结束投票</string>
     <string name="cd_delete_vote">删除投票</string>
     <string name="cd_member_avatar">成员头像</string>
-    <string name="cd_add_member">添加成员</string>
+    <string name="cd_add_member">添加成员，长按填写完整资料</string>
     <string name="cd_search_action">搜索</string>
     <string name="cd_close_search">关闭搜索</string>
     <string name="cd_more_actions">更多操作</string>

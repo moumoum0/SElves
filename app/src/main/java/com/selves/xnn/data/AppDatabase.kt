@@ -56,7 +56,7 @@ import android.util.Log
         LocationRecordEntity::class,
         MemberDiaryEntity::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -522,6 +522,24 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * 成员增加 isAdmin。
+         * 默认全部非管理员；启动后若存在成员但无管理员，由 UI 引导用户勾选。
+         */
+        private val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                try {
+                    database.execSQL(
+                        "ALTER TABLE members ADD COLUMN isAdmin INTEGER NOT NULL DEFAULT 0"
+                    )
+                    Log.d("AppDatabase", "数据库迁移 19->20 完成：members.isAdmin 已添加（默认非管理员）")
+                } catch (e: Exception) {
+                    Log.e("AppDatabase", "数据库迁移 19->20 失败: ${e.message}", e)
+                    throw e
+                }
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -529,7 +547,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "chat_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17, MIGRATION_17_18, MIGRATION_18_19, MIGRATION_19_20)
                 // 移除 .fallbackToDestructiveMigration() 以防止数据丢失
                 .build()
                 INSTANCE = instance

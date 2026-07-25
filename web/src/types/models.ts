@@ -6,6 +6,8 @@ export interface Member {
   bio?: string;
   pronouns?: string;
   groups?: string[];
+  /** 系统管理员（Web 暂不做权限门控，仅透传展示） */
+  isAdmin?: boolean;
 }
 
 export interface ChatGroup {

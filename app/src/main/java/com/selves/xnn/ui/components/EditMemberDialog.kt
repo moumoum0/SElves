@@ -48,13 +48,17 @@ fun EditMemberDialog(
     member: Member,
     existingMemberNames: List<String>,
     existingGroups: List<String> = emptyList(),
+    /** 当前操作者是否管理员；为 true 时显示「设为管理员」开关 */
+    canGrantAdmin: Boolean = false,
     onDismiss: () -> Unit,
-    onConfirm: (String, String?, String, String, List<String>) -> Unit
+    /** name, avatar, bio, pronouns, groups, isAdmin */
+    onConfirm: (String, String?, String, String, List<String>, Boolean) -> Unit
 ) {
     var memberName by remember { mutableStateOf(member.name) }
     var memberBio by remember { mutableStateOf(member.bio) }
     var memberPronouns by remember { mutableStateOf(member.pronouns) }
     var memberGroups by remember { mutableStateOf(member.groups) }
+    var memberIsAdmin by remember { mutableStateOf(member.isAdmin) }
     var showNewGroupDialog by remember { mutableStateOf(false) }
     var newGroupInput by remember { mutableStateOf("") }
     var avatarUri by remember { mutableStateOf<Uri?>(null) }
@@ -96,9 +100,12 @@ fun EditMemberDialog(
                     } else {
                         currentAvatarUrl // 保持原来的头像
                     }
+
+                    // 非管理员不可改角色，保持原 isAdmin
+                    val isAdmin = if (canGrantAdmin) memberIsAdmin else member.isAdmin
                     
                     // 使用保存后的头像路径
-                    onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns, memberGroups)
+                    onConfirm(memberName, savedAvatarPath, memberBio, memberPronouns, memberGroups, isAdmin)
                 }
             }
         }
@@ -290,6 +297,27 @@ fun EditMemberDialog(
                             )
                         }
                     )
+                }
+
+                // 管理员可升降目标成员的管理员身份
+                if (canGrantAdmin) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.member_set_as_admin),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = memberIsAdmin,
+                            onCheckedChange = { memberIsAdmin = it }
+                        )
+                    }
                 }
 
                 // 按钮区域

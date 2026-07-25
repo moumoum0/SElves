@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
@@ -59,6 +60,7 @@ import com.selves.xnn.ui.components.SpOwnerSelectionDialog
 import com.selves.xnn.data.ImportMode
 import com.selves.xnn.ui.components.LanguageDialog
 import com.selves.xnn.ui.components.AutoBackupConfigDialog
+import com.selves.xnn.ui.components.AdminPinDialog
 import com.selves.xnn.model.getDisplayName
 import androidx.compose.ui.res.stringResource
 import com.selves.xnn.R
@@ -71,6 +73,8 @@ import java.util.Locale
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAbout: () -> Unit = {},
+    /** 当前成员是否管理员；非管理员不可导入备份 */
+    isCurrentMemberAdmin: Boolean = false,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -103,6 +107,7 @@ fun SettingsScreen(
     val autoBackupFrequency by viewModel.autoBackupFrequency.collectAsState()
     val autoBackupHour by viewModel.autoBackupHour.collectAsState()
     val showAutoBackupDialog by viewModel.showAutoBackupDialog.collectAsState()
+    val adminPinDialog by viewModel.adminPinDialog.collectAsState()
     
     // 权限请求
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -232,6 +237,17 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 SettingsGroupTitle(title = stringResource(R.string.settings_data_backup))
             }
+
+            if (isCurrentMemberAdmin) {
+                item {
+                    SettingsItem(
+                        icon = Icons.Default.Lock,
+                        title = stringResource(R.string.admin_pin_change_title),
+                        subtitle = stringResource(R.string.admin_pin_change_desc),
+                        onClick = { viewModel.startChangeAdminPin() }
+                    )
+                }
+            }
             
             item {
                 SettingsItem(
@@ -266,17 +282,19 @@ fun SettingsScreen(
                     }
                 )
             }
-            
-            item {
-                SettingsItemWithProgress(
-                    icon = Icons.Default.FileDownload,
-                    title = stringResource(R.string.settings_backup_import),
-                    subtitle = stringResource(R.string.settings_backup_import_desc),
-                    isLoading = isBackupInProgress,
-                    onClick = {
-                        importBackupLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
-                    }
-                )
+
+            if (isCurrentMemberAdmin) {
+                item {
+                    SettingsItemWithProgress(
+                        icon = Icons.Default.FileDownload,
+                        title = stringResource(R.string.settings_backup_import),
+                        subtitle = stringResource(R.string.settings_backup_import_desc),
+                        isLoading = isBackupInProgress,
+                        onClick = {
+                            importBackupLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
+                        }
+                    )
+                }
             }
 
             item {
@@ -394,6 +412,17 @@ fun SettingsScreen(
             onConfirm = { viewModel.confirmImportBackup() },
             onDismiss = { viewModel.cancelImportBackup() }
         )
+
+        // 管理员 PIN（导入校验 / 修改密码）
+        adminPinDialog?.let { pinState ->
+            AdminPinDialog(
+                mode = pinState.mode,
+                canDismiss = pinState.canDismiss,
+                errorMessage = pinState.errorMessage,
+                onDismiss = { viewModel.dismissAdminPinDialog() },
+                onSubmit = { pin -> viewModel.submitAdminPin(pin) }
+            )
+        }
 
         // SP 导入进度对话框
         BackupProgressDialog(

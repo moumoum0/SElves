@@ -6,6 +6,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.selves.xnn.data.MemberPreferences
+import com.selves.xnn.data.AdminPinRepository
 import com.selves.xnn.data.repository.ChatGroupRepository
 import com.selves.xnn.data.repository.MemberGroupRepository
 import com.selves.xnn.data.repository.MessageRepository
@@ -42,6 +43,9 @@ import java.util.*
 import javax.inject.Inject
 import android.content.Context
 import com.selves.xnn.util.ImageUtils
+import com.selves.xnn.util.AdminPinCrypto
+import com.selves.xnn.ui.components.AdminPinDialogMode
+import com.selves.xnn.ui.components.AdminPinUiState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -52,6 +56,11 @@ import kotlinx.coroutines.withContext
 data class LoadingState(
     val isLoading: Boolean = true
 )
+
+/** 验证通过后要执行的敏感操作（进程内，不序列化） */
+private sealed class PendingAdminAction {
+    data class DeleteMember(val member: Member) : PendingAdminAction()
+}
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -65,7 +74,8 @@ class MainViewModel @Inject constructor(
     private val systemRepository: SystemRepository,
     private val onlineStatusRepository: OnlineStatusRepository,
     private val backupService: com.selves.xnn.data.BackupService,
-    private val spImportService: SimplyPluralImportService
+    private val spImportService: SimplyPluralImportService,
+    private val adminPinRepository: AdminPinRepository
 ) : ViewModel() {
     
     private val TAG = "MainViewModel"
@@ -97,7 +107,25 @@ class MainViewModel @Inject constructor(
     // 是否需要显示引导界面
     private val _needsGuide = MutableStateFlow<Boolean?>(null)
     val needsGuide: StateFlow<Boolean?> = _needsGuide.asStateFlow()
-    
+
+    /**
+     * 升级后存在成员但尚无任何管理员时，强制引导用户勾选管理员。
+     * 与 needsGuide（建系统/建成员）互斥：仅在不需要欢迎引导时弹出。
+     */
+    private val _needsAdminSetup = MutableStateFlow(false)
+    val needsAdminSetup: StateFlow<Boolean> = _needsAdminSetup.asStateFlow()
+
+    /**
+     * 管理员 PIN 弹窗状态；null 表示不显示。
+     * 强制设置时 canDismiss=false。
+     */
+    private val _adminPinDialog = MutableStateFlow<AdminPinUiState?>(null)
+    val adminPinDialog: StateFlow<AdminPinUiState?> = _adminPinDialog.asStateFlow()
+
+    private var pendingAdminAction: PendingAdminAction? = null
+    /** SetupConfirm / ChangeConfirm 时暂存第一次输入 */
+    private var pendingPinFirstInput: String? = null
+
     // 备份导入相关状态
     private val _isBackupInProgress = MutableStateFlow(false)
     val isBackupInProgress: StateFlow<Boolean> = _isBackupInProgress.asStateFlow()
@@ -242,6 +270,9 @@ class MainViewModel @Inject constructor(
                 
                 // 等待基础数据加载完成
                 awaitAll(membersJob, currentMemberJob)
+
+                // 有成员但无管理员 → 弹出选管理员引导（欢迎引导优先）
+                refreshNeedsAdminSetup()
                 
                 // 同步成员分组与分组元数据
                 val memberGroupsJob = async(Dispatchers.IO) { loadMemberGroups() }
@@ -482,26 +513,41 @@ class MainViewModel @Inject constructor(
     }
     
     // 创建成员
-    fun createMember(name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", groups: List<String> = emptyList(), shouldSetAsCurrent: Boolean = true) {
+    fun createMember(
+        name: String,
+        avatarUrl: String?,
+        bio: String = "",
+        pronouns: String = "",
+        groups: List<String> = emptyList(),
+        shouldSetAsCurrent: Boolean = true,
+        isAdmin: Boolean = false
+    ) {
         val memberId = UUID.randomUUID().toString()
-        
         val normalizedGroups = normalizeGroupNames(groups)
-        
-        val member = Member(
-            id = memberId,
-            name = name,
-            avatarUrl = avatarUrl,
-            bio = bio,
-            pronouns = pronouns,
-            groups = normalizedGroups
-        )
-        
+
         // 使用单一协程进行所有操作，避免并发问题
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
+                val activeCount = memberRepository.countActiveMembers()
+                // 系统内尚无成员时，首位强制管理员（引导 / 空库创建）
+                val forceFirstAdmin = activeCount == 0
+                // 仅当前管理员可授予 isAdmin；非管理员请求会被忽略
+                val grantAdmin = forceFirstAdmin ||
+                    (isAdmin && _currentMember.value?.isAdmin == true)
+
+                val member = Member(
+                    id = memberId,
+                    name = name,
+                    avatarUrl = avatarUrl,
+                    bio = bio,
+                    pronouns = pronouns,
+                    groups = normalizedGroups,
+                    isAdmin = grantAdmin
+                )
+
                 memberGroupRepository.ensureGroupsExist(normalizedGroups)
                 memberRepository.saveMember(member)
-                
+
                 if (shouldSetAsCurrent) {
                     // 先让之前的成员下线
                     _currentMember.value?.let { previousMember ->
@@ -509,13 +555,18 @@ class MainViewModel @Inject constructor(
                             onlineStatusRepository.logoutMember(previousMember.id)
                         }
                     }
-                    
+
                     // 设置新的当前成员
                     _currentMember.value = member
                     memberPreferences.saveCurrentMemberId(member.id)
-                    
+
                     // 让新创建的成员上线
                     onlineStatusRepository.loginMember(member.id)
+                }
+
+                // 首位管理员 / 首次产生管理员：强制设置管理密码
+                if (grantAdmin) {
+                    ensureAdminPinIfNeeded(force = true)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "创建成员失败: ${e.message}", e)
@@ -524,7 +575,15 @@ class MainViewModel @Inject constructor(
     }
     
     // 更新成员信息
-    fun updateMember(memberId: String, name: String, avatarUrl: String?, bio: String = "", pronouns: String = "", groups: List<String> = emptyList()) {
+    fun updateMember(
+        memberId: String,
+        name: String,
+        avatarUrl: String?,
+        bio: String = "",
+        pronouns: String = "",
+        groups: List<String> = emptyList(),
+        isAdmin: Boolean? = null
+    ) {
         
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
@@ -533,6 +592,23 @@ class MainViewModel @Inject constructor(
                 
                 if (existingMember != null) {
                     val normalizedGroups = normalizeGroupNames(groups)
+
+                    // 仅当前管理员可改 isAdmin；否则保持原值
+                    val actorIsAdmin = _currentMember.value?.isAdmin == true
+                    var nextIsAdmin = if (actorIsAdmin && isAdmin != null) {
+                        isAdmin
+                    } else {
+                        existingMember.isAdmin
+                    }
+
+                    // 不能取消最后一个管理员
+                    if (existingMember.isAdmin && !nextIsAdmin) {
+                        val adminCount = memberRepository.countActiveAdmins()
+                        if (adminCount <= 1) {
+                            Log.e(TAG, "无法取消最后一个管理员: $memberId")
+                            nextIsAdmin = true
+                        }
+                    }
                     
                     // 创建更新后的成员对象
                     val updatedMember = existingMember.copy(
@@ -540,7 +616,8 @@ class MainViewModel @Inject constructor(
                         avatarUrl = avatarUrl ?: existingMember.avatarUrl,
                         bio = bio,
                         pronouns = pronouns,
-                        groups = normalizedGroups
+                        groups = normalizedGroups,
+                        isAdmin = nextIsAdmin
                     )
                     
                     // 保存到数据库
@@ -941,21 +1018,37 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    // 删除成员（软删除）
+    // 删除成员（软删除）— 仅管理员，且需 PIN（会话内解锁可跳过）
     fun deleteMember(member: Member) {
+        val actor = _currentMember.value
+        if (actor?.isAdmin != true) {
+            Log.e(TAG, "删除成员被拒绝：当前成员非管理员")
+            return
+        }
         // 检查不能删除当前成员
-        if (member.id == _currentMember.value?.id) {
+        if (member.id == actor.id) {
             Log.e(TAG, "无法删除当前成员: ${member.id}")
             return
         }
-        
+
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
-            try {
-                // 标记成员为已删除状态，而不是物理删除
-                memberRepository.deleteMember(member.id)
-            } catch (e: Exception) {
-                Log.e(TAG, "标记成员为删除状态失败: ${e.message}", e)
+            requireAdminPinThen(PendingAdminAction.DeleteMember(member))
+        }
+    }
+
+    private suspend fun performDeleteMember(member: Member) {
+        try {
+            // 不能删掉最后一个管理员
+            if (member.isAdmin) {
+                val adminCount = memberRepository.countActiveAdmins()
+                if (adminCount <= 1) {
+                    Log.e(TAG, "无法删除最后一个管理员: ${member.id}")
+                    return
+                }
             }
+            memberRepository.deleteMember(member.id)
+        } catch (e: Exception) {
+            Log.e(TAG, "标记成员为删除状态失败: ${e.message}", e)
         }
     }
     
@@ -1155,6 +1248,234 @@ class MainViewModel @Inject constructor(
             _needsGuide.value = true // 出错时默认显示引导界面
         }
     }
+
+    /**
+     * 有活跃成员且活跃管理员数为 0 时需要选管理员；欢迎引导中不弹。
+     */
+    private suspend fun refreshNeedsAdminSetup() {
+        try {
+            if (_needsGuide.value == true) {
+                _needsAdminSetup.value = false
+                return
+            }
+            val membersCount = memberRepository.countActiveMembers()
+            if (membersCount == 0) {
+                _needsAdminSetup.value = false
+                return
+            }
+            val adminCount = memberRepository.countActiveAdmins()
+            _needsAdminSetup.value = adminCount == 0
+            Log.d(TAG, "管理员引导检查: members=$membersCount, admins=$adminCount, need=${_needsAdminSetup.value}")
+            // 已有管理员但未设 PIN（异常/旧数据）→ 强制设置
+            if (adminCount > 0) {
+                ensureAdminPinIfNeeded(force = false)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "检查管理员引导失败: ${e.message}", e)
+            _needsAdminSetup.value = false
+        }
+    }
+
+    /**
+     * 升级后首次指定管理员（可多选）；完成后关闭引导，并强制设置管理密码。
+     * 无管理员门控：此时系统内尚无管理员。
+     */
+    fun assignInitialAdmins(memberIds: Set<String>) {
+        if (memberIds.isEmpty()) {
+            Log.w(TAG, "assignInitialAdmins: 未选择任何成员")
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            try {
+                // 仅在仍无管理员时允许（防止绕过后重复调用乱改）
+                val existingAdmins = memberRepository.countActiveAdmins()
+                if (existingAdmins > 0 && !_needsAdminSetup.value) {
+                    Log.w(TAG, "assignInitialAdmins: 已有管理员且非引导态，忽略")
+                    return@launch
+                }
+                memberIds.forEach { id ->
+                    memberRepository.setMemberAsAdmin(id)
+                }
+                // 刷新内存中的成员列表 / 当前成员
+                val refreshed = memberRepository.getAllMembers().first()
+                _members.value = refreshed
+                _currentMember.value?.let { cur ->
+                    refreshed.find { it.id == cur.id }?.let { _currentMember.value = it }
+                }
+                _needsAdminSetup.value = false
+                Log.d(TAG, "初始管理员已设置: $memberIds")
+                // 尚无 PIN 则强制设置（迁移升级路径）
+                ensureAdminPinIfNeeded(force = true)
+            } catch (e: Exception) {
+                Log.e(TAG, "设置初始管理员失败: ${e.message}", e)
+            }
+        }
+    }
+
+    // ── 管理员 PIN ──────────────────────────────────────────────
+
+    /**
+     * 有管理员但尚无 PIN 时弹出强制设置。
+     * @param force 刚完成管理员指定时强制检查
+     */
+    private suspend fun ensureAdminPinIfNeeded(force: Boolean = false) {
+        val adminCount = memberRepository.countActiveAdmins()
+        if (adminCount == 0) return
+        if (adminPinRepository.hasAdminPin()) return
+        if (!force && _adminPinDialog.value != null) return
+        pendingPinFirstInput = null
+        _adminPinDialog.value = AdminPinUiState(
+            mode = AdminPinDialogMode.Setup,
+            canDismiss = false
+        )
+    }
+
+    fun dismissAdminPinDialog() {
+        val state = _adminPinDialog.value ?: return
+        if (!state.canDismiss) return
+        pendingAdminAction = null
+        pendingPinFirstInput = null
+        _adminPinDialog.value = null
+    }
+
+    /** 用户提交 PIN 输入 */
+    fun submitAdminPin(pin: String) {
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            val state = _adminPinDialog.value ?: return@launch
+            when (state.mode) {
+                AdminPinDialogMode.Setup, AdminPinDialogMode.ChangeNew -> {
+                    if (!AdminPinCrypto.isValidPinFormat(pin)) {
+                        _adminPinDialog.value = state.copy(
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_format_error)
+                        )
+                        return@launch
+                    }
+                    pendingPinFirstInput = pin
+                    val nextMode = if (state.mode == AdminPinDialogMode.Setup) {
+                        AdminPinDialogMode.SetupConfirm
+                    } else {
+                        AdminPinDialogMode.ChangeConfirm
+                    }
+                    _adminPinDialog.value = AdminPinUiState(
+                        mode = nextMode,
+                        canDismiss = state.canDismiss
+                    )
+                }
+                AdminPinDialogMode.SetupConfirm, AdminPinDialogMode.ChangeConfirm -> {
+                    val first = pendingPinFirstInput
+                    if (first == null || first != pin) {
+                        // 不一致：回到第一步重设
+                        val backMode = if (state.mode == AdminPinDialogMode.SetupConfirm) {
+                            AdminPinDialogMode.Setup
+                        } else {
+                            AdminPinDialogMode.ChangeNew
+                        }
+                        pendingPinFirstInput = null
+                        _adminPinDialog.value = AdminPinUiState(
+                            mode = backMode,
+                            canDismiss = state.canDismiss,
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_mismatch)
+                        )
+                        return@launch
+                    }
+                    val ok = adminPinRepository.setPin(pin)
+                    pendingPinFirstInput = null
+                    if (!ok) {
+                        _adminPinDialog.value = state.copy(
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_format_error)
+                        )
+                        return@launch
+                    }
+                    _adminPinDialog.value = null
+                    // 若有挂起的敏感操作，设置成功即视为已解锁，继续执行
+                    flushPendingAdminAction()
+                }
+                AdminPinDialogMode.Verify, AdminPinDialogMode.ChangeVerify -> {
+                    val ok = adminPinRepository.verifyPin(pin)
+                    if (!ok) {
+                        _adminPinDialog.value = state.copy(
+                            errorMessage = context.getString(com.selves.xnn.R.string.admin_pin_wrong)
+                        )
+                        return@launch
+                    }
+                    if (state.mode == AdminPinDialogMode.ChangeVerify) {
+                        _adminPinDialog.value = AdminPinUiState(
+                            mode = AdminPinDialogMode.ChangeNew,
+                            canDismiss = true
+                        )
+                    } else {
+                        _adminPinDialog.value = null
+                        flushPendingAdminAction()
+                    }
+                }
+            }
+        }
+    }
+
+    /** 设置页：修改管理密码（需可 dismiss） */
+    fun startChangeAdminPin() {
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+            if (!adminPinRepository.hasAdminPin()) {
+                // 尚未设置则走设置流
+                pendingPinFirstInput = null
+                _adminPinDialog.value = AdminPinUiState(
+                    mode = AdminPinDialogMode.Setup,
+                    canDismiss = true
+                )
+                return@launch
+            }
+            pendingPinFirstInput = null
+            _adminPinDialog.value = AdminPinUiState(
+                mode = AdminPinDialogMode.ChangeVerify,
+                canDismiss = true
+            )
+        }
+    }
+
+    /**
+     * 敏感操作前：已解锁则直接执行；否则弹 Verify。
+     * 无 PIN 时先强制 Setup。
+     */
+    private suspend fun requireAdminPinThen(action: PendingAdminAction) {
+        if (!adminPinRepository.hasAdminPin()) {
+            pendingAdminAction = action
+            pendingPinFirstInput = null
+            _adminPinDialog.value = AdminPinUiState(
+                mode = AdminPinDialogMode.Setup,
+                canDismiss = false
+            )
+            return
+        }
+        if (adminPinRepository.isSessionUnlocked()) {
+            executePendingAdminAction(action)
+            return
+        }
+        pendingAdminAction = action
+        _adminPinDialog.value = AdminPinUiState(
+            mode = AdminPinDialogMode.Verify,
+            canDismiss = true
+        )
+    }
+
+    private suspend fun flushPendingAdminAction() {
+        val action = pendingAdminAction ?: return
+        pendingAdminAction = null
+        executePendingAdminAction(action)
+    }
+
+    private suspend fun executePendingAdminAction(action: PendingAdminAction) {
+        when (action) {
+            is PendingAdminAction.DeleteMember -> performDeleteMember(action.member)
+        }
+    }
+
+    /** 供 Settings 等外部确认「本会话是否已通过 PIN」 */
+    fun isAdminPinSessionUnlocked(): Boolean = adminPinRepository.isSessionUnlocked()
+
+    suspend fun ensureAdminPinUnlockedForAction(): Boolean {
+        if (!adminPinRepository.hasAdminPin()) return false
+        return adminPinRepository.isSessionUnlocked()
+    }
     
     /**
      * 创建系统
@@ -1186,7 +1507,9 @@ class MainViewModel @Inject constructor(
     fun completeGuide() {
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             _needsGuide.value = false
-            Log.d(TAG, "引导流程已完成")
+            // 若导入/异常导致有成员无管理员，紧接着弹出选管理员
+            refreshNeedsAdminSetup()
+            Log.d(TAG, "引导流程已完成, needsAdminSetup=${_needsAdminSetup.value}")
         }
     }
     
