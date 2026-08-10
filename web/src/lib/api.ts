@@ -12,6 +12,48 @@ export class AuthError extends Error {
   }
 }
 
+/**
+ * 敏感操作提权失败。服务端对删成员、导入/导出备份等操作要求管理密码，
+ * 调用方应据 reason 决定是弹出输入框、提示错误还是提示稍后重试。
+ */
+export class AdminPinError extends Error {
+  constructor(
+    public readonly reason:
+      | 'required'      // 未提供，需要弹窗输入
+      | 'invalid'       // 密码错误
+      | 'not_configured'// 手机端还没设过管理密码
+      | 'locked',       // 错误次数过多，暂时锁定
+    message: string,
+    public readonly retryAfterSeconds?: number,
+  ) {
+    super(message);
+    this.name = 'AdminPinError';
+  }
+}
+
+const ADMIN_PIN_HEADER = 'X-Admin-Pin';
+
+/** 把服务端的提权错误响应转成 AdminPinError；不是提权错误则返回 null */
+async function toAdminPinError(response: Response): Promise<AdminPinError | null> {
+  if (response.status !== 403 && response.status !== 429) return null;
+  const body = (await response.json().catch(() => null)) as
+    | { error?: string; message?: string }
+    | null;
+  const retryAfter = Number(response.headers.get('Retry-After')) || undefined;
+  switch (body?.error) {
+    case 'admin_pin_required':
+      return new AdminPinError('required', body.message ?? '需要管理密码');
+    case 'admin_pin_invalid':
+      return new AdminPinError('invalid', body.message ?? '管理密码错误');
+    case 'admin_pin_not_configured':
+      return new AdminPinError('not_configured', body.message ?? '请先在手机端设置管理密码');
+    case 'admin_pin_locked':
+      return new AdminPinError('locked', body.message ?? '错误次数过多，请稍后重试', retryAfter);
+    default:
+      return null;
+  }
+}
+
 export function getApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
   const fromStorage = window.localStorage.getItem(API_BASE_URL_KEY);
@@ -33,17 +75,22 @@ export function setApiToken(value: string): void {
 
 // ===== 写入请求 =====
 
-async function mutate<T>(method: string, path: string, body?: unknown): Promise<T> {
+async function mutate<T>(method: string, path: string, body?: unknown, adminPin?: string): Promise<T> {
   const token = getApiToken();
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(adminPin ? { [ADMIN_PIN_HEADER]: adminPin } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  if (!res.ok) {
+    const pinError = await toAdminPinError(res);
+    if (pinError) throw pinError;
+    throw new Error(`${res.status} ${res.statusText}`);
+  }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
@@ -52,6 +99,10 @@ export { fetchJson };
 export const postJson = <T>(path: string, body: unknown) => mutate<T>('POST', path, body);
 export const putJson = <T>(path: string, body: unknown) => mutate<T>('PUT', path, body);
 export const deleteApi = (path: string) => mutate<void>('DELETE', path);
+
+/** 删除成员：服务端要求管理密码提权 */
+export const deleteMember = (memberId: string, adminPin: string) =>
+  mutate<void>('DELETE', `/api/members/${encodeURIComponent(memberId)}`, undefined, adminPin);
 
 const TODO_PRIORITY_VALUE: Record<Todo['priority'], number> = {
   LOW: 0,
@@ -123,28 +174,39 @@ export function getOnlineSummary(params: Pick<OnlineLogQuery, 'from' | 'to'> = {
   return fetchJson<OnlineSummary>(`/api/online/summary${toQueryString(params)}`);
 }
 
-export async function exportBackup(): Promise<Blob> {
+export async function exportBackup(adminPin: string): Promise<Blob> {
   const token = getApiToken();
   const response = await fetch(`${getApiBaseUrl()}/api/backup/export`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      [ADMIN_PIN_HEADER]: adminPin,
+    },
   });
-  if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    const pinError = await toAdminPinError(response);
+    if (pinError) throw pinError;
+    throw new Error(`${response.status} ${response.statusText}`);
+  }
   return response.blob();
 }
 
-export function importBackup(file: File): Promise<{ status: string }> {
+export async function importBackup(file: File, adminPin: string): Promise<{ status: string }> {
   const token = getApiToken();
-  return fetch(`${getApiBaseUrl()}/api/backup/import`, {
+  const response = await fetch(`${getApiBaseUrl()}/api/backup/import`, {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      [ADMIN_PIN_HEADER]: adminPin,
+    },
     body: file,
-  }).then(async (response) => {
-    if (!response.ok) {
-      const error = await response.json().catch(() => null) as { error?: string } | null;
-      throw new Error(error?.error || `${response.status} ${response.statusText}`);
-    }
-    return response.json() as Promise<{ status: string }>;
   });
+  if (!response.ok) {
+    const pinError = await toAdminPinError(response);
+    if (pinError) throw pinError;
+    const error = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(error?.error || `${response.status} ${response.statusText}`);
+  }
+  return response.json() as Promise<{ status: string }>;
 }
 
 export function castVote(

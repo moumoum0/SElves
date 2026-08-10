@@ -17,7 +17,10 @@ import {
   deleteDynamicComment,
   getVoteRecords,
   castVote,
+  deleteMember,
 } from './lib/api';
+import { AdminPinDialog } from './components/AdminPinDialog';
+import { useAdminPinGate } from './hooks/useAdminPinGate';
 import { ChatDetailPage } from './pages/ChatDetailPage';
 import { CreateDynamicPage } from './pages/CreateDynamicPage';
 import { DiaryPage } from './pages/DiaryPage';
@@ -139,6 +142,16 @@ export default function App() {
   const handleCreateMember = useCallback((name: string, bio: string, pronouns: string, _groups: string[]) => {
     postJson('/api/members', { name, bio, pronouns }).then(() => void reload()).catch(() => {});
   }, [reload]);
+
+  const adminPinGate = useAdminPinGate();
+
+  // 删除成员需管理密码提权，且服务端会拒绝删除最后一个管理员
+  const handleDeleteMember = useCallback((id: string) => {
+    void adminPinGate.run('删除成员', async (pin) => {
+      await deleteMember(id, pin);
+      void reload();
+    }).catch(() => {});
+  }, [adminPinGate, reload]);
 
   // 检查 token 是否存在，首次访问时弹窗提示
   useEffect(() => {
@@ -317,7 +330,7 @@ export default function App() {
       <Route path="/vote/:voteId" element={data && currentMember ? <VoteDetailRoute data={data} currentMember={currentMember} onBack={() => navigate('/vote')} reload={reload} /> : <div />} />
       <Route path="/diary" element={data && currentMember ? <DiaryPage diaries={data.diaries} currentMember={currentMember} onBack={() => navigate('/')} onCreateDiary={(title, content) => { postJson('/api/diaries', { memberId: currentMember.id, title, content }).catch(() => {}); }} onDeleteDiary={(id) => { deleteApi(`/api/diaries/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
       <Route path="/location" element={data && currentMember ? <LocationPage tracking={data.tracking} currentMember={currentMember} onBack={() => navigate('/')} /> : <div />} />
-      <Route path="/member-management" element={data && currentMember ? <MemberManagementPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} onCreateMember={handleCreateMember} onEditMember={(id, name, bio, pronouns) => { putJson(`/api/members/${id}`, { name, bio, pronouns }).then(() => void reload()).catch(() => {}); }} onDeleteMember={(id) => { deleteApi(`/api/members/${id}`).then(() => void reload()).catch(() => {}); }} /> : <div />} />
+      <Route path="/member-management" element={data && currentMember ? <MemberManagementPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} onCreateMember={handleCreateMember} onEditMember={(id, name, bio, pronouns) => { putJson(`/api/members/${id}`, { name, bio, pronouns }).then(() => void reload()).catch(() => {}); }} onDeleteMember={handleDeleteMember} /> : <div />} />
       <Route path="/online-stats" element={data && currentMember ? <OnlineStatsPage members={data.members} currentMember={currentMember} onBack={() => navigate('/system')} /> : <div />} />
       <Route path="/settings" element={<SettingsPage baseUrl={baseUrl} onBack={() => navigate('/system')} onNavigateToAbout={() => navigate('/about')} />} />
       <Route path="/about" element={<AboutPage onBack={() => navigate('/system')} onDeveloperModeUnlocked={() => setDeveloperModeArmed(true)} />} />
@@ -459,6 +472,17 @@ export default function App() {
                   确认
                 </mdui-button>
               </mdui-dialog>
+            )}
+
+            {/* 敏感操作提权（删除成员等） */}
+            {adminPinGate.pendingLabel && (
+              <AdminPinDialog
+                actionLabel={adminPinGate.pendingLabel}
+                errorMessage={adminPinGate.error}
+                submitting={adminPinGate.submitting}
+                onSubmit={adminPinGate.submitPin}
+                onDismiss={adminPinGate.dismiss}
+              />
             )}
           </>
         )}

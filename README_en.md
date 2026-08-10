@@ -20,13 +20,16 @@
 
   <img alt="Kotlin" src="https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white" />
   <img alt="Jetpack Compose" src="https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white">
+  <img alt="React" src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white">
 
   <h6>Supported Platform</h6>
 
   <img alt="Android" src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" />
+  <img alt="Web" src="https://img.shields.io/badge/Web-5A0FC8?style=for-the-badge&logo=googlechrome&logoColor=white" />
 
   <p>
-    An Android app designed for communication and collaboration within plural systems
+    An app designed for communication and collaboration within plural systems. The Android app embeds a web server, so any device on the same network can access the web frontend from a browser for cross-device collaboration.
   </p>
 </div>
 
@@ -34,14 +37,16 @@
 
 ## Features
 
-- **Group Chat**: Real-time messaging between system members, with multi-group support
-- **Todo**: Shared task lists with progress tracking
-- **Dynamics**: Post and view member updates, with likes and comments
-- **Voting**: Create collective decision polls, view vote details and results
+- **Group Chat**: Real-time messaging between system members, with text, images, and multi-group support
+- **Todo**: Shared task lists with priorities and completion tracking
+- **Dynamics**: Post and view member updates, with images, likes, and comments
+- **Voting**: Create collective decision polls with multi-choice and anonymous options, view vote details and results
+- **Diary**: Personal diaries for each member
 - **Location Tracking**: Track and record system members' location information
-- **Online Stats**: View each member's online history and statistics
-- **Member Management**: Create, switch, and manage system members
-- **Settings**: Theme modes (dark/light/system), multi-language support, personalized configuration
+- **Online Stats**: View each member's online history and duration statistics
+- **Member Management**: Create, switch, and manage system members, with member groups
+- **Web Access**: Embedded web server (REST API + WebSocket, token auth) — enable it in Settings and any device on the same network can connect from a browser
+- **Settings**: Theme modes (dark/light/system), multi-language (English / 简体中文), customizable home screen modules
 - **Welcome Guide**: First-launch onboarding flow with backup import support
 - **Local Storage**: All data stored locally to protect privacy
 
@@ -59,8 +64,9 @@
 ### Prerequisites
 
 - [Android Studio](https://developer.android.com/studio) (latest stable)
-- JDK 11+
+- JDK 17+
 - Android SDK (API 26+)
+- [Node.js](https://nodejs.org/) and npm (the web frontend is built automatically and bundled into the APK)
 
 ### Installation
 
@@ -68,11 +74,23 @@
    ```sh
    git clone https://github.com/moumoum0/SElves.git
    ```
-2. Open the project in Android Studio
-3. Build and install to your device
+2. Install web frontend dependencies
+   ```sh
+   cd web && npm install
+   ```
+3. Open the project in Android Studio, then build and install to your device (Gradle builds the web frontend automatically)
    ```sh
    ./gradlew installDebug
    ```
+
+### Web Development (optional)
+
+```sh
+cd web
+npm run dev   # start the Vite dev server (port 5173)
+```
+
+In production, the web frontend is served by the web server embedded in the Android app (port 8080). Enable it in the app's Settings, and any device on the same network can access it from a browser.
 
 ## Roadmap
 
@@ -80,12 +98,15 @@
 - [x] Todo list
 - [x] Dynamics feed
 - [x] Voting system
+- [x] Diary
 - [x] Location tracking
 - [x] Online stats
 - [x] Member management
 - [x] Settings & theming
+- [x] English localization
+- [x] Web frontend (embedded web server, cross-device browser access)
+- [ ] Standalone server deployment
 - [ ] Cloud data sync
-- [ ] English localization
 
 See [Issues](https://github.com/moumoum0/SElves/issues) for proposed features and known bugs.
 

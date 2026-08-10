@@ -666,18 +666,41 @@ class BackupService @Inject constructor(
     private fun restoreOtherFile(filePath: String, fileData: ByteArray) {
         try {
             val relativePath = filePath.removePrefix(OTHER_FILES_FOLDER)
-            val targetFile = File(context.filesDir, relativePath)
-            
+            val targetFile = resolveInsideFilesDir(relativePath) ?: run {
+                Log.e(TAG, "拒绝恢复越界路径条目: $filePath")
+                return
+            }
+
             // 确保父目录存在
             targetFile.parentFile?.mkdirs()
-            
+
             // 写入文件数据
             targetFile.writeBytes(fileData)
-            
+
             Log.d(TAG, "成功恢复文件: $relativePath")
         } catch (e: Exception) {
             Log.e(TAG, "恢复文件失败: $filePath, ${e.message}", e)
         }
+    }
+
+    /**
+     * 把备份条目的相对路径解析到 filesDir 内。
+     *
+     * 备份文件可能来自任何地方（Web 导入、用户手选的 zip），条目名不可信：
+     * 形如 `../../datastore/xxx.preferences_pb` 的条目会覆盖管理密码哈希、
+     * shared_prefs 等应用私有文件（Zip Slip）。因此以规范化路径为准做边界校验。
+     *
+     * @return 合法的目标文件，越界或非法则返回 null
+     */
+    private fun resolveInsideFilesDir(relativePath: String): File? {
+        if (relativePath.isBlank()) return null
+        // 绝对路径条目直接拒绝，避免 File(parent, "/etc/x") 忽略 parent
+        if (relativePath.startsWith("/") || relativePath.startsWith("\\")) return null
+
+        val baseDir = context.filesDir.canonicalFile
+        val target = File(baseDir, relativePath).canonicalFile
+        val basePrefix = baseDir.path + File.separator
+        return if (target.path.startsWith(basePrefix)) target else null
     }
 
     /**
@@ -686,8 +709,11 @@ class BackupService @Inject constructor(
     private fun restoreImageFile(imagePath: String, imageData: ByteArray) {
         try {
             val relativePath = imagePath.removePrefix(IMAGES_FOLDER)
-            val imageFile = File(context.filesDir, relativePath)
-            
+            val imageFile = resolveInsideFilesDir(relativePath) ?: run {
+                Log.e(TAG, "拒绝恢复越界路径图片条目: $imagePath")
+                return
+            }
+
             // 确保父目录存在
             imageFile.parentFile?.mkdirs()
             

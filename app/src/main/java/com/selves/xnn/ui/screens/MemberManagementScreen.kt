@@ -34,6 +34,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -270,50 +272,22 @@ fun MemberManagementScreen(
                     }
                 }
             }
-        },
-        floatingActionButton = {
-            // 短按：仅头像+名称；长按：完整资料（简介/代词/分组）
-            val fabInteractionSource = remember { MutableInteractionSource() }
-            Surface(
-                shape = FloatingActionButtonDefaults.shape,
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                tonalElevation = 6.dp,
-                shadowElevation = 6.dp,
-                modifier = Modifier
-                    .size(56.dp)
-                    .combinedClickable(
-                        interactionSource = fabInteractionSource,
-                        indication = ripple(bounded = true, radius = 28.dp),
-                        role = Role.Button,
-                        onClick = {
-                            createMemberFullForm = false
-                            showCreateMemberDialog = true
-                        },
-                        onLongClick = {
-                            createMemberFullForm = true
-                            showCreateMemberDialog = true
-                        }
-                    )
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = stringResource(R.string.cd_add_member)
-                    )
-                }
-            }
         }
     ) { paddingValues ->
-        // FAB 占位高度（56dp 按钮 + 16dp 外边距 + 16dp 间隙），避免遮挡列表与字母索引栏
-        val fabClearance = 88.dp
-        Row(
+        // FAB 与列表/字母栏放在同一个 Box 内，避让距离由 FAB 实测高度推导，
+        // 不依赖硬编码常量，FAB 尺寸或系统栏变化时自动跟随。
+        val fabMargin = 16.dp
+        var fabHeight by remember { mutableStateOf(0.dp) }
+        val density = LocalDensity.current
+        val fabClearance = fabHeight + fabMargin * 2
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+        ) {
+        Row(
+            modifier = Modifier.fillMaxSize()
         ) {
             // 主列表区域
             LazyColumn(
@@ -469,6 +443,48 @@ fun MemberManagementScreen(
                     modifier = Modifier
                         .padding(end = 8.dp, top = 16.dp, bottom = fabClearance)
                 )
+            }
+        }
+
+            // 短按：仅头像+名称；长按：完整资料（简介/代词/分组）
+            val fabInteractionSource = remember { MutableInteractionSource() }
+            Surface(
+                shape = FloatingActionButtonDefaults.shape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(fabMargin)
+                    .size(56.dp)
+                    .onGloballyPositioned { coordinates ->
+                        val measured = with(density) { coordinates.size.height.toDp() }
+                        if (measured != fabHeight) fabHeight = measured
+                    }
+                    .combinedClickable(
+                        interactionSource = fabInteractionSource,
+                        indication = ripple(bounded = true, radius = 28.dp),
+                        role = Role.Button,
+                        onClick = {
+                            createMemberFullForm = false
+                            showCreateMemberDialog = true
+                        },
+                        onLongClick = {
+                            createMemberFullForm = true
+                            showCreateMemberDialog = true
+                        }
+                    )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.cd_add_member)
+                    )
+                }
             }
         }
     }

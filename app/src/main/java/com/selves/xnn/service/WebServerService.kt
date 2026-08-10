@@ -11,6 +11,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.selves.xnn.MainActivity
 import com.selves.xnn.R
+import com.selves.xnn.data.AdminPinRepository
 import com.selves.xnn.data.AppDatabase
 import com.selves.xnn.data.BackupResult
 import com.selves.xnn.data.BackupService
@@ -74,6 +75,7 @@ class WebServerService : Service() {
     @Inject lateinit var database: AppDatabase
     @Inject lateinit var memberPreferences: MemberPreferences
     @Inject lateinit var backupService: BackupService
+    @Inject lateinit var adminPinRepository: AdminPinRepository
 
     @Volatile
     private var server: EmbeddedServer<*, *>? = null
@@ -85,6 +87,8 @@ class WebServerService : Service() {
         private const val CHANNEL_ID = "web_server_channel"
         private const val WEB_ASSET_ROOT = "web"
         private const val TAG = "WebServerService"
+        /** 敏感操作提权用的管理密码请求头 */
+        const val ADMIN_PIN_HEADER = "X-Admin-Pin"
 
         fun getLocalIpAddress(): String {
             // 优先取 wlan* 接口（Wi-Fi），避免返回移动数据/VPN/热点 IP
@@ -460,6 +464,8 @@ class WebServerService : Service() {
 
                 // --- 备份 ---
                 get("/api/backup/export") {
+                    // 导出包含全部成员的日记与位置记录，等同于整库外泄，同样需提权
+                    if (!call.requireAdminPin()) return@get
                     val (result, bytes) = backupService.exportBackupBytes()
                     when (result) {
                         is BackupResult.Success -> {
@@ -481,6 +487,7 @@ class WebServerService : Service() {
                 }
 
                 post("/api/backup/import") {
+                    if (!call.requireAdminPin()) return@post
                     val bytes = call.receive<ByteArray>()
                     if (bytes.isEmpty()) {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "备份文件为空"))
@@ -718,10 +725,25 @@ class WebServerService : Service() {
                 }
 
                 delete("/api/members/{id}") {
+                    if (!call.requireAdminPin()) return@delete
                     val id = call.parameters["id"]
                         ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing id"))
                     val existing = database.memberDao().getMemberById(id)
                         ?: return@delete call.respond(HttpStatusCode.NotFound, mapOf("error" to "Member not found"))
+                    if (existing.isDeleted) {
+                        return@delete call.respond(HttpStatusCode.NotFound, mapOf("error" to "Member not found"))
+                    }
+                    // 不能删掉最后一个管理员：否则系统会退回「无管理员」态，
+                    // 而该状态下任何人都能通过引导把自己设为管理员。
+                    if (existing.isAdmin && memberRepository.countActiveAdmins() <= 1) {
+                        return@delete call.respond(
+                            HttpStatusCode.Conflict,
+                            mapOf(
+                                "error" to "last_admin",
+                                "message" to "无法删除最后一个管理员"
+                            )
+                        )
+                    }
                     database.memberDao().updateMember(existing.copy(isDeleted = true))
                     WebSocketManager.broadcast("MEMBER_DELETED", mapOf("id" to id))
                     call.respond(HttpStatusCode.NoContent)
@@ -854,6 +876,64 @@ class WebServerService : Service() {
             get("{...}") {
                 if (call.respondWebAssetOrIndex()) return@get
                 call.respond(HttpStatusCode.NotFound, mapOf("error" to "Web page not found"))
+            }
+        }
+    }
+
+    /**
+     * 敏感操作提权守卫。
+     *
+     * Web 端只有一个全局共享 token，无法区分请求者是哪个成员，因此凡是 App 内
+     * 要求「管理员 + 管理密码」的操作（删成员、导备份、改系统信息等），远程也必须
+     * 出示管理密码。成员 id 类的信息全都能从 /api/members 读到，不能作为凭据。
+     *
+     * @return true 表示已提权，调用方可继续；false 表示本函数已写出错误响应。
+     */
+    private suspend fun ApplicationCall.requireAdminPin(): Boolean {
+        val pin = request.headers[ADMIN_PIN_HEADER]
+        if (pin.isNullOrBlank()) {
+            respond(
+                HttpStatusCode.Forbidden,
+                mapOf(
+                    "error" to "admin_pin_required",
+                    "message" to "此操作需要管理密码，请在请求头 $ADMIN_PIN_HEADER 中提供"
+                )
+            )
+            return false
+        }
+        return when (val result = adminPinRepository.verifyPinForRemote(pin)) {
+            is AdminPinRepository.RemoteVerifyResult.Success -> true
+
+            is AdminPinRepository.RemoteVerifyResult.Invalid -> {
+                respond(
+                    HttpStatusCode.Forbidden,
+                    mapOf("error" to "admin_pin_invalid", "message" to "管理密码错误")
+                )
+                false
+            }
+
+            is AdminPinRepository.RemoteVerifyResult.NotConfigured -> {
+                respond(
+                    HttpStatusCode.Forbidden,
+                    mapOf(
+                        "error" to "admin_pin_not_configured",
+                        "message" to "请先在手机端设置管理密码"
+                    )
+                )
+                false
+            }
+
+            is AdminPinRepository.RemoteVerifyResult.LockedOut -> {
+                val seconds = (result.retryAfterMillis / 1000).coerceAtLeast(1)
+                response.header(HttpHeaders.RetryAfter, seconds.toString())
+                respond(
+                    HttpStatusCode.TooManyRequests,
+                    mapOf(
+                        "error" to "admin_pin_locked",
+                        "message" to "管理密码错误次数过多，请 $seconds 秒后重试"
+                    )
+                )
+                false
             }
         }
     }

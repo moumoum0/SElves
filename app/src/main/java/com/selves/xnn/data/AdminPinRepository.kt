@@ -66,4 +66,65 @@ class AdminPinRepository @Inject constructor(
         if (!verifyPin(oldPin)) return false
         return setPin(newPin)
     }
+
+    // ── 远程（Web API）提权校验 ──────────────────────────────────
+    //
+    // 6 位数字仅 100 万组合，网络侧可高速枚举，因此远程校验必须限流。
+    // 不复用 sessionUnlocked：本机 UI 的解锁状态不应让远程请求免验。
+
+    private val remoteLock = Any()
+    private var remoteFailures = 0
+    private var remoteLockedUntil = 0L
+
+    /**
+     * 供 Web API 校验提权 PIN。与 [verifyPin] 的区别：
+     * - 不解锁本机会话
+     * - 连续失败 [MAX_REMOTE_FAILURES] 次后锁定 [LOCKOUT_MILLIS]
+     */
+    suspend fun verifyPinForRemote(pin: String): RemoteVerifyResult {
+        synchronized(remoteLock) {
+            val now = System.currentTimeMillis()
+            if (now < remoteLockedUntil) {
+                return RemoteVerifyResult.LockedOut(remoteLockedUntil - now)
+            }
+        }
+
+        if (!AdminPinCrypto.isValidPinFormat(pin)) {
+            registerRemoteFailure()
+            return RemoteVerifyResult.Invalid
+        }
+        val salt = memberPreferences.getAdminPinSalt() ?: return RemoteVerifyResult.NotConfigured
+        val hash = memberPreferences.getAdminPinHash() ?: return RemoteVerifyResult.NotConfigured
+
+        return if (AdminPinCrypto.verifyPin(pin, salt, hash)) {
+            synchronized(remoteLock) { remoteFailures = 0 }
+            RemoteVerifyResult.Success
+        } else {
+            registerRemoteFailure()
+            RemoteVerifyResult.Invalid
+        }
+    }
+
+    private fun registerRemoteFailure() {
+        synchronized(remoteLock) {
+            remoteFailures++
+            if (remoteFailures >= MAX_REMOTE_FAILURES) {
+                remoteFailures = 0
+                remoteLockedUntil = System.currentTimeMillis() + LOCKOUT_MILLIS
+            }
+        }
+    }
+
+    sealed class RemoteVerifyResult {
+        object Success : RemoteVerifyResult()
+        object Invalid : RemoteVerifyResult()
+        /** 本机尚未设置管理密码，远程提权无从校验 */
+        object NotConfigured : RemoteVerifyResult()
+        data class LockedOut(val retryAfterMillis: Long) : RemoteVerifyResult()
+    }
+
+    private companion object {
+        const val MAX_REMOTE_FAILURES = 5
+        const val LOCKOUT_MILLIS = 5 * 60 * 1000L
+    }
 }

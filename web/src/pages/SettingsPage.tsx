@@ -3,6 +3,8 @@ import { SubPageScaffold } from './SubPageScaffold';
 import { applyAndroidColorScheme, type ColorSchemeName } from '../theme/androidColors';
 import { setThemeMode as applyThemeMode } from '../ui/theme/themeManager';
 import { ImportBackupWarningDialog } from '../components/BackupDialogs';
+import { AdminPinDialog } from '../components/AdminPinDialog';
+import { useAdminPinGate } from '../hooks/useAdminPinGate';
 import { exportBackup, getApiToken, importBackup as importBackupFile, setApiToken, getApiBaseUrl, setApiBaseUrl } from '../lib/api';
 import { Switch } from '../ui/components/Switch';
 import { Radio } from '../ui/components/Radio';
@@ -42,6 +44,7 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
   const [colorScheme, setColorScheme] = useState<ColorSchemeName>(() => (window.localStorage.getItem('selves-color-scheme') || 'default') as ColorSchemeName);
   const [quickSwitch, setQuickSwitch] = useState(false);
   const [webServerEnabled, setWebServerEnabled] = useState(false);
+  const adminPinGate = useAdminPinGate();
   const [showLangDialog, setShowLangDialog] = useState(false);
   const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [showColorDialog, setShowColorDialog] = useState(false);
@@ -73,18 +76,22 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
     setShowLangDialog(false);
   };
 
+  const downloadBackup = async (pin: string) => {
+    const blob = await exportBackup(pin);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `selves-backup-${Date.now()}.zip`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setBackupMessage('备份已开始下载');
+  };
+
   const handleExportBackup = async () => {
     setIsBackupLoading(true);
     setBackupMessage(null);
     try {
-      const blob = await exportBackup();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `selves-backup-${Date.now()}.zip`;
-      link.click();
-      URL.revokeObjectURL(url);
-      setBackupMessage('备份已开始下载');
+      await adminPinGate.run('导出备份', downloadBackup);
     } catch (error) {
       setBackupMessage(error instanceof Error ? error.message : '导出备份失败');
     } finally {
@@ -101,13 +108,16 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
   };
 
   const handleConfirmImportBackup = async () => {
-    if (!pendingImportFile) return;
+    const file = pendingImportFile;
+    if (!file) return;
     setShowImportWarning(false);
     setIsBackupLoading(true);
     setBackupMessage(null);
     try {
-      await importBackupFile(pendingImportFile);
-      setBackupMessage('备份导入成功，请刷新页面查看最新数据');
+      await adminPinGate.run('导入备份', async (pin) => {
+        await importBackupFile(file, pin);
+        setBackupMessage('备份导入成功，请刷新页面查看最新数据');
+      });
     } catch (error) {
       setBackupMessage(error instanceof Error ? error.message : '导入备份失败');
     } finally {
@@ -223,6 +233,15 @@ export function SettingsPage({ baseUrl, onBack, onNavigateToAbout }: SettingsPag
             setPendingImportFile(null);
             setShowImportWarning(false);
           }}
+        />
+      )}
+      {adminPinGate.pendingLabel && (
+        <AdminPinDialog
+          actionLabel={adminPinGate.pendingLabel}
+          errorMessage={adminPinGate.error}
+          submitting={adminPinGate.submitting}
+          onSubmit={adminPinGate.submitPin}
+          onDismiss={adminPinGate.dismiss}
         />
       )}
     </SubPageScaffold>
