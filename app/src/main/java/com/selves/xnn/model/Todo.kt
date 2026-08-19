@@ -1,9 +1,5 @@
 package com.selves.xnn.model
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
 data class Todo(
     val id: String,
     val title: String,
@@ -13,7 +9,7 @@ data class Todo(
     val completedAt: Long? = null,
     val priority: TodoPriority = TodoPriority.NORMAL,
     val createdBy: String // 创建者ID
-) : Parcelable
+)
 
 enum class TodoPriority {
     LOW,

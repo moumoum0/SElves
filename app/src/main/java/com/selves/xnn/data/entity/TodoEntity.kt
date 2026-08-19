@@ -4,10 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
 
-@Parcelize
 @Entity(
     tableName = "todos",
     indices = [
@@ -32,4 +29,4 @@ data class TodoEntity(
     val completedAt: Long? = null,
     val priority: Int = 1, // 0: LOW, 1: NORMAL, 2: HIGH
     val createdBy: String
-) : Parcelable 
+) 

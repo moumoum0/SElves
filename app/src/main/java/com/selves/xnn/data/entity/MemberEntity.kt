@@ -2,10 +2,7 @@ package com.selves.xnn.data.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
 
-@Parcelize
 @Entity(tableName = "members")
 data class MemberEntity(
     @PrimaryKey
@@ -17,4 +14,4 @@ data class MemberEntity(
     val pronouns: String = "",
     val groups: List<String> = emptyList(),
     val isAdmin: Boolean = false
-) : Parcelable
+)

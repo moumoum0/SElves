@@ -1,13 +1,15 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    // AGP 9 内置 Kotlin，不再需要 org.jetbrains.kotlin.android
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.parcelize)
+    alias(libs.plugins.hilt.android)
+    // KSP 必须放在最后，确保能看到 Parcelize 等插件生成的代码
     alias(libs.plugins.ksp)
-    id("kotlin-parcelize")
-    id("dagger.hilt.android.plugin")
 }
 
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // 读取 local.properties 中的签名配置
 val localProperties = Properties()
@@ -18,7 +20,7 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.selves.xnn"
-    compileSdk = 36
+    compileSdk = 37
 
     signingConfigs {
         create("release") {
@@ -36,7 +38,7 @@ android {
     defaultConfig {
         applicationId = "com.selves.xnn"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 17
         versionName = "1.2.0_beta3"
 
@@ -45,13 +47,6 @@ android {
             useSupportLibrary = true
         }
 
-        // 为Room和SQLite设置系统属性
-        System.setProperty("org.sqlite.tmpdir", "${project.buildDir}/tmp/sqlite")
-        System.setProperty("room.schemaLocation", "${project.buildDir}/schemas")
-        
-        // 只保留必要的资源密度
-        resourceConfigurations += listOf("zh", "en")
-        
         // 16KB页面大小支持配置
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
@@ -66,7 +61,7 @@ android {
         buildConfigField("String", "IMAGE_CROPPER_VERSION", "\"${libs.versions.imageCropper.get()}\"")
         buildConfigField("String", "ACCOMPANIST_VERSION", "\"${libs.versions.accompanist.get()}\"")
         buildConfigField("String", "GSON_VERSION", "\"${libs.versions.gson.get()}\"")
-        buildConfigField("String", "KOTLIN_BOM_VERSION", "\"${libs.versions.kotlinCoroutines.get()}\"")
+        buildConfigField("String", "KOTLIN_BOM_VERSION", "\"${libs.versions.kotlin.get()}\"")
         buildConfigField("String", "CORE_KTX_VERSION", "\"${libs.versions.coreKtx.get()}\"")
         buildConfigField("String", "LIFECYCLE_VERSION", "\"${libs.versions.lifecycleRuntimeKtx.get()}\"")
         buildConfigField("String", "ACTIVITY_COMPOSE_VERSION", "\"${libs.versions.activityCompose.get()}\"")
@@ -76,8 +71,14 @@ android {
         buildConfigField("String", "TINYPINYIN_VERSION", "\"${libs.versions.tinyPinyin.get()}\"")
     }
 
+    androidResources {
+        localeFilters += listOf("zh", "en")
+    }
+
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
+        // 禁用 Room 数据库验证以避免 SQLite 临时目录问题
+        arg("room.verifyDatabase", "false")
     }
 
     buildTypes {
@@ -95,9 +96,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -130,14 +128,29 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+// Web 构建任务配置（Configuration Cache 兼容）
 val webProjectDir = rootProject.projectDir.resolve("web")
 val webDistDir = webProjectDir.resolve("dist")
-val webAssetsDir = layout.projectDirectory.dir("src/main/assets/web")
 val hasWebProject = webProjectDir.isDirectory
 val isWindows = System.getProperty("os.name").lowercase().contains("windows")
 
 val buildWebDist = tasks.register<Exec>("buildWebDist") {
-    workingDir(webProjectDir)
+    workingDir = webProjectDir
+    
+    // 增量构建：只有源码变化时才重新构建
+    inputs.dir(webProjectDir.resolve("src"))
+    inputs.file(webProjectDir.resolve("package.json"))
+    inputs.file(webProjectDir.resolve("package-lock.json"))
+    inputs.file(webProjectDir.resolve("tsconfig.json"))
+    inputs.file(webProjectDir.resolve("vite.config.ts"))
+    outputs.dir(webDistDir)
+    
     if (isWindows) {
         commandLine("npm.cmd", "run", "build")
         val appData = System.getenv("APPDATA") ?: System.getProperty("user.home") + "\\AppData\\Roaming"
@@ -147,13 +160,25 @@ val buildWebDist = tasks.register<Exec>("buildWebDist") {
         commandLine("npm", "run", "build")
     }
     isEnabled = hasWebProject
+    
+    // 跳过条件：如果 dist 目录已存在且源码未变化
+    onlyIf {
+        !webDistDir.exists() || inputs.sourceFiles.any { 
+            it.lastModified() > webDistDir.lastModified() 
+        }
+    }
 }
 
 val syncWebAssets = tasks.register<Sync>("syncWebAssets") {
     dependsOn(buildWebDist)
     from(webDistDir)
-    into(webAssetsDir)
-    enabled = hasWebProject
+    into(layout.projectDirectory.dir("src/main/assets/web"))
+    isEnabled = hasWebProject
+    
+    // 增量同步：只有 dist 变化时才同步
+    inputs.dir(webDistDir)
+    outputs.dir(layout.projectDirectory.dir("src/main/assets/web"))
+    onlyIf { webDistDir.exists() }
 }
 
 tasks.matching { it.name == "preBuild" }.configureEach {

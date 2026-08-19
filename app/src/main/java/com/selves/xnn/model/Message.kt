@@ -1,9 +1,5 @@
 package com.selves.xnn.model
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
 data class Message(
     val id: String,
     val senderId: String,
@@ -11,7 +7,7 @@ data class Message(
     val timestamp: Long = java.lang.System.currentTimeMillis(),
     val type: MessageType = MessageType.TEXT,
     val imagePath: String? = null // 图片消息的本地路径
-) : Parcelable
+)
 
 enum class MessageType {
     TEXT,
